@@ -175,10 +175,16 @@
     el.style.setProperty('--tail', Math.max(24, Math.min(w - 24, x - left)) + 'px');
     el.classList.add('on');
     clearTimeout(tipTimer);
-    if (o.dur !== 0) tipTimer = setTimeout(hideBubble, o.dur || 6500);
+    if (o.dur !== 0) tipTimer = setTimeout(hideWhenSaid, o.dur || 6500);
   }
   function hideBubble() { clearTimeout(tipTimer); $('tip').classList.remove('on'); }
+  // (a bubble stays while its line is still being said)
+  function hideWhenSaid() { if (V.busy()) tipTimer = setTimeout(hideWhenSaid, 400); else hideBubble(); }
   function speak(text) { if (save.voice) V.say(text); }   // (text in the chosen language: L())
+  // Seconds since ケロはかせ stopped talking (0 while he talks). What moves on by itself (the cards after a result,
+  // the steps of the stretch) waits for this, so a line is never cut off by the next one.
+  var hush = 0;
+  function quietFor(sec) { return hush >= sec; }
 
   // ---------------------------------------------------------------- small pictures for the lists
 
@@ -301,7 +307,7 @@
     else {
       var nm = nameOf(u), line = C.checkedToday(save) ? pick(DATA.LINES.title) : DATA.LINES.checkFirst;
       text = nameHead(nm) + hello + '\n' + line;
-      parts = [nameHead(nm), hello, line];   // the name is read by the phone, the rest are clips (in Japanese)
+      parts = [hello, line];   // (the name is only written: ケロはかせ does not say it, the phone's voice for it sounded out of place)
     }
     setTimeout(function () {
       if (screen !== 'title') return;
@@ -816,7 +822,7 @@
       $('r-badge').textContent = eo.newBest ? L('しんきろく！') : '';
       var line = eo.newBest ? DATA.LINES.record : n >= 10 ? pick(DATA.LINES.good) : pick(DATA.LINES.soso);
       $('r-say').textContent = L('ケロはかせ「{t}」', { t: nameHead(who0) + line });
-      speak([nameHead(who0), line]);
+      speak(line);
       confetti(eo.newBest ? 60 : 20);
     }
     if (!R.shown && R.t >= 1.15) {
@@ -829,14 +835,15 @@
       var core = R.out.newBest ? pick(DATA.LINES.best) : R.out.firstPlay ? pick(DATA.LINES.first1) : R.rank >= 4 ? pick(DATA.LINES.good) : pick(DATA.LINES.soso);
       $('r-badge').textContent = R.out.newBest ? L('じこベスト！') : '';
       $('r-say').textContent = L('ケロはかせ「{t}」', { t: nameHead(who) + core });
-      speak([L('{animal}！', { animal: name }), nameHead(who), core]);
+      speak([L('{animal}！', { animal: name }), core]);
       confetti(R.rank >= 5 ? 60 : 24);
       var got = document.querySelectorAll('#r-stars i');
       for (var i = 0; i < R.out.stars; i++) {
         (function (k) { setTimeout(function () { if (result === R) { got[k].classList.add('got'); S.play('star', k); } }, 350 + k * 260); }(i));
       }
     }
-    if (R.shown && !R.overlays && R.t >= 2.9) { R.overlays = true; queueGains(R.out, true); }
+    // the stamp and other cards come once ケロはかせ has finished what he says (at most ~10 s)
+    if (R.shown && !R.overlays && R.t >= 2.9 && (quietFor(0.4) || R.t >= 12)) { R.overlays = true; queueGains(R.out, true); }
   }
 
   function drawResult(c) {
@@ -1113,9 +1120,9 @@
       S.play('fanfare');
       confetti(40);
       var what = check.out.age != null ? L('めねんれいは {age}さい！', { age: check.out.age }) : L('きょうの めは {animal}！', { animal: animalName(check.out.rank) });
-      speak([what, nameHead(who), core]);
+      speak([what, core]);
     }
-    if (check.shown && !check.overlays && check.t >= 2.9) { check.overlays = true; queueGains(check.out, false); }
+    if (check.shown && !check.overlays && check.t >= 2.9 && (quietFor(0.4) || check.t >= 12)) { check.overlays = true; queueGains(check.out, false); }
   }
 
   function drawCheck(c) {
@@ -1291,7 +1298,7 @@
 
   var stretch = null;
   function startStretch() {
-    stretch = { i: -1, t: 0, done: false };
+    stretch = { i: -1, t: 0, w: 0, go: false, done: false };
     $('st-end').hidden = true;
     show('stretch');
     requestWake();
@@ -1300,7 +1307,7 @@
   function nextStretch() {
     var st = stretch;
     if (!st) return;
-    st.i++; st.t = 0;
+    st.i++; st.t = 0; st.w = 0; st.go = false;
     if (st.i >= DATA.STRETCH.length) { st.done = true; st.i = DATA.STRETCH.length - 1; $('st-end').hidden = false; return; }
     var step = DATA.STRETCH[st.i];
     $('st-text').textContent = step[0];
@@ -1310,9 +1317,15 @@
     for (var k = 0; k < DATA.STRETCH.length; k++) h += '<i class="' + (k <= st.i ? 'on' : '') + '"></i>';
     $('st-dots').innerHTML = h;
   }
+  // Each step: first ケロはかせ says what to do (the star waits), then the exercise runs for its own time.
   function updateStretch(dt) {
     var st = stretch;
     if (!st || st.done) return;
+    st.w += dt;
+    if (!st.go) {
+      if ((st.w >= 0.8 && quietFor(0.3)) || st.w >= 15) st.go = true;
+      return;
+    }
     st.t += dt;
     if (st.t >= DATA.STRETCH[st.i][1]) nextStretch();
   }
@@ -1757,6 +1770,7 @@
   }
   function step(dt) {
     clock += dt;
+    hush = V.busy() ? 0 : hush + dt;
     updateFx(dt);
     if (screen === 'play' && run) { updateRun(dt); if (run) drawRun(ctx); }
     else if (screen === 'title') { updateTitle(dt); drawBackground(4); drawTitle(ctx); }

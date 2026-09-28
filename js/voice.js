@@ -5,7 +5,8 @@
    (a nickname) is read by the phone's own text-to-speech, slowly.
    In the other languages (js/lang.js) every part is read by the phone's text-to-speech in that language;
    a part written in Japanese letters (a nickname in kana) is read by the phone's Japanese voice.
-   The clips play through Web Audio (js/sound.js), which also turns the music down while ケロはかせ talks. */
+   The clips play through Web Audio (js/sound.js), which also turns the music down while ケロはかせ talks.
+   busy() tells whether a line is still being said, so the game can wait for its end before moving on. */
 var Voice = (function () {
   'use strict';
   // Silent on the PC (localhost) like the sound effects, unless the address has ?sound=1.
@@ -21,7 +22,7 @@ var Voice = (function () {
   var synth = typeof window !== 'undefined' && window.speechSynthesis ? window.speechSynthesis : null;
   var LOCALE = { ja: 'ja-JP', vi: 'vi-VN', en: 'en-US', ko: 'ko-KR' };
   var JA = /[぀-ヿ㐀-鿿]/, JA_RUN = /([぀-ヿ㐀-鿿]+)/;   // kana and kanji
-  var voices = {}, listed = 0, on = true, primed = false, gen = 0, src = null;
+  var voices = {}, listed = 0, on = true, primed = false, gen = 0, src = null, talking = false;
   var bytes = {};    // clip file → its bytes (small; decoded again each time it is said)
   var misses = {};   // Japanese parts that had no clip (for checking that only names are read by the phone)
   var canPlay = (function () {
@@ -112,8 +113,10 @@ var Voice = (function () {
     if (!on || !list.length) return;
     stop();
     var my = gen;
+    talking = true;
     (function next(i) {
-      if (my !== gen || i >= list.length) return;
+      if (my !== gen) return;
+      if (i >= list.length) { talking = false; return; }
       var t = list[i], go = function () { next(i + 1); };
       var url = id === 'ja' ? clipOf(t) : null;
       if (url && canPlay) play(url, t, go, my);
@@ -123,6 +126,7 @@ var Voice = (function () {
 
   function stop() {
     gen++;
+    talking = false;
     if (src) { try { src.stop(); } catch (e) { /* ignore */ } src = null; }
     if (synth) { try { synth.cancel(); } catch (e) { /* ignore */ } }
   }
@@ -145,7 +149,7 @@ var Voice = (function () {
   }
 
   return {
-    say: say, stop: stop, prime: prime, set: set, phoneVoice: phoneVoice, quiet: quiet,
+    say: say, stop: stop, prime: prime, set: set, phoneVoice: phoneVoice, quiet: quiet, busy: function () { return talking; },
     norm: norm, hasClip: function (t) { return !!clipOf(t); }, misses: misses, credit: clips.credit || ''
   };
 }());
