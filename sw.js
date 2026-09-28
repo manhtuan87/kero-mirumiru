@@ -6,7 +6,7 @@
    over at once, and the page reloads itself on the title screen.
    The site hosts other games and the menu, which share the cache storage,
    so only caches whose names start with "miru-" are ever deleted here. */
-var VERSION = 'miru-v7';
+var VERSION = 'miru-v8';
 var FONTS = 'miru-fonts';
 var FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',

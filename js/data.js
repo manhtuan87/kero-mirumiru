@@ -75,7 +75,13 @@
     { id: 'dog' }, { id: 'cat' }, { id: 'umbrella' }, { id: 'shoe' }, { id: 'star' }, { id: 'flower' }, { id: 'crab' }, { id: 'peach' },
     { id: 'apple' }, { id: 'strawberry' }, { id: 'egg' }, { id: 'chick' }, { id: 'frog' }, { id: 'rabbit' }, { id: 'watermelon' },
     { id: 'grapes' }, { id: 'mandarin' }, { id: 'fish' }, { id: 'hat' }, { id: 'car' }, { id: 'riceball' }, { id: 'balloon' },
-    { id: 'sunflower' }, { id: 'mitten' }, { id: 'pencil' }, { id: 'snail' }, { id: 'cherry' }
+    { id: 'sunflower' }, { id: 'mitten' }, { id: 'pencil' }, { id: 'snail' }, { id: 'cherry' },
+    // (added 2026-09-29, the same pictures as in あたま ぐんぐん)
+    { id: 'bear' }, { id: 'cow' }, { id: 'turtle' }, { id: 'monkey' }, { id: 'elephant' }, { id: 'moon' }, { id: 'cloud' }, { id: 'house' },
+    { id: 'boat' }, { id: 'octopus' }, { id: 'bread' }, { id: 'top' }, { id: 'rainbow' }, { id: 'mushroom' }, { id: 'glasses' }, { id: 'banana' },
+    { id: 'lemon' }, { id: 'tomato' }, { id: 'mouse' }, { id: 'panda' }, { id: 'giraffe' }, { id: 'drum' }, { id: 'book' }, { id: 'scissors' },
+    { id: 'ghost' }, { id: 'plane' }, { id: 'lion' }, { id: 'penguin' }, { id: 'owl' }, { id: 'acorn' }, { id: 'carrot' }, { id: 'crown' },
+    { id: 'snowman' }, { id: 'beetle' }, { id: 'corn' }, { id: 'ladybug' }
   ];
 
   // The eye facts: one a day before the first training, 48 days (as in the original), kept in まめちしき.
