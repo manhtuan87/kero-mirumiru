@@ -81,9 +81,9 @@
         } else {
           A.text(c, L(phase === 'ask' ? 'でた じゅんに こたえてね' : phase === 'good' ? 'ぜんぶ あたり！' : 'こたえは これ'), 180, 104, 22, '#fff', { lw: 6 });
           // the answer so far, one box per C
-          var n = R.cs.length, w = 64, x0 = 180 - (n * w + (n - 1) * 10) / 2;
+          var n = R.cs.length, w = n > 4 ? 56 : 64, gap = n > 4 ? 8 : 10, x0 = 180 - (n * w + (n - 1) * gap) / 2;
           for (var k = 0; k < n; k++) {
-            var x = x0 + k * (w + 10) + w / 2, y = 300;
+            var x = x0 + k * (w + gap) + w / 2, y = 300;
             D.roundRect(c, x - w / 2, y - w / 2, w, w, 14); D.paint(c, '#fffdf5', D.INK, 3);
             A.text(c, String(k + 1), x - w / 2 + 11, y - w / 2 + 11, 13, D.INK, { stroke: false });
             if (said[k] != null) A.dirArrow(c, x, y, 0.95, said[k], said[k] === R.cs[k].dir ? ARROW_COLORS[said[k]] : '#c9c1bb');
@@ -104,13 +104,15 @@
       e: { rounds: 6, k: 2, show: 1.0, gap: 0.3, size: 36 },
       n: { rounds: 6, k: 3, show: 0.8, gap: 0.25, size: 32 },
       h: { rounds: 6, k: 3, show: 0.55, gap: 0.2, size: 28 },
+      ae: { rounds: 6, k: 3, show: 0.5, gap: 0.2, size: 26 },
       a: { rounds: 6, k: 4, show: 0.4, gap: 0.15, size: 24 },
+      ah: { rounds: 6, k: 5, show: 0.33, gap: 0.12, size: 22 },
       test: { rounds: 5, k: 3, show: 0.7, gap: 0.25, size: 30 },
       testA: { rounds: 5, k: 4, show: 0.4, gap: 0.15, size: 24 },
       practice: { rounds: 2, k: 1, show: 1.4, gap: 0.3, size: 38 }
     },
     ranks: {
-      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1],
+      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1],
       test: [5, 5, 4, 3, 2, 1], testA: [5, 5, 4, 3, 2, 1]
     },
     gen: gen,

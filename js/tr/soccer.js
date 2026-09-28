@@ -182,11 +182,13 @@
       e: { n: 8, mates: 2, extra: 0, time: 5 },
       n: { n: 10, mates: 3, extra: 1, time: 4 },
       h: { n: 10, mates: 3, extra: 2, time: 3 },
+      ae: { n: 10, mates: 3, extra: 2, time: 3 },
       a: { n: 12, mates: 4, extra: 2, time: 2.4 },
+      ah: { n: 12, mates: 4, extra: 3, time: 2.0 },
       endless: { n: 10, mates: 3, extra: 1, time: 4, endless: true },
       practice: { n: 3, mates: 2, extra: 0, time: 8 }
     },
-    ranks: { e: [8, 7, 6, 5, 3, 2], n: [10, 9, 8, 6, 4, 2], h: [10, 9, 8, 6, 4, 2], a: [12, 11, 9, 7, 5, 3] },
+    ranks: { e: [8, 7, 6, 5, 3, 2], n: [10, 9, 8, 6, 4, 2], h: [10, 9, 8, 6, 4, 2], ae: [10, 9, 8, 6, 4, 2], a: [12, 11, 9, 7, 5, 3], ah: [12, 11, 9, 7, 5, 3] },
     gen: gen,
     start: start,
     icon: function (c, t) {

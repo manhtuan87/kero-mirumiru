@@ -25,7 +25,7 @@ function levelsOf(tr) { return Object.keys(tr.levels).filter(l => l !== 'practic
 function params(tr, lv, practice) {
   const p = Object.assign({}, tr.levels[lv]);
   if (practice) Object.assign(p, tr.levels.practice || {}, { practice: true });
-  p.adult = lv === 'a' || lv === 'testA';
+  p.adult = ['ae', 'a', 'ah', 'testA'].indexOf(lv) >= 0;
   return p;
 }
 function eachParams(tr, fn) {
@@ -63,7 +63,7 @@ T.list.forEach(tr => {
   check(['time', 'count'].includes(tr.kind), tr.id + ' kind');
   check(typeof tr.icon === 'function' && typeof tr.start === 'function' && typeof tr.gen === 'function', tr.id + ' icon, start and gen');
   check(typeof tr.name === 'string' && typeof tr.help === 'string' && tr.help.length > 10, tr.id + ' name and help');
-  ['e', 'n', 'h', 'a', 'practice'].forEach(lv => check(!!tr.levels[lv], tr.id + ' misses level ' + lv));
+  ['e', 'n', 'h', 'ae', 'a', 'ah', 'practice'].forEach(lv => check(!!tr.levels[lv], tr.id + ' misses level ' + lv));
   if (tr.sport) check(!!tr.levels.endless && tr.levels.endless.endless === true, tr.id + ' needs an endless level');
   Object.keys(tr.ranks).forEach(lv => {
     const c = tr.ranks[lv], test = lv === 'test' || lv === 'testA';
@@ -315,7 +315,10 @@ console.log('save data');
   check(!C.hardOpen(s, 'shuffle'), 'むずかしい is closed at first');
   const b = C.addRun(s, { id: 'shuffle', level: 'n', kind: 'count', cuts, score: 4, text: 'y', today: '2026-10-01' });
   check(!b.stampNew && b.newBest && !b.firstOfDay && b.runsToday === 2, 'second run the same day');
-  check(b.opened.hard.length === 1 && b.opened.hard[0] === 'shuffle' && C.hardOpen(s, 'shuffle'), 'カメレオン at ふつう opens むずかしい');
+  check(b.opened.hard.length === 1 && b.opened.hard[0].id === 'shuffle' && b.opened.hard[0].lv === 'h' && C.hardOpen(s, 'shuffle'), 'カメレオン at ふつう opens むずかしい');
+  check(!C.hardOpen(s, 'shuffle', 'ah') && C.hardOpen(s, 'shuffle', 'a'), 'おとな むずかしい waits for おとな ふつう');
+  const b2 = C.addRun(s, { id: 'shuffle', level: 'a', kind: 'count', cuts, score: 4, text: 'y', today: '2026-10-01' });
+  check(b2.opened.hard.length === 1 && b2.opened.hard[0].lv === 'ah' && C.hardOpen(s, 'shuffle', 'ah'), 'カメレオン at おとな ふつう opens おとな むずかしい');
   check(!C.hardOpen(s, 'flashnum'), 'only for that training');
   check(C.udata(s).rec.shuffle.n.hist.length === 1, 'graph keeps the first run of the day');
   C.addRun(s, { id: 'shuffle', level: 'n', kind: 'count', cuts, score: 2, text: 'z', today: '2026-10-02' });
@@ -375,7 +378,7 @@ console.log('save data');
   const s2 = C.fresh();
   for (let d = 1; d <= 11; d++) C.addRun(s2, { id: 'shuffle', level: 'e', kind: 'count', cuts, score: 1, text: '', today: '2026-11-' + String(d).padStart(2, '0') });
   check(Data.TRAININGS.every(t => C.isOpen(s2, t.id)) && !C.nextUnlock(s2), 'everything opens by 11 stamps');
-  check(Data.TRAININGS.every(t => C.hardOpen(s2, t.id)), 'every むずかしい opens by 10 stamps');
+  check(Data.TRAININGS.every(t => C.hardOpen(s2, t.id) && C.hardOpen(s2, t.id, 'ah')), 'every むずかしい opens by 10 stamps');
   check(C.stampDays(C.udata(s2)).filter(x => x.big).length === 2, 'every 5th stamp is はなまる');
   const s3 = C.fresh(); s3.all = true;
   check(Data.TRAININGS.every(t => C.isOpen(s3, t.id) && C.hardOpen(s3, t.id)), 'the admin switch opens everything');

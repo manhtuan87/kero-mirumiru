@@ -95,13 +95,15 @@
       e: { rounds: 6, cols: 2, rows: 2, fill: 4, show: 0.9 },
       n: { rounds: 6, cols: 3, rows: 3, fill: 7, show: 0.7 },
       h: { rounds: 6, cols: 4, rows: 4, fill: 12, show: 0.55 },
+      ae: { rounds: 6, cols: 4, rows: 4, fill: 12, show: 0.45 },
       a: { rounds: 6, cols: 5, rows: 5, fill: 18, show: 0.4 },
+      ah: { rounds: 6, cols: 6, rows: 6, fill: 26, show: 0.35 },
       test: { rounds: 5, cols: 3, rows: 3, fill: 8, show: 0.6 },
       testA: { rounds: 5, cols: 5, rows: 5, fill: 16, show: 0.4 },
       practice: { rounds: 2, cols: 2, rows: 2, fill: 3, show: 1.3 }
     },
     ranks: {
-      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1],
+      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1],
       test: [5, 5, 4, 3, 2, 1], testA: [5, 5, 4, 3, 2, 1]
     },
     gen: gen,

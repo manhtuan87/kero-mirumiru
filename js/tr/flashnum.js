@@ -89,12 +89,12 @@
           // a little star to look at
           D.sparkle(c, 180, 270, 12 + Math.sin(pt * 10) * 2, '#ffd23d');
         } else if (phase === 'flash') {
-          A.text(c, R.n, R.x, R.y, R.n.length > 3 ? 46 : 56, '#fff', { lw: 9 });
+          A.text(c, R.n, R.x, R.y, R.n.length > 4 ? 40 : R.n.length > 3 ? 46 : 56, '#fff', { lw: 9 });
         } else if (phase === 'ask') {
           A.text(c, L('なんだった？'), 180, 110, 24, '#fff', { lw: 7 });
           A.text(c, L('？'), 180, 270, 70, '#fff', { lw: 12 });
         } else if (phase === 'good' || phase === 'bad') {
-          A.text(c, R.n, R.x, R.y, 44, phase === 'good' ? '#ff8fc0' : '#6cc6ff', { lw: 8 });
+          A.text(c, R.n, R.x, R.y, R.n.length > 4 ? 40 : 44, phase === 'good' ? '#ff8fc0' : '#6cc6ff', { lw: 8 });
         }
       },
       peek: function () {   // for playtesting: the right answer
@@ -112,13 +112,15 @@
       e: { rounds: 6, len: 1, show: 0.8 },
       n: { rounds: 6, len: 2, show: 0.6 },
       h: { rounds: 6, len: 3, show: 0.45 },
+      ae: { rounds: 6, len: 3, show: 0.4 },
       a: { rounds: 6, len: 4, show: 0.32 },
+      ah: { rounds: 6, len: 5, show: 0.3 },
       test: { rounds: 5, len: 2, show: 0.5 },
       testA: { rounds: 5, len: 4, show: 0.3 },
       practice: { rounds: 2, len: 1, show: 1.2 }
     },
     ranks: {
-      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1],
+      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1],
       test: [5, 5, 4, 3, 2, 1], testA: [5, 5, 4, 3, 2, 1]
     },
     gen: gen,

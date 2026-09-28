@@ -6,15 +6,21 @@
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var DATA = typeof Data !== 'undefined' ? Data : require('../data.js');
   var LANE_Y = 300, LETTERS = 'ABCDEFGHJKLMNPRSTUVWXYZ';
+  // letters that look like each letter (おとな むずかしい: most of the others are these)
+  var ALIKE = { A: 'HR', B: 'DPRE', C: 'GDU', D: 'BPRC', E: 'FBH', F: 'EPT', G: 'CD', H: 'NMK', J: 'LT', K: 'XHR', L: 'JTE', M: 'NWH',
+    N: 'MHZ', P: 'RBF', R: 'PBK', S: 'ZG', T: 'FYL', U: 'VC', V: 'UYW', W: 'MV', X: 'KY', Y: 'VXT', Z: 'SN' };
 
-  // p: { rounds, items, hits: [a, b], speed (px/s), gap (s between items), mix (0 one way, 1 each round, 2 each item), letters }
+  // p: { rounds, items, hits: [a, b], speed (px/s), gap (s between items), mix (0 one way, 1 each round, 2 each item), letters,
+  //      alike (the others look like the letter), recent (pictures shown lately: they come last) }
   function gen(p, r) {
-    var ids = DATA.PICS.map(function (x) { return x.id; }), out = [];
+    var all = DATA.PICS.map(function (x) { return x.id; }), ids = U.fresh(r, all, Math.min(all.length, 14), p.recent), out = [];
+    var looks = U.sample(r, ids, Math.min(ids.length, p.rounds));   // (a different picture to look for in every round)
     for (var i = 0; i < p.rounds; i++) {
       var pool = p.letters ? LETTERS.split('') : ids;
-      var target = U.pick(r, pool), others = pool.filter(function (x) { return x !== target; });
+      var target = p.letters ? U.pick(r, pool) : looks[i % looks.length], others = pool.filter(function (x) { return x !== target; });
+      var near = p.alike ? (ALIKE[target] || '').split('') : [];
       var n = p.items, hits = U.span(r, p.hits), items = [];
-      for (var k = 0; k < n; k++) items.push(k < hits ? target : U.pick(r, others));
+      for (var k = 0; k < n; k++) items.push(k < hits ? target : near.length && r() < 0.7 ? U.pick(r, near) : U.pick(r, others));
       items = U.shuffle(r, items);
       var d0 = r() < 0.5 ? 1 : -1, dirs = items.map(function (x, k) {
         return p.mix === 2 ? (r() < 0.5 ? 1 : -1) : p.mix === 1 ? (i % 2 ? -d0 : d0) : -1;
@@ -27,6 +33,7 @@
   function start(api, p) {
     var D = G.Draw, A = G.Art, P = G.Pics;
     var rounds = gen(p, api.rnd), ri = -1, phase = 'wait', pt = 0, right = 0, R = null, flying = [], sent = 0, next = 0, got = null;
+    if (!p.letters) api.used(rounds.map(function (x) { return x.target; }));
     var pad = api.answerPad({ expect: function () { return R ? R.ans : 0; }, onAnswer: answer });
     pad.enable(false);
 
@@ -103,19 +110,21 @@
   }
 
   T.register({
-    id: 'rushcount', name: 'かぞえて びゅん', orig: 'ABC速読', kind: 'count',
+    id: 'rushcount', name: 'かぞえて びゅん', orig: 'ABC速読', kind: 'count', pool: 'pics',
     help: 'さいしょに でた えと おなじ えが、\nよこに びゅんと ながれるよ。\nいくつ あったか かぞえてね！',
     levels: {
       e: { rounds: 6, items: 5, hits: [1, 3], speed: 150, gap: 1.0, mix: 0 },
       n: { rounds: 6, items: 7, hits: [2, 4], speed: 210, gap: 0.8, mix: 1 },
       h: { rounds: 6, items: 9, hits: [2, 5], speed: 280, gap: 0.62, mix: 2 },
+      ae: { rounds: 6, items: 10, hits: [2, 5], speed: 300, gap: 0.6, mix: 2, letters: true },
       a: { rounds: 6, items: 12, hits: [3, 6], speed: 360, gap: 0.5, mix: 2, letters: true },
+      ah: { rounds: 6, items: 15, hits: [4, 7], speed: 420, gap: 0.42, mix: 2, letters: true, alike: true },
       test: { rounds: 5, items: 7, hits: [2, 4], speed: 230, gap: 0.75, mix: 1 },
       testA: { rounds: 5, items: 11, hits: [3, 6], speed: 340, gap: 0.52, mix: 2, letters: true },
       practice: { rounds: 2, items: 4, hits: [1, 2], speed: 130, gap: 1.1, mix: 0 }
     },
     ranks: {
-      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1],
+      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1],
       test: [5, 5, 4, 3, 2, 1], testA: [5, 5, 4, 3, 2, 1]
     },
     gen: gen,

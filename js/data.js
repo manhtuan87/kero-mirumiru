@@ -59,11 +59,15 @@
     { id: 'kyoou', name: 'タッチ', tests: ['quicktouch', 'numtouch'], good: 'みて すぐ タッチするのが とくい だね！' }
   ];
 
+  // The grown-ups' three levels (おとな) are near the original game's stages; only grown-up users see them.
+  // hard: a むずかしい opens after a good result at that level (or with stamps), as in the original.
   var LEVELS = [
     { id: 'e', name: 'かんたん', dots: 1 },
     { id: 'n', name: 'ふつう', dots: 2 },
-    { id: 'h', name: 'むずかしい', dots: 3, hard: true },
-    { id: 'a', name: 'おとな', dots: 4, adult: true }
+    { id: 'h', name: 'むずかしい', dots: 3, hard: 'n' },
+    { id: 'ae', name: 'おとな かんたん', short: 'かんたん', dots: 1, adult: true },
+    { id: 'a', name: 'おとな ふつう', short: 'ふつう', dots: 2, adult: true },
+    { id: 'ah', name: 'おとな むずかしい', short: 'むずかしい', dots: 3, adult: true, hard: 'a' }
   ];
 
   // Pictures (drawn in pics.js) used by かぞえて びゅん.

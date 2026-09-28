@@ -89,13 +89,15 @@
       e: { boards: 2, n: 9, cols: 3, rows: 3 },
       n: { boards: 2, n: 12, cols: 3, rows: 4 },
       h: { boards: 1, n: 16, cols: 4, rows: 4 },
+      ae: { boards: 1, n: 16, cols: 4, rows: 4 },
       a: { boards: 1, n: 20, cols: 4, rows: 5 },
+      ah: { boards: 1, n: 25, cols: 5, rows: 5 },
       test: { boards: 1, n: 12, cols: 3, rows: 4 },
       testA: { boards: 1, n: 20, cols: 4, rows: 5 },
       practice: { boards: 1, n: 5, cols: 3, rows: 2 }
     },
     ranks: {
-      e: [9, 11, 14, 18, 24, 34], n: [14, 17, 21, 27, 36, 50], h: [11, 13, 16, 21, 28, 40], a: [13, 15, 18, 23, 30, 42],
+      e: [9, 11, 14, 18, 24, 34], n: [14, 17, 21, 27, 36, 50], h: [11, 13, 16, 21, 28, 40], ae: [9, 11, 14, 18, 24, 33], a: [13, 15, 18, 23, 30, 42], ah: [17, 20, 24, 30, 39, 54],
       test: [7, 9, 11, 14, 19, 27], testA: [13, 15, 18, 23, 30, 42]
     },
     gen: gen,

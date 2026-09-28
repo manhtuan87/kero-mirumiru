@@ -9,9 +9,9 @@
   'use strict';
 
   var KEY = 'kero-mirumiru-v1';
-  var MAX_USERS = 4, HIST = 60, NAME_MAX = 10;
+  var MAX_USERS = 4, HIST = 60, NAME_MAX = 10, RECENT = 80;
   var COLORS = ['#86d65c', '#ff8fc0', '#6cc6ff', '#ffb347', '#b58cff', '#ffd23d'];
-  var LEVEL_IDS = ['e', 'n', 'h', 'a'];
+  var LEVEL_IDS = ['e', 'n', 'h', 'ae', 'a', 'ah'];
   var NCHECK = Data.CHECK.length;
 
   // ---------------------------------------------------------------- dates (the phone's own clock)
@@ -26,7 +26,7 @@
   // ---------------------------------------------------------------- a fresh save
 
   function newData() {
-    return { days: {}, rec: {}, lv: {}, seen: {}, spent: 0, owned: ['frog'], chara: 'frog', tipN: 0, tipDay: '', endless: {} };
+    return { days: {}, rec: {}, lv: {}, seen: {}, spent: 0, owned: ['frog'], chara: 'frog', tipN: 0, tipDay: '', endless: {}, recent: {} };
   }
   function fresh() {
     return {
@@ -83,6 +83,10 @@
     Object.keys(lv).forEach(function (id) { if (LEVEL_IDS.indexOf(lv[id]) >= 0) out.lv[id] = lv[id]; });
     var seen = obj(d.seen);
     Object.keys(seen).forEach(function (id) { if (seen[id]) out.seen[id] = true; });
+    var recent = obj(d.recent);
+    Object.keys(recent).forEach(function (k) {
+      if (Array.isArray(recent[k])) out.recent[k] = recent[k].filter(function (x) { return typeof x === 'string'; }).slice(-RECENT);
+    });
     out.spent = clampInt(d.spent, 0, 1e6);
     if (Array.isArray(d.owned)) {
       d.owned.forEach(function (c) { if (typeof c === 'string' && out.owned.indexOf(c) < 0) out.owned.push(c); });
@@ -180,14 +184,15 @@
     var t = trainingInfo(id);
     return !!t && (s.all || stampCount(udata(s)) >= t.unlock);
   }
-  // むずかしい: a good result at ふつう, or enough stamps (as in the original).
-  function hardOpen(s, id) {
-    var u = udata(s), n = u.rec[id] && u.rec[id].n;
-    return s.all || stampCount(u) >= Data.HARD_STAMPS || !!(n && n.rank >= Data.HARD_RANK);
+  // むずかしい (and おとな むずかしい): a good result at the level before it, or enough stamps (as in the original).
+  function hardFrom(lv) { for (var i = 0; i < Data.LEVELS.length; i++) if (Data.LEVELS[i].id === lv) return Data.LEVELS[i].hard || null; return null; }
+  function hardOpen(s, id, lv) {
+    var from = hardFrom(lv || 'h'), u = udata(s), x = from && u.rec[id] && u.rec[id][from];
+    return !from || s.all || stampCount(u) >= Data.HARD_STAMPS || !!(x && x.rank >= Data.HARD_RANK);
   }
   function hardOpenAll(s) {
     var out = {};
-    Data.TRAININGS.forEach(function (t) { out[t.id] = hardOpen(s, t.id); });
+    Data.TRAININGS.forEach(function (t) { Data.LEVELS.forEach(function (l) { if (l.hard) out[t.id + '/' + l.id] = hardOpen(s, t.id, l.id); }); });
     return out;
   }
   function openedBetween(a, b) {
@@ -205,7 +210,8 @@
   }
   // The trainings whose むずかしい opened between two states (for the "you can play むずかしい" card).
   function hardOpened(before, after) {
-    return Object.keys(after).filter(function (id) { return after[id] && !before[id]; });
+    return Object.keys(after).filter(function (k) { return after[k] && !before[k]; })
+      .map(function (k) { var p = k.split('/'); return { id: p[0], lv: p[1] }; });
   }
 
   // ---------------------------------------------------------------- finishing a training
@@ -295,6 +301,17 @@
     u.tipDay = today || dayKey();
   }
 
+  // ---------------------------------------------------------------- questions shown lately
+
+  // Pictures (and the like) shown lately, the latest last: the next runs pick others first, so a pool is used up
+  // before anything comes back.
+  function recentOf(s, key) { return (udata(s).recent[key] || []).slice(); }
+  function addRecent(s, key, ids) {
+    var u = udata(s), r = u.recent[key] || (u.recent[key] = []);
+    ids.forEach(function (id) { id = String(id); var i = r.indexOf(id); if (i >= 0) r.splice(i, 1); r.push(id); });
+    if (r.length > RECENT) r.splice(0, r.length - RECENT);
+  }
+
   // ---------------------------------------------------------------- the shop
 
   function starsEarned(u) {
@@ -312,6 +329,7 @@
     stampCount: stampCount, stampDays: stampDays, isOpen: isOpen, hardOpen: hardOpen, nextUnlock: nextUnlock, trainingInfo: trainingInfo,
     addRun: addRun, addEndless: addEndless, addCheck: addCheck, checkedToday: checkedToday, eyeAge: eyeAge, lastCheck: lastCheck,
     tipToday: tipToday, tipSeen: tipSeen,
+    recentOf: recentOf, addRecent: addRecent,
     starsEarned: starsEarned, wallet: wallet
   };
 }));

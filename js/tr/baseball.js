@@ -131,11 +131,13 @@
       e: { n: 10, time: [1.6, 2.1], slow: 0.2, curve: 0 },
       n: { n: 10, time: [1.2, 1.7], slow: 0.25, curve: 0 },
       h: { n: 10, time: [0.95, 1.5], slow: 0.3, curve: 30 },
+      ae: { n: 10, time: [0.95, 1.5], slow: 0.3, curve: 30 },
       a: { n: 10, time: [0.8, 1.35], slow: 0.3, curve: 45 },
+      ah: { n: 10, time: [0.68, 1.2], slow: 0.35, curve: 60 },
       endless: { n: 10, time: [1.3, 1.8], slow: 0.25, curve: 20, endless: true },
       practice: { n: 3, time: [1.9, 1.9], slow: 0, curve: 0 }
     },
-    ranks: { e: [10, 9, 8, 6, 4, 2], n: [10, 9, 8, 6, 4, 2], h: [10, 9, 7, 5, 3, 2], a: [10, 9, 7, 5, 3, 1] },
+    ranks: { e: [10, 9, 8, 6, 4, 2], n: [10, 9, 8, 6, 4, 2], h: [10, 9, 7, 5, 3, 2], ae: [10, 9, 7, 5, 3, 2], a: [10, 9, 7, 5, 3, 1], ah: [10, 9, 7, 5, 3, 1] },
     gen: gen,
     start: start,
     icon: function (c, t) {

@@ -30,6 +30,13 @@
     range: function (a, b) { var o = []; for (var i = a; i <= b; i++) o.push(i); return o; },
     // a number from [a, b] given as a pair, or the number itself
     span: function (r, v) { return Array.isArray(v) ? U.int(r, v[0], v[1]) : v; },
+    // k ids of pool in a random order, the ones not shown lately first (recent: ids shown lately, the latest last)
+    fresh: function (r, pool, k, recent) {
+      var age = {};
+      (recent || []).forEach(function (id, i) { age[id] = i + 1; });
+      var a = U.shuffle(r, pool).sort(function (x, y) { return (age[x] || 0) - (age[y] || 0); });
+      return U.shuffle(r, a.slice(0, k));
+    },
     // acc where a wrong answer is simply tried again: 1, less an equal share (1/n) for each mistake
     acc: function (miss, n) { return n > 0 ? Math.max(0, 1 - miss / n) : miss ? 0 : 1; },
     rng: function (seed) {

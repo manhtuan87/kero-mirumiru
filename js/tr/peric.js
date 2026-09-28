@@ -88,13 +88,15 @@
       e: { q: 8, around: 4, radius: 105, size: 30 },
       n: { q: 10, around: 6, radius: 118, size: 26 },
       h: { q: 10, around: 8, radius: 128, size: 22 },
+      ae: { q: 10, around: 8, radius: 128, size: 22 },
       a: { q: 12, around: 8, radius: 136, size: 19 },
+      ah: { q: 12, around: 12, radius: 140, size: 17 },
       test: { q: 8, around: 6, radius: 120, size: 25 },
       testA: { q: 10, around: 8, radius: 134, size: 19 },
       practice: { q: 3, around: 4, radius: 100, size: 32 }
     },
     ranks: {
-      e: [8, 10, 13, 17, 23, 32], n: [12, 15, 19, 25, 33, 45], h: [15, 19, 24, 31, 41, 56], a: [16, 20, 25, 32, 42, 56],
+      e: [8, 10, 13, 17, 23, 32], n: [12, 15, 19, 25, 33, 45], h: [15, 19, 24, 31, 41, 56], ae: [13, 16, 20, 26, 34, 46], a: [16, 20, 25, 32, 42, 56], ah: [22, 27, 34, 43, 56, 74],
       test: [10, 13, 16, 21, 28, 38], testA: [13, 16, 20, 26, 34, 46]
     },
     gen: gen,

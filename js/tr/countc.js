@@ -101,13 +101,15 @@
       e: { rounds: 6, items: 5, hits: [1, 3], show: 0.9, gap: 0.25, size: 34 },
       n: { rounds: 6, items: 7, hits: [2, 4], show: 0.7, gap: 0.2, size: 30 },
       h: { rounds: 6, items: 9, hits: [2, 5], show: 0.5, gap: 0.15, size: 26 },
+      ae: { rounds: 6, items: 10, hits: [2, 5], show: 0.45, gap: 0.14, size: 24 },
       a: { rounds: 6, items: 12, hits: [3, 6], show: 0.38, gap: 0.12, size: 22 },
+      ah: { rounds: 6, items: 15, hits: [4, 8], show: 0.3, gap: 0.1, size: 20 },
       test: { rounds: 5, items: 7, hits: [2, 4], show: 0.6, gap: 0.2, size: 28 },
       testA: { rounds: 5, items: 11, hits: [3, 6], show: 0.4, gap: 0.12, size: 22 },
       practice: { rounds: 2, items: 4, hits: [1, 2], show: 1.1, gap: 0.3, size: 36 }
     },
     ranks: {
-      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1],
+      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1],
       test: [5, 5, 4, 3, 2, 1], testA: [5, 5, 4, 3, 2, 1]
     },
     gen: gen,

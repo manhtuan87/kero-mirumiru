@@ -130,13 +130,15 @@
       e: { rounds: 6, cups: 3, swaps: [3, 4], speed: 1.3 },
       n: { rounds: 6, cups: 3, swaps: [5, 6], speed: 2.0 },
       h: { rounds: 6, cups: 4, swaps: [6, 8], speed: 2.6 },
-      a: { rounds: 6, cups: 5, swaps: [8, 10], speed: 3.4 },
+      ae: { rounds: 6, cups: 3, swaps: [8, 10], speed: 3.0 },
+      a: { rounds: 6, cups: 4, swaps: [9, 11], speed: 3.4 },
+      ah: { rounds: 6, cups: 5, swaps: [10, 12], speed: 4.0 },
       test: { rounds: 5, cups: 3, swaps: [5, 6], speed: 2.2 },
       testA: { rounds: 5, cups: 4, swaps: [7, 9], speed: 3.2 },
       practice: { rounds: 2, cups: 3, swaps: [2, 2], speed: 1.0 }
     },
     ranks: {
-      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1],
+      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1],
       test: [5, 5, 4, 3, 2, 1], testA: [5, 5, 4, 3, 2, 1]
     },
     gen: gen,

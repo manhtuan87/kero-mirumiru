@@ -137,11 +137,13 @@
       e: { rounds: 6, players: 3, mates: 1, show: 1.4, move: 0 },
       n: { rounds: 6, players: 4, mates: 1, show: 1.1, move: 30 },
       h: { rounds: 6, players: 5, mates: 2, show: 0.9, move: 55 },
+      ae: { rounds: 6, players: 5, mates: 2, show: 0.9, move: 55 },
       a: { rounds: 6, players: 6, mates: 2, show: 0.7, move: 75 },
+      ah: { rounds: 6, players: 6, mates: 3, show: 0.55, move: 90 },
       endless: { rounds: 5, players: 4, mates: 1, show: 1.0, move: 40, endless: true },
       practice: { rounds: 2, players: 2, mates: 1, show: 1.8, move: 0 }
     },
-    ranks: { e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1] },
+    ranks: { e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1] },
     gen: gen,
     start: start,
     icon: function (c, t) {

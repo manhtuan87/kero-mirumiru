@@ -124,11 +124,13 @@
       e: { n: 12, speed: 150, every: 1.6, two: 0 },
       n: { n: 15, speed: 200, every: 1.25, two: 0.25 },
       h: { n: 18, speed: 250, every: 1.0, two: 0.4 },
+      ae: { n: 18, speed: 250, every: 1.0, two: 0.4 },
       a: { n: 20, speed: 300, every: 0.85, two: 0.5 },
+      ah: { n: 24, speed: 350, every: 0.72, two: 0.6 },
       endless: { n: 15, speed: 200, every: 1.2, two: 0.3, endless: true },
       practice: { n: 4, speed: 120, every: 2.0, two: 0 }
     },
-    ranks: { e: [12, 11, 10, 8, 6, 3], n: [15, 14, 12, 10, 7, 4], h: [18, 16, 14, 11, 8, 4], a: [20, 18, 15, 12, 9, 5] },
+    ranks: { e: [12, 11, 10, 8, 6, 3], n: [15, 14, 12, 10, 7, 4], h: [18, 16, 14, 11, 8, 4], ae: [18, 16, 14, 11, 8, 4], a: [20, 18, 15, 12, 9, 5], ah: [24, 22, 18, 14, 10, 5] },
     gen: gen,
     start: start,
     icon: function (c, t) {

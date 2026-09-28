@@ -176,7 +176,14 @@ input { -webkit-user-select: text; user-select: text; touch-action: auto; }
   font: 800 14px/1.1 var(--font); color: var(--ink);
   background: #fff; border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink);
 }
-.levels.four .lv-btn { font-size: 12px; letter-spacing: -.5px; }
+/* grown-ups: the children's three levels, and the grown-ups' three below them */
+.levels.six { display: grid; grid-template-columns: repeat(3, 1fr); }
+.levels.six .lv-btn { height: 58px; font-size: 13px; letter-spacing: -.5px; }
+.levels.six .lv-btn canvas { width: 28px; height: 20px; }
+.lv-btn small { font-size: 10px; line-height: 1; letter-spacing: 0; opacity: .75; }
+.lv-btn.adult .dots { color: #b48cff; }
+.lv-btn .noanimal { height: 24px; }
+.levels.six .lv-btn .noanimal { height: 20px; }
 .lv-btn .dots { font-style: normal; font-size: 8px; letter-spacing: 1px; color: #ffb13d; }
 .lv-btn canvas { width: 34px; height: 24px; }
 .lv-btn.on { background: linear-gradient(#fff6b8, #ffd84d); }
@@ -359,7 +366,7 @@ input { -webkit-user-select: text; user-select: text; touch-action: auto; }
 .endless-row b { font-size: 17px; color: #ff6f91; }
 .graph-card { width: 330px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .graph-canvas { width: 290px; height: 197px; }
-.graph-levels { display: flex; gap: 5px; }
+.graph-levels { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
 .graph-levels button { height: 34px; padding: 0 10px; font: 800 13px/1 var(--font); color: var(--ink); background: #fff; border: 2.5px solid var(--ink); border-radius: 999px; }
 .graph-levels button.on { background: linear-gradient(#fff6b8, #ffd84d); }
 .graph-note { font-size: 14px; font-weight: 800; text-align: center; line-height: 1.4; min-height: 20px; }

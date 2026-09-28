@@ -79,13 +79,15 @@
       e: { q: 8, show: 0.9, size: 30, spread: 120 },
       n: { q: 10, show: 0.6, size: 26, spread: 140 },
       h: { q: 10, show: 0.42, size: 22, spread: 150 },
+      ae: { q: 10, show: 0.38, size: 21, spread: 155 },
       a: { q: 12, show: 0.3, size: 19, spread: 160 },
+      ah: { q: 12, show: 0.22, size: 17, spread: 170 },
       test: { q: 8, show: 0.5, size: 25, spread: 145 },
       testA: { q: 10, show: 0.3, size: 19, spread: 160 },
       practice: { q: 3, show: 1.3, size: 32, spread: 110 }
     },
     ranks: {
-      e: [8, 7, 6, 5, 4, 2], n: [10, 9, 8, 7, 5, 3], h: [10, 9, 8, 7, 5, 3], a: [12, 11, 10, 8, 6, 4],
+      e: [8, 7, 6, 5, 4, 2], n: [10, 9, 8, 7, 5, 3], h: [10, 9, 8, 7, 5, 3], ae: [10, 9, 8, 7, 5, 3], a: [12, 11, 10, 8, 6, 4], ah: [12, 11, 10, 8, 6, 4],
       test: [8, 7, 6, 5, 4, 2], testA: [10, 9, 8, 7, 5, 3]
     },
     gen: gen,

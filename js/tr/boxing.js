@@ -120,11 +120,13 @@
       e: { n: 16, window: 1.7, punch: 0.15, spots: 4 },
       n: { n: 20, window: 1.25, punch: 0.2, spots: 6 },
       h: { n: 20, window: 0.95, punch: 0.25, spots: 8 },
+      ae: { n: 20, window: 0.95, punch: 0.25, spots: 8 },
       a: { n: 24, window: 0.75, punch: 0.25, spots: 8 },
+      ah: { n: 28, window: 0.62, punch: 0.3, spots: 8 },
       endless: { n: 20, window: 1.3, punch: 0.2, spots: 6, endless: true },
       practice: { n: 4, window: 2.6, punch: 0.3, spots: 4 }
     },
-    ranks: { e: [16, 15, 13, 11, 8, 5], n: [20, 19, 17, 14, 10, 6], h: [20, 18, 16, 13, 9, 5], a: [24, 22, 19, 15, 11, 6] },
+    ranks: { e: [16, 15, 13, 11, 8, 5], n: [20, 19, 17, 14, 10, 6], h: [20, 18, 16, 13, 9, 5], ae: [20, 18, 16, 13, 9, 5], a: [24, 22, 19, 15, 11, 6], ah: [28, 26, 22, 17, 12, 7] },
     gen: gen,
     start: start,
     icon: function (c, t) {

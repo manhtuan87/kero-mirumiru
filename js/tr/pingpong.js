@@ -113,11 +113,13 @@
       e: { n: 15, time: 1.7, spread: 50, spin: 0 },
       n: { n: 20, time: 1.3, spread: 80, spin: 20 },
       h: { n: 20, time: 1.0, spread: 110, spin: 40 },
+      ae: { n: 20, time: 1.0, spread: 110, spin: 40 },
       a: { n: 24, time: 0.82, spread: 120, spin: 55 },
+      ah: { n: 28, time: 0.7, spread: 130, spin: 70 },
       endless: { n: 20, time: 1.35, spread: 90, spin: 25, endless: true },
       practice: { n: 4, time: 2.0, spread: 30, spin: 0 }
     },
-    ranks: { e: [15, 14, 12, 10, 7, 4], n: [20, 19, 17, 14, 10, 6], h: [20, 18, 16, 13, 9, 5], a: [24, 22, 19, 15, 11, 6] },
+    ranks: { e: [15, 14, 12, 10, 7, 4], n: [20, 19, 17, 14, 10, 6], h: [20, 18, 16, 13, 9, 5], ae: [20, 18, 16, 13, 9, 5], a: [24, 22, 19, 15, 11, 6], ah: [28, 26, 22, 17, 12, 7] },
     gen: gen,
     start: start,
     icon: function (c, t) {

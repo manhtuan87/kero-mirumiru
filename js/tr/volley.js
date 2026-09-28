@@ -121,11 +121,13 @@
       e: { n: 10, time: 2.2, spread: 30 },
       n: { n: 10, time: 1.7, spread: 60 },
       h: { n: 12, time: 1.35, spread: 80 },
+      ae: { n: 12, time: 1.35, spread: 80 },
       a: { n: 12, time: 1.1, spread: 90 },
+      ah: { n: 14, time: 0.9, spread: 100 },
       endless: { n: 10, time: 1.8, spread: 60, endless: true },
       practice: { n: 3, time: 2.6, spread: 20 }
     },
-    ranks: { e: [10, 9, 8, 6, 4, 2], n: [10, 9, 8, 6, 4, 2], h: [12, 11, 9, 7, 5, 3], a: [12, 11, 9, 7, 5, 3] },
+    ranks: { e: [10, 9, 8, 6, 4, 2], n: [10, 9, 8, 6, 4, 2], h: [12, 11, 9, 7, 5, 3], ae: [12, 11, 9, 7, 5, 3], a: [12, 11, 9, 7, 5, 3], ah: [14, 13, 11, 8, 6, 3] },
     gen: gen,
     start: start,
     icon: function (c, t) {

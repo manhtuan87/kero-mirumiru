@@ -18,7 +18,7 @@
     var tx = function (s) { return L(s); };
     T.list.forEach(function (tr) { tr.name = L(tr.name); if (tr.help) tr.help = L(tr.help); });
     DATA.CATS.forEach(function (c) { c.name = L(c.name); if (c.sub) c.sub = L(c.sub); });
-    DATA.LEVELS.forEach(function (l) { l.name = L(l.name); });
+    DATA.LEVELS.forEach(function (l) { l.name = L(l.name); if (l.short) l.short = L(l.short); });
     DATA.ANIMALS.forEach(function (a) { a.name = L(a.name); a.fact = L(a.fact); });
     DATA.CHECK.forEach(function (c) { c.name = L(c.name); c.good = L(c.good); });
     Object.keys(DATA.LINES).forEach(function (k) { var v = DATA.LINES[k]; DATA.LINES[k] = Array.isArray(v) ? v.map(tx) : L(v); });
@@ -46,6 +46,7 @@
     return lv === 'endless' ? L('きろくに ちょうせん') : L('チェック');
   }
   function levelsFor() { return DATA.LEVELS.filter(function (l) { return !l.adult || isAdult(); }); }
+  function isAdultLevel(lv) { return lv === 'testA' || DATA.LEVELS.some(function (l) { return l.id === lv && l.adult; }); }
   function animalName(rank) { return DATA.ANIMALS[Math.max(0, Math.min(6, rank - 1))].name; }
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];   // (English calendar)
   function paren(t) { return t ? L('（{t}）', { t: t }) : ''; }
@@ -447,7 +448,7 @@
   function openIntro(tr) {
     if (!tr) { go('list'); return; }
     intro.tr = tr; intro.t = 0;
-    var ids = levelsFor().filter(function (l) { return !l.hard || C.hardOpen(save, tr.id); }).map(function (l) { return l.id; }), last = ud().lv[tr.id];
+    var ids = levelsFor().filter(function (l) { return !l.hard || C.hardOpen(save, tr.id, l.id); }).map(function (l) { return l.id; }), last = ud().lv[tr.id];
     intro.level = ids.indexOf(last) >= 0 ? last : (isAdult() ? 'a' : 'e');
     $('intro-name').textContent = tr.name;
     $('intro-help').textContent = tr.help;
@@ -467,18 +468,19 @@
   function buildLevels() {
     var box = $('intro-levels'), rec = ud().rec[intro.tr.id] || {};
     box.innerHTML = '';
-    box.classList.toggle('four', levelsFor().length > 3);
+    box.classList.toggle('six', levelsFor().length > 3);   // (grown-ups: the children's row, then the grown-ups' row)
     levelsFor().forEach(function (l) {
-      var b = document.createElement('button'), locked = l.hard && !C.hardOpen(save, intro.tr.id);
-      b.className = 'lv-btn' + (intro.level === l.id ? ' on' : '') + (locked ? ' locked' : '');
-      b.innerHTML = '<i class="dots">' + '●●●●'.slice(0, l.dots) + '</i>' + l.name;
+      var b = document.createElement('button'), locked = l.hard && !C.hardOpen(save, intro.tr.id, l.id);
+      b.className = 'lv-btn' + (l.adult ? ' adult' : '') + (intro.level === l.id ? ' on' : '') + (locked ? ' locked' : '');
+      b.innerHTML = '<i class="dots">' + '●●●'.slice(0, l.dots) + '</i>' + (l.adult ? '<small>' + L('おとな') + '</small>' + l.short : l.name);
       if (locked) b.insertAdjacentHTML('beforeend', icon('lock'));
       else if (rec[l.id]) b.appendChild(animalCanvas(rec[l.id].rank, 34, 24));
-      else b.insertAdjacentHTML('beforeend', '<span style="height:24px"></span>');
+      else b.insertAdjacentHTML('beforeend', '<span class="noanimal"></span>');
       b.addEventListener('click', function () {
         if (locked) {
           S.play('ng'); shake(b);
-          $('intro-note').textContent = L('「むずかしい」は ふつうで {animal} いじょう か、スタンプ {n}こで あくよ', { animal: animalName(DATA.HARD_RANK), n: DATA.HARD_STAMPS });
+          $('intro-note').textContent = L('「{level}」は「{from}」で {animal} いじょう か、スタンプ {n}こで あくよ',
+            { level: l.name, from: levelName(l.hard), animal: animalName(DATA.HARD_RANK), n: DATA.HARD_STAMPS });
           return;
         }
         S.play('select'); intro.level = l.id; buildLevels();
@@ -512,7 +514,8 @@
     if (run) stopRun();
     var params = Object.assign({}, tr.levels[level] || tr.levels.n);
     if (opts.practice) Object.assign(params, tr.levels.practice || {}, { practice: true });
-    params.adult = level === 'a' || level === 'testA';
+    params.adult = isAdultLevel(level);
+    if (tr.pool) params.recent = C.recentOf(save, tr.pool);   // (what was shown lately comes last)
     run = {
       tr: tr, level: level, params: params, practice: !!opts.practice, check: opts.check || null, endless: level === 'endless',
       state: 'count', countT: 0, t: 0, session: null, hand: null, done: false
@@ -534,6 +537,7 @@
     return {
       W: W, H: H, level: r.level, practice: r.practice, adult: r.params.adult, partner: ud().chara,
       rnd: Math.random, U: T.U,
+      used: function (ids) { if (r.tr.pool) { C.addRecent(save, r.tr.pool, ids); store(); } },   // (what this run shows)
       live: live,
       playing: function () { return live() && r.state === 'play'; },
       progress: function (i, n) { if (live()) setDots(i, n); },
@@ -877,9 +881,10 @@
   function queueGains(out, fromRun) {
     if (out.stampNew) queueOverlay({ kind: 'stamp', n: out.stamps });
     out.opened.trainings.forEach(function (id) { if (trOf(id)) queueOverlay({ kind: 'training', id: id }); });
-    var hard = (out.opened.hard || []).filter(function (id) { return trOf(id) && C.isOpen(save, id); });
+    var mine = levelsFor().map(function (l) { return l.id; });
+    var hard = (out.opened.hard || []).filter(function (o) { return trOf(o.id) && C.isOpen(save, o.id) && mine.indexOf(o.lv) >= 0; });
     if (hard.length > 2) queueOverlay({ kind: 'hardAll' });
-    else hard.forEach(function (id) { queueOverlay({ kind: 'hard', id: id }); });
+    else hard.forEach(function (o) { queueOverlay({ kind: 'hard', id: o.id, lv: o.lv }); });
     if (fromRun && save.stopAfter && out.runsToday >= save.stopAfter) {
       var day = ud().days[C.dayKey()];
       if (day && !day.nudged) { day.nudged = true; store(); queueOverlay({ kind: 'nudge' }); }
@@ -908,7 +913,7 @@
       S.play('unlock'); speak([DATA.LINES.newTraining, trOf(ov.id).name]);
     } else if (ov.kind === 'hard' || ov.kind === 'hardAll') {
       title = L('「むずかしい」が あそべるよ！');
-      text = ov.kind === 'hard' ? L('「{name}」で「むずかしい」が えらべるよ', { name: trOf(ov.id).name }) : L('ぜんぶの トレーニングで「むずかしい」が えらべるよ');
+      text = ov.kind === 'hard' ? L('「{name}」で「{level}」が えらべるよ', { name: trOf(ov.id).name, level: levelName(ov.lv) }) : L('ぜんぶの トレーニングで「むずかしい」が えらべるよ');
       S.play('unlock'); speak(DATA.LINES.newHard);
     } else if (ov.kind === 'tip') {
       title = L('めの まめちしき No.{n}', { n: ov.n + 1 });
