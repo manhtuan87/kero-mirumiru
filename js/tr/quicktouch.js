@@ -46,7 +46,7 @@
         }
         if (done >= list.length) {
           phase = 'end'; api.hand(null);
-          api.finish({ score: hits, text: U.res.hit(hits, list.length), delay: 500 });
+          api.finish({ score: hits, acc: hits / list.length, text: U.res.hit(hits, list.length), delay: 500 });
         }
       },
       draw: function (c, clock) {

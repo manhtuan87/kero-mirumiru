@@ -28,7 +28,7 @@
       api.hand(null);
       if (bi >= boards.length) {
         phase = 'end';
-        api.finish({ score: time + mistakes * 2, text: U.res.time(time, mistakes) });
+        api.finish({ score: time + mistakes * 2, acc: U.acc(mistakes, boards.length * p.n), text: U.res.time(time, mistakes) });
         return;
       }
       B = boards[bi]; nextN = 1; phase = 'play'; pt = 0; since = 0;

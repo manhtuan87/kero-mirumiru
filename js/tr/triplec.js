@@ -26,7 +26,7 @@
       if (ch) { ch.remove(); ch = null; }
       if (ri >= rounds.length) {
         phase = 'end';
-        api.finish({ score: right, text: U.res.right(right, rounds.length) });
+        api.finish({ score: right, acc: right / rounds.length, text: U.res.right(right, rounds.length) });
         return;
       }
       R = rounds[ri]; ci = 0; said = [];

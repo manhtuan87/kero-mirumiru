@@ -351,6 +351,23 @@ console.log('save data');
   check(C.addCheck(s, { ranks: [4, 4, 4, 4, 4], tests: ['a', 'b', 'c', 'd', 'e'], today: '2026-10-03' }).age === C.eyeAge(0.5), 'grown-ups get an eye age');
   check(C.removeUser(s, u.id) && s.users.length === 1 && s.cur === 'u1', 'remove user');
   check(!C.removeUser(s, 'u1'), 'the last user stays');
+  // ★: what the animal gives, but ★3 only with no mistakes and ★1 at half or less right
+  check(C.starsOf(7) === 3 && C.starsOf(5) === 2 && C.starsOf(2) === 1, '★ from the animal');
+  check(C.starsOf(7, 1) === 3 && C.starsOf(7, 7 / 8) === 2 && C.starsOf(7, 0.51) === 2 && C.starsOf(7, 3 / 6) === 1 && C.starsOf(7, 0) === 1, '★ from how much was right');
+  check(C.starsOf(4, 1) === 2 && C.starsOf(2, 1) === 1, 'no more ★ than the animal gives');
+  check(T.U.acc(0, 10) === 1 && T.U.acc(5, 10) === 0.5 && T.U.acc(30, 10) === 0 && T.U.acc(0, 0) === 1, 'acc: a share less for each mistake');
+  {
+    const s3 = C.fresh(), c3 = T.byId.updownc.ranks.n;
+    const w1 = C.addRun(s3, { id: 'updownc', level: 'n', kind: 'count', cuts: c3, score: 9, acc: 0.9, text: '', today: '2026-10-01' });
+    check(w1.rank >= 6 && w1.stars === 2 && C.udata(s3).rec.updownc.n.stars === 2, 'a good run with a mistake gets ★2');
+    check(C.addRun(s3, { id: 'updownc', level: 'n', kind: 'count', cuts: c3, score: 10, acc: 1, text: '', today: '2026-10-01' }).stars === 3 && C.udata(s3).rec.updownc.n.stars === 3, 'a run with no mistakes gets ★3');
+    check(C.addRun(s3, { id: 'updownc', level: 'n', kind: 'count', cuts: c3, score: 5, acc: 0.5, text: '', today: '2026-10-01' }).stars === 1 && C.udata(s3).rec.updownc.n.stars === 3, 'half right gets ★1 (the best ★ stays)');
+  }
+  // every training that keeps records says how much of a run was right
+  T.list.filter(tr => !tr.checkOnly && !tr.versusOnly).forEach(tr => {
+    const code = require('fs').readFileSync(require('path').join(__dirname, '../js/tr/' + tr.id + '.js'), 'utf8'), calls = code.split('api.finish(').slice(1);
+    check(calls.length > 0 && calls.every(x => /^\{[^}]*\bacc: /.test(x)), tr.id + ' finishes without acc');
+  });
   check(C.wallet(C.udata(s)) === C.starsEarned(C.udata(s)), 'wallet');
   const back = C.sanitize(JSON.parse(JSON.stringify(s)));
   check(JSON.stringify(back.data.u1) === JSON.stringify(s.data.u1), 'save survives a round trip');

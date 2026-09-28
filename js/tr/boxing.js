@@ -30,7 +30,7 @@
       api.hand(null);
       if (p.endless ? misses >= 3 : tries >= p.n) {
         phase = 'end';
-        api.finish({ score: hits, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 600 });
+        api.finish({ score: hits, acc: hits / p.n, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 600 });
         return;
       }
       X = acts[ai % acts.length]; phase = 'gap'; pt = 0; dodge = 0;

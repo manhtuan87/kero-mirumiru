@@ -47,7 +47,7 @@
       api.hand(null);
       if (p.endless ? misses >= 3 : tries >= p.rounds) {
         phase = 'end';
-        api.finish({ score: right, text: p.endless ? U.res.endless(right) : U.res.hit(right, p.rounds), delay: 600 });
+        api.finish({ score: right, acc: right / p.rounds, text: p.endless ? U.res.endless(right) : U.res.hit(right, p.rounds), delay: 600 });
         return;
       }
       R = rounds[ri % rounds.length]; found = 0; bad = -1;

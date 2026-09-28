@@ -5,7 +5,8 @@
      gen(params, rnd)   the questions (pure, so the Node.js tools can check them),
      start(api, params) a play session: { begin, update, draw, down, move, up, key, end }.
    The app (app.js) runs the explanation, practice, countdown, pause, results and records;
-   a training only asks its questions and reports { score, text }. */
+   a training only asks its questions and reports { score, acc, text }
+   (acc: how much of the run was right, 0..1 — the ★ need it: see core.js starsOf). */
 (function (root, factory) {
   var T = factory();
   if (typeof module === 'object' && module.exports) module.exports = T;
@@ -29,6 +30,8 @@
     range: function (a, b) { var o = []; for (var i = a; i <= b; i++) o.push(i); return o; },
     // a number from [a, b] given as a pair, or the number itself
     span: function (r, v) { return Array.isArray(v) ? U.int(r, v[0], v[1]) : v; },
+    // acc where a wrong answer is simply tried again: 1, less an equal share (1/n) for each mistake
+    acc: function (miss, n) { return n > 0 ? Math.max(0, 1 - miss / n) : miss ? 0 : 1; },
     rng: function (seed) {
       var s = Math.abs(Math.floor(seed)) % 2147483647 || 1;
       return function () { s = s * 16807 % 2147483647; return (s - 1) / 2147483646; };

@@ -26,7 +26,7 @@
       api.hand(null);
       if (p.endless ? misses >= 3 : tries >= p.n) {
         phase = 'end';
-        api.finish({ score: hits, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 600 });
+        api.finish({ score: hits, acc: hits / p.n, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 600 });
         return;
       }
       X = tosses[ti % tosses.length]; phase = 'set'; pt = 0; bt = 0; spike = null;

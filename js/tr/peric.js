@@ -29,7 +29,7 @@
       api.hand(null);
       if (qi >= qs.length) {
         phase = 'end';
-        api.finish({ score: time + mistakes * 2, text: U.res.time(time, mistakes) });
+        api.finish({ score: time + mistakes * 2, acc: U.acc(mistakes, qs.length), text: U.res.time(time, mistakes) });
         return;
       }
       Q = qs[qi]; phase = 'play'; pt = 0; since = 0; wrong = -1;

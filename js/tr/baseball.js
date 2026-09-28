@@ -27,7 +27,7 @@
       api.hand(null);
       if (p.endless ? misses >= 3 : tries >= p.n) {
         phase = 'end';
-        api.finish({ score: hits, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 600 });
+        api.finish({ score: hits, acc: hits / p.n, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 600 });
         return;
       }
       P = pitches[pi % pitches.length]; phase = 'windup'; pt = 0; bt = 0; swing = -1; ballOut = null;

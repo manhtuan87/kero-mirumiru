@@ -158,7 +158,13 @@
     }
     return 1;
   }
-  function starsOf(rank) { return rank <= 2 ? 1 : rank <= 5 ? 2 : 3; }
+  /* ★ for a run: what the animal gives (rank 1-2 ★1, 3-5 ★2, 6-7 ★3), but no more than
+     acc allows (how much of the run was right, 0..1): ★3 only with no mistakes, ★1 at half or less right. */
+  function starsOf(rank, acc) {
+    var s = rank <= 2 ? 1 : rank <= 5 ? 2 : 3;
+    if (acc == null) return s;
+    return Math.min(s, acc >= 1 - 1e-9 ? 3 : acc > 0.5 + 1e-9 ? 2 : 1);
+  }
   function better(kind, a, b) { return kind === 'time' ? a < b - 1e-9 : a > b + 1e-9; }
 
   // ---------------------------------------------------------------- stamps and what is open
@@ -204,14 +210,14 @@
 
   // ---------------------------------------------------------------- finishing a training
 
-  /* info: { id, level, kind, cuts, score, text, today? }
+  /* info: { id, level, kind, cuts, score, acc, text, today? }
      Returns what happened, for the result screen. */
   function addRun(s, info) {
     var u = udata(s), today = info.today || dayKey();
     var hardBefore = hardOpenAll(s);
     var day = u.days[today] || (u.days[today] = { stamp: false, runs: 0 });
     var before = stampCount(u), stampNew = !day.stamp;
-    var rank = rankOf(info.kind, info.cuts, info.score), stars = starsOf(rank);
+    var rank = rankOf(info.kind, info.cuts, info.score), stars = starsOf(rank, info.acc);
     var r = u.rec[info.id] || (u.rec[info.id] = {});
     var x = r[info.level], firstPlay = !x, newBest = false, prevBest = x ? x.best : null;
     if (!x) x = r[info.level] = { best: info.score, rank: rank, stars: stars, plays: 0, bt: info.text || '', hist: [] };

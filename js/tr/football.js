@@ -27,7 +27,7 @@
     function speed() { return p.speed * (p.endless ? Math.min(1.8, 1 + passed * 0.012) : 1); }
     function finish() {
       phase = 'end';
-      api.finish({ score: hits, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 700 });
+      api.finish({ score: hits, acc: hits / p.n, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 700 });
     }
     function step(dir) {
       if (phase !== 'play' || stun > 0) return;

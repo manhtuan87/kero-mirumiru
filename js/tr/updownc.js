@@ -26,7 +26,7 @@
       if (ch) { ch.remove(); ch = null; }
       if (qi >= qs.length) {
         phase = 'end';
-        api.finish({ score: right, text: U.res.right(right, qs.length) });
+        api.finish({ score: right, acc: right / qs.length, text: U.res.right(right, qs.length) });
         return;
       }
       Q = qs[qi]; phase = 'ready'; pt = 0;
