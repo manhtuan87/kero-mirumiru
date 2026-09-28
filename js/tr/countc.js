@@ -78,14 +78,15 @@
         D.roundRect(c, BOX.x0 - 44, BOX.y0 - 50, BOX.x1 - BOX.x0 + 88, BOX.y1 - BOX.y0 + 94, 24); D.paint(c, 'rgba(255,255,255,.4)');
         if (phase === 'target') {
           A.text(c, L('この むきの Cを かぞえてね！'), 180, 104, 21, '#fff', { lw: 6 });
-          A.ringC(c, 180, 290, 52 + Math.sin(pt * 6) * 2, R.target, '#fff4b0');
+          A.disc(c, 180, 290, 76, '#fff4b0', 3);   // (the C to count sits on yellow, as in the corner later)
+          A.ringC(c, 180, 290, 52 + Math.sin(pt * 6) * 2, R.target);
           return;
         }
         // the C to count, small in the corner
         A.disc(c, 318, 116, 28, '#fff4b0', 3);
-        A.ringC(c, 318, 116, 18, R.target, '#fffdf5');
+        A.ringC(c, 318, 116, 18, R.target);
         A.text(c, L(phase === 'ask' ? 'いくつ あった？' : 'おなじ むきは いくつ？'), 150, 116, 21, '#fff', { lw: 6, max: 230 });
-        if (phase === 'show' && pt < p.show) { var q = R.cs[ci]; A.ringC(c, q.x, q.y, p.size, q.dir, '#fffdf5'); }
+        if (phase === 'show' && pt < p.show) { var q = R.cs[ci]; A.ringC(c, q.x, q.y, p.size, q.dir); }
         if (phase === 'good' || phase === 'bad') A.text(c, L('こたえは {n}', { n: R.ans }), 180, 290, 30, '#fff', { lw: 8 });
       },
       peek: function () { return phase === 'ask' ? { pad: R.ans } : null; },   // for playtesting
@@ -113,8 +114,9 @@
     start: start,
     icon: function (c, t) {
       var A = G.Art, k = Math.floor((t || 0) * 2) % 4;
-      A.ringC(c, 30, 30, 15, 1, '#fff4b0');
-      [[70, 36, 1], [34, 74, 2], [74, 74, 1], [52, 52, 0]].forEach(function (q, i) { if (i === k) A.ringC(c, q[0], q[1], 15, q[2], '#fffdf5'); });
+      A.disc(c, 30, 30, 21, '#fff4b0', 2.4);
+      A.ringC(c, 30, 30, 14, 1);
+      [[70, 36, 1], [34, 74, 2], [74, 74, 1], [52, 52, 0]].forEach(function (q, i) { if (i === k) A.ringC(c, q[0], q[1], 15, q[2]); });
     }
   });
 }(typeof Trainings !== 'undefined' ? Trainings : require('../trainings.js')));

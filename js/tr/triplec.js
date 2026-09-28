@@ -77,7 +77,7 @@
           D.sparkle(c, 180, 285, 12 + Math.sin(pt * 10) * 2, '#ffd23d');
         } else if (phase === 'show') {
           A.text(c, L('Cの あいてる ほうを おぼえてね'), 180, 104, 20, '#fff', { lw: 6 });
-          if (pt < p.show) { var q = R.cs[ci]; A.ringC(c, q.x, q.y, p.size, q.dir, '#fffdf5'); }
+          if (pt < p.show) { var q = R.cs[ci]; A.ringC(c, q.x, q.y, p.size, q.dir); }
         } else {
           A.text(c, L(phase === 'ask' ? 'でた じゅんに こたえてね' : phase === 'good' ? 'ぜんぶ あたり！' : 'こたえは これ'), 180, 104, 22, '#fff', { lw: 6 });
           // the answer so far, one box per C
@@ -87,8 +87,8 @@
             D.roundRect(c, x - w / 2, y - w / 2, w, w, 14); D.paint(c, '#fffdf5', D.INK, 3);
             A.text(c, String(k + 1), x - w / 2 + 11, y - w / 2 + 11, 13, D.INK, { stroke: false });
             if (said[k] != null) A.dirArrow(c, x, y, 0.95, said[k], said[k] === R.cs[k].dir ? ARROW_COLORS[said[k]] : '#c9c1bb');
-            else if (phase === 'bad') A.ringC(c, x, y, 20, R.cs[k].dir, '#bfe7ff');
-            if (phase === 'bad' && said[k] != null && said[k] !== R.cs[k].dir) A.ringC(c, x, y + 58, 17, R.cs[k].dir, '#bfe7ff');
+            else if (phase === 'bad') A.ringC(c, x, y, 20, R.cs[k].dir);
+            if (phase === 'bad' && said[k] != null && said[k] !== R.cs[k].dir) A.ringC(c, x, y + 58, 17, R.cs[k].dir);
           }
         }
       },
@@ -117,7 +117,7 @@
     start: start,
     icon: function (c, t) {
       var A = G.Art, k = Math.floor((t || 0) * 1.5) % 3;
-      [[28, 30, 0], [72, 46, 1], [40, 76, 3]].forEach(function (q, i) { if (i <= k) A.ringC(c, q[0], q[1], 15, q[2], '#fffdf5'); });
+      [[28, 30, 0], [72, 46, 1], [40, 76, 3]].forEach(function (q, i) { if (i <= k) A.ringC(c, q[0], q[1], 15, q[2]); });
     }
   });
 }(typeof Trainings !== 'undefined' ? Trainings : require('../trainings.js')));

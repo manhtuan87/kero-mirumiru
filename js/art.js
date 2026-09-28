@@ -320,12 +320,19 @@ var Art = (function () {
   // Directions: 0 up, 1 right, 2 down, 3 left.
   var DIR_ANGLE = [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
   // The "C" of an eye chart (a ring with a gap), gap towards dir.
+  // Black, as on a real eye chart; a light colour (a C that was tapped by mistake) gets the brown outline of the stickers.
+  var C_COLOR = '#222222';
   function ringC(ctx, x, y, r, dir, color) {
+    color = color || C_COLOR;
     var mid = r * 0.8, w = r * 0.42, a = DIR_ANGLE[dir], gap = Math.asin(Math.min(0.9, w * 0.62 / mid));
     ctx.save(); ctx.lineCap = 'butt';
-    ctx.beginPath(); ctx.arc(x, y, mid, a + gap - 0.1, a - gap + 0.1 + TAU); ctx.lineWidth = w + Math.max(3, r * 0.14); ctx.strokeStyle = INK; ctx.stroke();
-    ctx.beginPath(); ctx.arc(x, y, mid, a + gap, a - gap + TAU); ctx.lineWidth = w; ctx.strokeStyle = color || '#fffdf5'; ctx.stroke();
+    if (isLight(color)) { ctx.beginPath(); ctx.arc(x, y, mid, a + gap - 0.1, a - gap + 0.1 + TAU); ctx.lineWidth = w + Math.max(3, r * 0.14); ctx.strokeStyle = INK; ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(x, y, mid, a + gap, a - gap + TAU); ctx.lineWidth = w; ctx.strokeStyle = color; ctx.stroke();
     ctx.restore();
+  }
+  function isLight(hex) {
+    var n = parseInt(hex.slice(1), 16);
+    return ((n >> 16) * 0.299 + ((n >> 8) & 255) * 0.587 + (n & 255) * 0.114) / 255 > 0.6;
   }
   // A chunky arrow pointing dir.
   function dirArrow(ctx, x, y, s, dir, color) {
@@ -404,7 +411,7 @@ var Art = (function () {
   }
 
   return {
-    FONT: FONT, MARKS: MARKS, CUP_COLOR: CUP_COLOR, DIR_ANGLE: DIR_ANGLE,
+    FONT: FONT, MARKS: MARKS, CUP_COLOR: CUP_COLOR, C_COLOR: C_COLOR, DIR_ANGLE: DIR_ANGLE,
     blob: blob, eyeDot: eyeDot, smile: smile, blush: blush, stroke: stroke, tube: tube, text: text, shade: shade,
     hakase: hakase, animal: animal, stamp: stamp, maru: maru, batsu: batsu,
     ringC: ringC, dirArrow: dirArrow, mark: mark, cup: cup, disc: disc, balloon: balloon, wing: wing

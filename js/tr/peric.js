@@ -61,10 +61,10 @@
         A.text(c, L('まんなかと おなじ むきの Cは どれ？'), 180, 104, 20, '#fff', { lw: 6 });
         D.circle(c, CX, CY, p.radius + p.size + 14); D.paint(c, 'rgba(255,255,255,.4)');
         D.circle(c, CX, CY, p.size * 1.5 + 10); D.paint(c, '#fff4b0', D.INK, 3);
-        A.ringC(c, CX, CY, p.size * 1.5, Q.dir, '#fffdf5');
+        A.ringC(c, CX, CY, p.size * 1.5, Q.dir);
         Q.cs.forEach(function (q, k) {
           if (phase === 'good' && k === Q.ans) { D.circle(c, q.x, q.y, p.size + 8); D.paint(c, 'rgba(255,143,192,.5)'); }
-          A.ringC(c, q.x, q.y, p.size, q.dir, k === wrong ? '#d8d0ca' : '#fffdf5');
+          A.ringC(c, q.x, q.y, p.size, q.dir, k === wrong ? '#b3aaa4' : null);   // (a C tapped by mistake turns grey)
         });
       },
       peek: function () {   // for playtesting
@@ -102,10 +102,10 @@
     icon: function (c, t) {
       var A = G.Art, D = G.Draw;
       D.circle(c, 50, 52, 16); D.paint(c, '#fff4b0', D.INK, 2);
-      A.ringC(c, 50, 52, 12, 1, '#fffdf5');
+      A.ringC(c, 50, 52, 12, 1);
       [[50, 16, 0], [86, 52, 1], [50, 88, 2], [14, 52, 3]].forEach(function (q, i) {
         if (i === 1) { D.circle(c, q[0], q[1], 14 + Math.sin((t || 0) * 5) * 1.5); D.paint(c, 'rgba(255,143,192,.5)'); }
-        A.ringC(c, q[0], q[1], 10, q[2], '#fffdf5');
+        A.ringC(c, q[0], q[1], 10, q[2]);
       });
     }
   });

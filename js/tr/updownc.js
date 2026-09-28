@@ -63,8 +63,8 @@
         A.text(c, L(phase === 'ask' || phase === 'good' || phase === 'bad' ? 'おなじ むき だった？' : 'まんなかの ほしを みててね'), 180, 104, 21, '#fff', { lw: 6 });
         D.sparkle(c, 180, MID, 13 + Math.sin(pt * 8) * 2, '#ffd23d');
         if (phase === 'flash' || phase === 'good' || phase === 'bad') {
-          A.ringC(c, Q.xa, MID - p.spread, p.size, Q.a, '#fffdf5');
-          A.ringC(c, Q.xb, MID + p.spread, p.size, Q.b, '#fffdf5');
+          A.ringC(c, Q.xa, MID - p.spread, p.size, Q.a);
+          A.ringC(c, Q.xb, MID + p.spread, p.size, Q.b);
         }
       },
       peek: function () { return phase === 'ask' ? { cho: Q.same ? 0 : 1 } : null; },   // for playtesting
@@ -93,7 +93,7 @@
     icon: function (c, t) {
       var A = G.Art, D = G.Draw, on = Math.sin((t || 0) * 3) > -0.3;
       D.sparkle(c, 50, 52, 8, '#ffd23d');
-      if (on) { A.ringC(c, 30, 18, 12, 1, '#fffdf5'); A.ringC(c, 70, 84, 12, 1, '#fffdf5'); }
+      if (on) { A.ringC(c, 30, 18, 12, 1); A.ringC(c, 70, 84, 12, 1); }
     }
   });
 }(typeof Trainings !== 'undefined' ? Trainings : require('../trainings.js')));

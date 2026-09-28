@@ -23,9 +23,9 @@ function draw() {
   g.save();
   if (mask) { g.translate(50, 50); g.scale(0.8, 0.8); g.translate(-50, -50); }
   // the eye chart C and a little star, up where ケロはかせ is looking
-  Art.ringC(g, 22, 22, 11, 1, '#fffdf5');
+  Art.ringC(g, 22, 22, 11, 1);
   Draw.sparkle(g, 80, 20, 7, '#ffd23d');
-  Art.ringC(g, 86, 46, 6, 3, '#fffdf5');
+  Art.ringC(g, 86, 46, 6, 3);
   // ケロはかせ
   g.save(); g.translate(51, 63); g.scale(0.5, 0.5); g.translate(-180, -300);
   Draw.critter(g, { x: 180, y: 300, t: 0, kind: 'frog', look: { x: 60, y: 160 }, open: 0, mode: 'idle', mt: 0, wear: Art.hakase });
