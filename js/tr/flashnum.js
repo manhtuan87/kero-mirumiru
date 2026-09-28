@@ -56,12 +56,22 @@
     }
     function ask() {
       phase = 'ask'; pt = 0;
+      api.timer(p.limit, timeUp);
       if (pad) { pad.enable(true); return; }
       ch = api.choices(R.opts.map(function (s) { return { label: s, size: s.length > 2 ? 34 : 42 }; }), function (i) { answer(R.opts[i], i); },
         { top: 452, h: 78, cols: 2, gap: 12, left: 30, right: 30 });
     }
+    function timeUp() {   // (no answer in time)
+      if (phase !== 'ask') return;
+      api.ng(180, 270, 46);
+      if (ch) { ch.mark(R.ans, 'hint'); ch.enable(false); }
+      if (pad) pad.enable(false);
+      phase = 'bad'; pt = 0;
+      api.progress(ri + 1, rounds.length);
+    }
     function answer(v, i) {
       if (phase !== 'ask') return;
+      api.timer(0);
       var good = v === R.n;
       if (good) { right++; api.ok(180, 270, 56); if (ch) ch.mark(i, 'ok'); }
       else { api.ng(180, 270, 46); if (ch) { ch.mark(i, 'ng'); ch.mark(R.ans, 'hint'); } }
@@ -109,14 +119,14 @@
     id: 'flashnum', name: 'ぱっと すうじ', orig: '瞬間数字', kind: 'count',
     help: 'すうじが いっしゅんだけ でるよ。\nなんの すうじ だったか こたえてね！',
     levels: {
-      e: { rounds: 6, len: 1, show: 0.8 },
-      n: { rounds: 6, len: 2, show: 0.6 },
-      h: { rounds: 6, len: 3, show: 0.45 },
-      ae: { rounds: 6, len: 3, show: 0.4 },
-      a: { rounds: 6, len: 4, show: 0.32 },
-      ah: { rounds: 6, len: 5, show: 0.3 },
-      test: { rounds: 5, len: 2, show: 0.5 },
-      testA: { rounds: 5, len: 4, show: 0.3 },
+      e: { rounds: 6, len: 1, show: 0.8, limit: 8 },
+      n: { rounds: 6, len: 2, show: 0.6, limit: 7 },
+      h: { rounds: 6, len: 3, show: 0.45, limit: 6 },
+      ae: { rounds: 6, len: 3, show: 0.4, limit: 7 },
+      a: { rounds: 6, len: 4, show: 0.32, limit: 7 },
+      ah: { rounds: 6, len: 5, show: 0.3, limit: 8 },
+      test: { rounds: 5, len: 2, show: 0.5, limit: 7 },
+      testA: { rounds: 5, len: 4, show: 0.3, limit: 7 },
       practice: { rounds: 2, len: 1, show: 1.2 }
     },
     ranks: {

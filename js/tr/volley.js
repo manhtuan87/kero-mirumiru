@@ -38,7 +38,7 @@
     }
     function done(ok) {
       tries++;
-      if (ok) hits++; else misses++;
+      if (ok) { hits++; api.sfx('ok'); } else misses++;
       word = ok ? 'スパイク！' : 'ミス！'; wordT = 0.8;
       api.progress(p.endless ? 0 : tries, p.endless ? 0 : p.n);
     }

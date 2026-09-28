@@ -45,7 +45,8 @@
       if (ok) {
         hits++;
         word = d < 11 ? 'ホームラン！' : 'ヒット！';
-        api.sfx(d < 11 ? 'fanfare' : 'cheer'); api.burst(b.x, b.y, 10, '#fff6a8');
+        api.sfx('ok'); if (d < 11) api.sfx('fanfare');
+        api.burst(b.x, b.y, 10, '#fff6a8');
         ballOut = { x: b.x, y: b.y, vx: (b.x - 180) * 3 + (Math.random() - 0.5) * 120, vy: -520 - (d < 11 ? 220 : 0), t: 0 };
       } else {
         misses++;

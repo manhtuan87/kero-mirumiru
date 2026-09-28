@@ -33,12 +33,20 @@
         return;
       }
       Q = qs[qi]; phase = 'play'; pt = 0; since = 0; wrong = -1;
+      api.timer(p.limit, timeUp);
       api.progress(qi, qs.length);
+    }
+    function timeUp() {   // (not found in time: a mistake, and the right C is shown)
+      if (phase !== 'play') return;
+      mistakes++; var q = Q.cs[Q.ans]; api.ng(q.x, q.y, 24);
+      phase = 'bad'; pt = 0;
+      api.progress(qi + 1, qs.length);
     }
     function tap(k) {
       if (phase !== 'play') return;
       var q = Q.cs[k];
       if (k === Q.ans) {
+        api.timer(0);
         api.ok(q.x, q.y, 30); api.burst(q.x, q.y, 6, '#fff6a8');
         phase = 'good'; pt = 0;
         api.progress(qi + 1, qs.length);
@@ -54,7 +62,7 @@
         if (phase === 'play') {
           time += dt; since += dt;
           if (p.practice && since > 3) { var q = Q.cs[Q.ans]; api.hand(q.x + 6, q.y + 8); }
-        } else if (phase === 'good' && pt > 0.35) next();
+        } else if ((phase === 'good' && pt > 0.35) || (phase === 'bad' && pt > 1.1)) next();
       },
       draw: function (c) {
         if (!Q) return;
@@ -63,7 +71,7 @@
         D.circle(c, CX, CY, p.size * 1.5 + 10); D.paint(c, '#fff4b0', D.INK, 3);
         A.ringC(c, CX, CY, p.size * 1.5, Q.dir);
         Q.cs.forEach(function (q, k) {
-          if (phase === 'good' && k === Q.ans) { D.circle(c, q.x, q.y, p.size + 8); D.paint(c, 'rgba(255,143,192,.5)'); }
+          if ((phase === 'good' || phase === 'bad') && k === Q.ans) { D.circle(c, q.x, q.y, p.size + 8); D.paint(c, phase === 'good' ? 'rgba(255,143,192,.5)' : 'rgba(108,198,255,.55)'); }
           A.ringC(c, q.x, q.y, p.size, q.dir, k === wrong ? '#b3aaa4' : null);   // (a C tapped by mistake turns grey)
         });
       },
@@ -85,14 +93,14 @@
     id: 'peric', name: 'まわりの C', orig: '周辺C', kind: 'time',
     help: 'まんなかの「C」と おなじ むきの Cを\nまわりから さがして タッチしてね！\nはやさを はかるよ',
     levels: {
-      e: { q: 8, around: 4, radius: 105, size: 30 },
-      n: { q: 10, around: 6, radius: 118, size: 26 },
-      h: { q: 10, around: 8, radius: 128, size: 22 },
-      ae: { q: 10, around: 8, radius: 128, size: 22 },
-      a: { q: 12, around: 8, radius: 136, size: 19 },
-      ah: { q: 12, around: 12, radius: 140, size: 17 },
-      test: { q: 8, around: 6, radius: 120, size: 25 },
-      testA: { q: 10, around: 8, radius: 134, size: 19 },
+      e: { q: 8, around: 4, radius: 105, size: 30, limit: 10 },
+      n: { q: 10, around: 6, radius: 118, size: 26, limit: 8 },
+      h: { q: 10, around: 8, radius: 128, size: 22, limit: 7 },
+      ae: { q: 10, around: 8, radius: 128, size: 22, limit: 6 },
+      a: { q: 12, around: 8, radius: 136, size: 19, limit: 5 },
+      ah: { q: 12, around: 12, radius: 140, size: 17, limit: 4 },
+      test: { q: 8, around: 6, radius: 120, size: 25, limit: 8 },
+      testA: { q: 10, around: 8, radius: 134, size: 19, limit: 5 },
       practice: { q: 3, around: 4, radius: 100, size: 32 }
     },
     ranks: {

@@ -51,8 +51,15 @@
       api.progress(ri, rounds.length);
       api.sfx('pop');
     }
+    function timeUp() {   // (no answer in time)
+      if (phase !== 'ask') return;
+      api.ng(180, LANE_Y, 50); pad.hint(R.ans);
+      phase = 'bad'; pt = 0; pad.enable(false);
+      api.progress(ri + 1, rounds.length);
+    }
     function answer(v) {
       if (phase !== 'ask') return;
+      api.timer(0);
       got = v;
       var good = v === R.ans;
       if (good) { right++; api.ok(180, LANE_Y, 60); }
@@ -84,7 +91,7 @@
             sent++; next = p.gap;
             api.sfx('whoosh');
           }
-          if (sent >= R.items.length && !flying.length) { phase = 'ask'; pt = 0; pad.enable(true); }
+          if (sent >= R.items.length && !flying.length) { phase = 'ask'; pt = 0; pad.enable(true); api.timer(p.limit, timeUp); }
         } else if (phase === 'ask' && p.practice && pt > 3) pad.hint(R.ans);
         else if ((phase === 'good' && pt > 1.1) || (phase === 'bad' && pt > 1.9)) { pad.hint(null); startRound(); }
       },
@@ -113,14 +120,14 @@
     id: 'rushcount', name: 'かぞえて びゅん', orig: 'ABC速読', kind: 'count', pool: 'pics',
     help: 'さいしょに でた えと おなじ えが、\nよこに びゅんと ながれるよ。\nいくつ あったか かぞえてね！',
     levels: {
-      e: { rounds: 6, items: 5, hits: [1, 3], speed: 150, gap: 1.0, mix: 0 },
-      n: { rounds: 6, items: 7, hits: [2, 4], speed: 210, gap: 0.8, mix: 1 },
-      h: { rounds: 6, items: 9, hits: [2, 5], speed: 280, gap: 0.62, mix: 2 },
-      ae: { rounds: 6, items: 10, hits: [2, 5], speed: 300, gap: 0.6, mix: 2, letters: true },
-      a: { rounds: 6, items: 12, hits: [3, 6], speed: 360, gap: 0.5, mix: 2, letters: true },
-      ah: { rounds: 6, items: 15, hits: [4, 7], speed: 420, gap: 0.42, mix: 2, letters: true, alike: true },
-      test: { rounds: 5, items: 7, hits: [2, 4], speed: 230, gap: 0.75, mix: 1 },
-      testA: { rounds: 5, items: 11, hits: [3, 6], speed: 340, gap: 0.52, mix: 2, letters: true },
+      e: { rounds: 6, items: 5, hits: [1, 3], speed: 150, gap: 1.0, mix: 0, limit: 10 },
+      n: { rounds: 6, items: 7, hits: [2, 4], speed: 210, gap: 0.8, mix: 1, limit: 8 },
+      h: { rounds: 6, items: 9, hits: [2, 5], speed: 280, gap: 0.62, mix: 2, limit: 7 },
+      ae: { rounds: 6, items: 10, hits: [2, 5], speed: 300, gap: 0.6, mix: 2, letters: true, limit: 7 },
+      a: { rounds: 6, items: 12, hits: [3, 6], speed: 360, gap: 0.5, mix: 2, letters: true, limit: 6 },
+      ah: { rounds: 6, items: 15, hits: [4, 7], speed: 420, gap: 0.42, mix: 2, letters: true, alike: true, limit: 6 },
+      test: { rounds: 5, items: 7, hits: [2, 4], speed: 230, gap: 0.75, mix: 1, limit: 8 },
+      testA: { rounds: 5, items: 11, hits: [3, 6], speed: 340, gap: 0.52, mix: 2, letters: true, limit: 6 },
       practice: { rounds: 2, items: 4, hits: [1, 2], speed: 130, gap: 1.1, mix: 0 }
     },
     ranks: {

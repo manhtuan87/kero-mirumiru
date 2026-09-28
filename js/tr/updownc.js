@@ -34,11 +34,19 @@
     }
     function ask() {
       phase = 'ask'; pt = 0;
+      api.timer(p.limit, timeUp);
       ch = api.choices([{ label: L('おなじ'), size: 30 }, { label: L('ちがう'), size: 30 }], function (i) { answer(i === 0, i); },
         { top: 500, h: 86, cols: 2, gap: 16, left: 26, right: 26 });
     }
+    function timeUp() {   // (no answer in time: the right one is shown)
+      if (phase !== 'ask') return;
+      api.ng(180, MID, 42); ch.mark(Q.same ? 0 : 1, 'hint'); ch.enable(false);
+      phase = 'bad'; pt = 0;
+      api.progress(qi + 1, qs.length);
+    }
     function answer(same, i) {
       if (phase !== 'ask') return;
+      api.timer(0);
       var good = same === Q.same;
       if (good) { right++; api.ok(180, MID, 50); ch.mark(i, 'ok'); } else { api.ng(180, MID, 42); ch.mark(i, 'ng'); }
       ch.enable(false);
@@ -76,14 +84,14 @@
     id: 'updownc', name: 'うえした C', orig: '上下C', kind: 'count',
     help: 'まんなかの ほしを みていてね。\nうえと したに「C」が いっしゅん でるよ。\nおなじ むきか ちがう むきか こたえてね！',
     levels: {
-      e: { q: 8, show: 0.9, size: 30, spread: 120 },
-      n: { q: 10, show: 0.6, size: 26, spread: 140 },
-      h: { q: 10, show: 0.42, size: 22, spread: 150 },
-      ae: { q: 10, show: 0.38, size: 21, spread: 155 },
-      a: { q: 12, show: 0.3, size: 19, spread: 160 },
-      ah: { q: 12, show: 0.22, size: 17, spread: 170 },
-      test: { q: 8, show: 0.5, size: 25, spread: 145 },
-      testA: { q: 10, show: 0.3, size: 19, spread: 160 },
+      e: { q: 8, show: 0.9, size: 30, spread: 120, limit: 6 },
+      n: { q: 10, show: 0.6, size: 26, spread: 140, limit: 5 },
+      h: { q: 10, show: 0.42, size: 22, spread: 150, limit: 4 },
+      ae: { q: 10, show: 0.38, size: 21, spread: 155, limit: 4 },
+      a: { q: 12, show: 0.3, size: 19, spread: 160, limit: 3 },
+      ah: { q: 12, show: 0.22, size: 17, spread: 170, limit: 3 },
+      test: { q: 8, show: 0.5, size: 25, spread: 145, limit: 5 },
+      testA: { q: 10, show: 0.3, size: 19, spread: 160, limit: 3 },
       practice: { q: 3, show: 1.3, size: 32, spread: 110 }
     },
     ranks: {

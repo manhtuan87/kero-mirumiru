@@ -73,7 +73,8 @@
           if (!n || n < nextN) return;
           if (n === nextN) {
             nextN++; since = 0; api.hand(null);
-            api.sfx('pop'); api.burst(cl.x, cl.y, 5, '#fff6a8');
+            if (nextN <= p.n) api.sfx('ok');
+            api.burst(cl.x, cl.y, 5, '#fff6a8');
             if (nextN > p.n) { phase = 'clear'; pt = 0; api.ok(180, 330, 60); api.progress(bi + 1, boards.length); }
           } else { mistakes++; wrong = k; wrongT = 0.4; api.ng(cl.x, cl.y, 22); }
           return;

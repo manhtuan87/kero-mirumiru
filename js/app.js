@@ -559,9 +559,12 @@
       choices: function (items, onTap, o) { return makeChoices(r, items, onTap, o); },
       bigButton: function (label, onDown, o) { return makeBigButton(r, label, onDown, o); },
       clearControls: clearCtrl,
+      // A time limit for an answer, as in the original (a bar at the top); when it runs out, fn() counts it as wrong.
+      // Never in practice. timer(0) stops it.
+      timer: function (sec, fn) { r.timer = sec > 0 && !r.practice && live() ? { left: sec, total: sec, fn: fn } : null; },
       finish: function (res) {
         if (!live()) return;
-        r.done = true; r.hand = null;
+        r.done = true; r.hand = null; r.timer = null;
         setTimeout(function () { if (r === run) finishRun(res); }, res.delay != null ? res.delay : 650);
       }
     };
@@ -583,6 +586,10 @@
     }
     r.t += dt;
     if (r.session.update) r.session.update(dt, r.state === 'play' && !r.done);
+    if (r.timer && r.state === 'play' && !r.done) {
+      r.timer.left -= dt;
+      if (r.timer.left <= 0) { var fn = r.timer.fn; r.timer = null; fn(); }   // (the training marks it wrong, with the ブブッ)
+    }
   }
 
   function drawRun(c) {
@@ -592,11 +599,18 @@
     if (se.draw) se.draw(c, clock);
     drawFx(c);
     if (r.hand) D.hand(c, r.hand.x, r.hand.y, 1, Math.sin(clock * 8) > 0);
+    if (r.timer) drawTimer(c, Math.max(0, r.timer.left / r.timer.total));
     if (r.countT < 2.95) {
       var labels = ['3', '2', '1', L('スタート！')], idx = Math.min(3, Math.floor(r.countT / 0.75)), k = (r.countT - idx * 0.75) / 0.75;
       if (idx < 3) { c.save(); c.fillStyle = 'rgba(255,255,255,.3)'; c.fillRect(-200, -200, W + 400, H + 400); c.restore(); }
       D.word(c, labels[idx], W / 2, H / 2 - 30, idx === 3 ? 54 : 104, ['#ff8fc0', '#ffb347', '#6cc6ff', '#86d65c'][idx], Math.min(0.74, k));
     }
+  }
+
+  // The time left for an answer: a bar under the top buttons, green, then yellow, then red.
+  function drawTimer(c, k) {
+    D.roundRect(c, 70, 58, 220, 14, 7); D.paint(c, 'rgba(255,255,255,.85)', D.INK, 2.5);
+    if (k > 0.01) { D.roundRect(c, 72, 60, 216 * k, 10, 5); D.paint(c, k > 0.5 ? '#86d65c' : k > 0.25 ? '#ffc21a' : '#ff5a5a'); }
   }
 
   function setDots(i, n) {

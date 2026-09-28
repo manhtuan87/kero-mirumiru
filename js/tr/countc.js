@@ -51,8 +51,15 @@
       api.progress(ri, rounds.length);
       api.sfx('pop');
     }
+    function timeUp() {   // (no answer in time)
+      if (phase !== 'ask') return;
+      api.ng(180, 290, 50); pad.hint(R.ans);
+      phase = 'bad'; pt = 0; pad.enable(false);
+      api.progress(ri + 1, rounds.length);
+    }
     function answer(v) {
       if (phase !== 'ask') return;
+      api.timer(0);
       var good = v === R.ans;
       if (good) { right++; api.ok(180, 290, 60); } else { api.ng(180, 290, 50); pad.hint(R.ans); }
       phase = good ? 'good' : 'bad'; pt = 0;
@@ -69,7 +76,7 @@
         if (phase === 'target' && pt > 1.8) { phase = 'show'; pt = 0; ci = 0; api.sfx('pop'); }
         else if (phase === 'show' && pt > p.show + p.gap) {
           ci++; pt = 0;
-          if (ci >= R.cs.length) { phase = 'ask'; pad.enable(true); } else api.sfx('pop');
+          if (ci >= R.cs.length) { phase = 'ask'; pad.enable(true); api.timer(p.limit, timeUp); } else api.sfx('pop');
         } else if (phase === 'ask' && p.practice && pt > 3) pad.hint(R.ans);
         else if ((phase === 'good' && pt > 1.1) || (phase === 'bad' && pt > 1.9)) { pad.hint(null); startRound(); }
       },
@@ -98,14 +105,14 @@
     id: 'countc', name: 'かぞえて C', orig: 'カウントC', kind: 'count',
     help: 'さいしょに でた Cと おなじ むきの Cが\nいくつ でたか かぞえてね！',
     levels: {
-      e: { rounds: 6, items: 5, hits: [1, 3], show: 0.9, gap: 0.25, size: 34 },
-      n: { rounds: 6, items: 7, hits: [2, 4], show: 0.7, gap: 0.2, size: 30 },
-      h: { rounds: 6, items: 9, hits: [2, 5], show: 0.5, gap: 0.15, size: 26 },
-      ae: { rounds: 6, items: 10, hits: [2, 5], show: 0.45, gap: 0.14, size: 24 },
-      a: { rounds: 6, items: 12, hits: [3, 6], show: 0.38, gap: 0.12, size: 22 },
-      ah: { rounds: 6, items: 15, hits: [4, 8], show: 0.3, gap: 0.1, size: 20 },
-      test: { rounds: 5, items: 7, hits: [2, 4], show: 0.6, gap: 0.2, size: 28 },
-      testA: { rounds: 5, items: 11, hits: [3, 6], show: 0.4, gap: 0.12, size: 22 },
+      e: { rounds: 6, items: 5, hits: [1, 3], show: 0.9, gap: 0.25, size: 34, limit: 10 },
+      n: { rounds: 6, items: 7, hits: [2, 4], show: 0.7, gap: 0.2, size: 30, limit: 8 },
+      h: { rounds: 6, items: 9, hits: [2, 5], show: 0.5, gap: 0.15, size: 26, limit: 7 },
+      ae: { rounds: 6, items: 10, hits: [2, 5], show: 0.45, gap: 0.14, size: 24, limit: 7 },
+      a: { rounds: 6, items: 12, hits: [3, 6], show: 0.38, gap: 0.12, size: 22, limit: 6 },
+      ah: { rounds: 6, items: 15, hits: [4, 8], show: 0.3, gap: 0.1, size: 20, limit: 6 },
+      test: { rounds: 5, items: 7, hits: [2, 4], show: 0.6, gap: 0.2, size: 28, limit: 8 },
+      testA: { rounds: 5, items: 11, hits: [3, 6], show: 0.4, gap: 0.12, size: 22, limit: 6 },
       practice: { rounds: 2, items: 4, hits: [1, 2], show: 1.1, gap: 0.3, size: 36 }
     },
     ranks: {

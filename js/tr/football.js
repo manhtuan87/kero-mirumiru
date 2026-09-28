@@ -58,7 +58,7 @@
             api.sfx('bump'); api.ng(meX, ME_Y - 50, 28);
           } else if (!rs.done && rs.y > ME_Y + 20) {
             rs.done = true; passed++; hits++;
-            word = 'よけた！'; wordT = 0.4; api.sfx('select');
+            word = 'よけた！'; wordT = 0.4; api.sfx('ok');
           }
         });
         rushers = rushers.filter(function (rs) { return rs.y < 700; });

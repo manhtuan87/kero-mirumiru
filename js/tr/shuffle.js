@@ -46,15 +46,23 @@
       api.sfx('peep');
     }
     function stepSwap() {
-      if (si >= R.swaps.length) { phase = 'ask'; pt = 0; api.sfx('select'); return; }
+      if (si >= R.swaps.length) { toAsk(); return; }
       var s = R.swaps[si++];
       sw = { a: s[0], b: s[1], t: 0, dur: 1 / p.speed };
       api.sfx('whoosh');
     }
     function where(slot) { return { x: slotX(p.cups, slot), y: CUP_Y }; }
 
+    function toAsk() { phase = 'ask'; pt = 0; api.sfx('select'); api.timer(p.limit, timeUp); }
+    function timeUp() {   // (no cup chosen in time: the chick is shown)
+      if (phase !== 'ask') return;
+      pick = -1; api.ng(where(R.ans).x, CUP_Y - 120, 34);
+      phase = 'bad'; pt = 0; lift = 0;
+      api.progress(ri + 1, rounds.length);
+    }
     function choose(slot) {
       if (phase !== 'ask') return;
+      api.timer(0);
       pick = slot;
       var good = slot === R.ans;
       if (good) { right++; api.ok(where(slot).x, CUP_Y - 120, 40); api.sfx('cheer'); }
@@ -76,7 +84,7 @@
           sw.t += dt;
           if (sw.t >= sw.dur) {
             sw = null;
-            if (si < R.swaps.length) stepSwap(); else { phase = 'ask'; pt = 0; api.sfx('select'); }
+            if (si < R.swaps.length) stepSwap(); else toAsk();
           }
         } else if (phase === 'ask' && p.practice && pt > 2.5) { var w = where(R.ans); api.hand(w.x + 6, CUP_Y - 30); }
         else if ((phase === 'good' && pt > 1.2) || (phase === 'bad' && pt > 1.8)) startRound();
@@ -127,14 +135,14 @@
     id: 'shuffle', name: 'シャッフル', orig: 'シャッフル', kind: 'count',
     help: 'コップの どれかに ひよこが いるよ。\nコップが いれかわるのを めで おいかけて、\nひよこが いる コップを タッチしてね！',
     levels: {
-      e: { rounds: 6, cups: 3, swaps: [3, 4], speed: 1.3 },
-      n: { rounds: 6, cups: 3, swaps: [5, 6], speed: 2.0 },
-      h: { rounds: 6, cups: 4, swaps: [6, 8], speed: 2.6 },
-      ae: { rounds: 6, cups: 3, swaps: [8, 10], speed: 3.0 },
-      a: { rounds: 6, cups: 4, swaps: [9, 11], speed: 3.4 },
-      ah: { rounds: 6, cups: 5, swaps: [10, 12], speed: 4.0 },
-      test: { rounds: 5, cups: 3, swaps: [5, 6], speed: 2.2 },
-      testA: { rounds: 5, cups: 4, swaps: [7, 9], speed: 3.2 },
+      e: { rounds: 6, cups: 3, swaps: [3, 4], speed: 1.3, limit: 8 },
+      n: { rounds: 6, cups: 3, swaps: [5, 6], speed: 2.0, limit: 6 },
+      h: { rounds: 6, cups: 4, swaps: [6, 8], speed: 2.6, limit: 5 },
+      ae: { rounds: 6, cups: 3, swaps: [8, 10], speed: 3.0, limit: 5 },
+      a: { rounds: 6, cups: 4, swaps: [9, 11], speed: 3.4, limit: 4 },
+      ah: { rounds: 6, cups: 5, swaps: [10, 12], speed: 4.0, limit: 3 },
+      test: { rounds: 5, cups: 3, swaps: [5, 6], speed: 2.2, limit: 6 },
+      testA: { rounds: 5, cups: 4, swaps: [7, 9], speed: 3.2, limit: 4 },
       practice: { rounds: 2, cups: 3, swaps: [2, 2], speed: 1.0 }
     },
     ranks: {

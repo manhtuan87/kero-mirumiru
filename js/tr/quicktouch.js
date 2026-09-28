@@ -82,9 +82,9 @@
         list.forEach(function (o) { if (o.state !== 'on') return; var d = Math.hypot(q.x - o.x, q.y - o.y); if (d < bd) { bd = d; best = o; } });
         if (best && bd < p.size * 0.75) {
           best.state = 'hit'; best.k = 0; hits++; done++;
-          api.sfx('pop'); api.burst(best.x, best.y, 8, '#fff6a8');
+          api.sfx('ok'); api.burst(best.x, best.y, 8, '#fff6a8');
           api.progress(done, list.length);
-        }
+        } else api.sfx('ng');   // (a tap where there is no square)
       }
     };
   }

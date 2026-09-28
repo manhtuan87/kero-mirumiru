@@ -35,6 +35,7 @@
     }
     function ask() {
       phase = 'ask'; pt = 0;
+      api.timer(p.limit, function () { if (phase === 'ask') finishRound(false); });   // (time up: wrong)
       ch = api.choices([0, 1, 2, 3].map(function (d) {
         return { draw: function (g, w, h) { A.dirArrow(g, w / 2, h / 2, Math.min(w, h) / 52, d, ARROW_COLORS[d]); } };
       }), function (d) { tap(d); }, { top: 480, h: 88, cols: 4, gap: 10, left: 16, right: 16 });
@@ -43,11 +44,12 @@
       if (phase !== 'ask') return;
       said.push(d);
       var k = said.length - 1;
-      api.sfx('select');
       if (d !== R.cs[k].dir) { finishRound(false); return; }
       if (said.length >= R.cs.length) finishRound(true);
+      else api.sfx('ok');
     }
     function finishRound(good) {
+      api.timer(0);
       if (good) { right++; api.ok(180, 280, 60); } else api.ng(180, 280, 50);
       phase = good ? 'good' : 'bad'; pt = 0;
       if (ch) ch.enable(false);
@@ -101,14 +103,14 @@
     id: 'triplec', name: 'トリプル C', orig: 'トリプルC', kind: 'count',
     help: 'いろいろな ばしょに「C」が でるよ。\nでた じゅんばんに、Cの あいてる ほう\n（↑ → ↓ ←）を こたえてね！',
     levels: {
-      e: { rounds: 6, k: 2, show: 1.0, gap: 0.3, size: 36 },
-      n: { rounds: 6, k: 3, show: 0.8, gap: 0.25, size: 32 },
-      h: { rounds: 6, k: 3, show: 0.55, gap: 0.2, size: 28 },
-      ae: { rounds: 6, k: 3, show: 0.5, gap: 0.2, size: 26 },
-      a: { rounds: 6, k: 4, show: 0.4, gap: 0.15, size: 24 },
-      ah: { rounds: 6, k: 5, show: 0.33, gap: 0.12, size: 22 },
-      test: { rounds: 5, k: 3, show: 0.7, gap: 0.25, size: 30 },
-      testA: { rounds: 5, k: 4, show: 0.4, gap: 0.15, size: 24 },
+      e: { rounds: 6, k: 2, show: 1.0, gap: 0.3, size: 36, limit: 8 },
+      n: { rounds: 6, k: 3, show: 0.8, gap: 0.25, size: 32, limit: 10 },
+      h: { rounds: 6, k: 3, show: 0.55, gap: 0.2, size: 28, limit: 8 },
+      ae: { rounds: 6, k: 3, show: 0.5, gap: 0.2, size: 26, limit: 8 },
+      a: { rounds: 6, k: 4, show: 0.4, gap: 0.15, size: 24, limit: 8 },
+      ah: { rounds: 6, k: 5, show: 0.33, gap: 0.12, size: 22, limit: 9 },
+      test: { rounds: 5, k: 3, show: 0.7, gap: 0.25, size: 30, limit: 9 },
+      testA: { rounds: 5, k: 4, show: 0.4, gap: 0.15, size: 24, limit: 8 },
       practice: { rounds: 2, k: 1, show: 1.4, gap: 0.3, size: 38 }
     },
     ranks: {

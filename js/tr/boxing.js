@@ -37,7 +37,7 @@
     }
     function done(ok, word) {
       tries++;
-      if (ok) hits++; else misses++;
+      if (ok) { hits++; api.sfx('ok'); } else misses++;
       flash = word; flashT = 0.7;
       api.progress(p.endless ? 0 : tries, p.endless ? 0 : p.n);
       phase = 'after'; pt = 0;

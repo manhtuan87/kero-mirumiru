@@ -62,6 +62,7 @@
       return { x: q.x + (q.x1 - q.x) * s, y: q.y + (q.y1 - q.y) * s };
     }
     function endRound(ok) {
+      api.timer(0);
       tries++;
       if (ok) { right++; api.ok(180, 350, 60); api.sfx('cheer'); } else { misses++; api.ng(180, 350, 50); }
       phase = ok ? 'good' : 'bad'; pt = 0;
@@ -76,7 +77,10 @@
         if (!playing) return;
         if (phase === 'run' && pt > 0.65) { phase = 'look'; pt = 0; }
         // (きろくに ちょうせん: the colours show a little shorter with every round won)
-        else if (phase === 'look' && pt > p.show * (p.endless ? Math.max(0.5, 1 - right * 0.02) : 1)) { phase = 'shadow'; pt = 0; api.sfx('flip'); }
+        else if (phase === 'look' && pt > p.show * (p.endless ? Math.max(0.5, 1 - right * 0.02) : 1)) {
+          phase = 'shadow'; pt = 0; api.sfx('flip');
+          api.timer(p.limit, function () { if (phase === 'shadow') endRound(false); });   // (time up: wrong)
+        }
         else if (phase === 'shadow' && p.practice && pt > 2) {
           var m = R.pl.filter(function (q) { return q.mate && !q.got; })[0];
           if (m) { var w = posOf(m); api.hand(w.x + 8, w.y + 10); }
@@ -123,8 +127,8 @@
         if (best < 0 || bd > 50) return;
         var pl = R.pl[best];
         if (pl.mate) {
-          pl.got = true; found++; api.sfx('pop');
-          if (found >= p.mates) endRound(true);
+          pl.got = true; found++;
+          if (found >= p.mates) endRound(true); else api.sfx('ok');
         } else { bad = best; endRound(false); }
       }
     };
@@ -134,13 +138,13 @@
     id: 'basket', name: 'バスケット', orig: 'バスケット', kind: 'count', sport: true,
     help: 'せんしゅが はしって くるよ。\nみどりの ふくが みかた、オレンジが あいて。\nかげに なったら、みかたを タッチしてね！',
     levels: {
-      e: { rounds: 6, players: 3, mates: 1, show: 1.4, move: 0 },
-      n: { rounds: 6, players: 4, mates: 1, show: 1.1, move: 30 },
-      h: { rounds: 6, players: 5, mates: 2, show: 0.9, move: 55 },
-      ae: { rounds: 6, players: 5, mates: 2, show: 0.9, move: 55 },
-      a: { rounds: 6, players: 6, mates: 2, show: 0.7, move: 75 },
-      ah: { rounds: 6, players: 6, mates: 3, show: 0.55, move: 90 },
-      endless: { rounds: 5, players: 4, mates: 1, show: 1.0, move: 40, endless: true },
+      e: { rounds: 6, players: 3, mates: 1, show: 1.4, move: 0, limit: 8 },
+      n: { rounds: 6, players: 4, mates: 1, show: 1.1, move: 30, limit: 7 },
+      h: { rounds: 6, players: 5, mates: 2, show: 0.9, move: 55, limit: 6 },
+      ae: { rounds: 6, players: 5, mates: 2, show: 0.9, move: 55, limit: 6 },
+      a: { rounds: 6, players: 6, mates: 2, show: 0.7, move: 75, limit: 5 },
+      ah: { rounds: 6, players: 6, mates: 3, show: 0.55, move: 90, limit: 5 },
+      endless: { rounds: 5, players: 4, mates: 1, show: 1.0, move: 40, endless: true, limit: 6 },
       practice: { rounds: 2, players: 2, mates: 1, show: 1.8, move: 0 }
     },
     ranks: { e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1] },

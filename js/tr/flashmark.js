@@ -38,8 +38,15 @@
       phase = 'ready'; pt = 0;
       api.progress(ri, rounds.length);
     }
+    function timeUp() {   // (no answer in time: the ○ is shown)
+      if (phase !== 'ask') return;
+      tapped = -1; var q = cellOf(p, R.ans); api.ng(q.x, q.y, 30);
+      phase = 'bad'; pt = 0;
+      api.progress(ri + 1, rounds.length);
+    }
     function choose(k) {
       if (phase !== 'ask') return;
+      api.timer(0);
       tapped = k;
       var good = k === R.ans, q = cellOf(p, k);
       if (good) { right++; api.ok(q.x, q.y, 36); }
@@ -55,7 +62,7 @@
         pt += dt;
         if (!playing) return;
         if (phase === 'ready' && pt > 0.9) { phase = 'flash'; pt = 0; api.sfx('pop'); }
-        else if (phase === 'flash' && pt > p.show) { phase = 'ask'; pt = 0; api.sfx('select'); }
+        else if (phase === 'flash' && pt > p.show) { phase = 'ask'; pt = 0; api.sfx('select'); api.timer(p.limit, timeUp); }
         else if (phase === 'ask' && p.practice && pt > 2.5) { var q = cellOf(p, R.ans); api.hand(q.x + 6, q.y + 8); }
         else if ((phase === 'good' && pt > 1.0) || (phase === 'bad' && pt > 1.8)) startRound();
       },
@@ -92,14 +99,14 @@
     id: 'flashmark', name: 'ぱっと まる', orig: '瞬間記号', kind: 'count',
     help: 'いろいろな マークが いっしゅん でるよ。\n○が あった ばしょを タッチしてね！',
     levels: {
-      e: { rounds: 6, cols: 2, rows: 2, fill: 4, show: 0.9 },
-      n: { rounds: 6, cols: 3, rows: 3, fill: 7, show: 0.7 },
-      h: { rounds: 6, cols: 4, rows: 4, fill: 12, show: 0.55 },
-      ae: { rounds: 6, cols: 4, rows: 4, fill: 12, show: 0.45 },
-      a: { rounds: 6, cols: 5, rows: 5, fill: 18, show: 0.4 },
-      ah: { rounds: 6, cols: 6, rows: 6, fill: 26, show: 0.35 },
-      test: { rounds: 5, cols: 3, rows: 3, fill: 8, show: 0.6 },
-      testA: { rounds: 5, cols: 5, rows: 5, fill: 16, show: 0.4 },
+      e: { rounds: 6, cols: 2, rows: 2, fill: 4, show: 0.9, limit: 8 },
+      n: { rounds: 6, cols: 3, rows: 3, fill: 7, show: 0.7, limit: 7 },
+      h: { rounds: 6, cols: 4, rows: 4, fill: 12, show: 0.55, limit: 6 },
+      ae: { rounds: 6, cols: 4, rows: 4, fill: 12, show: 0.45, limit: 6 },
+      a: { rounds: 6, cols: 5, rows: 5, fill: 18, show: 0.4, limit: 5 },
+      ah: { rounds: 6, cols: 6, rows: 6, fill: 26, show: 0.35, limit: 5 },
+      test: { rounds: 5, cols: 3, rows: 3, fill: 8, show: 0.6, limit: 6 },
+      testA: { rounds: 5, cols: 5, rows: 5, fill: 16, show: 0.4, limit: 5 },
       practice: { rounds: 2, cols: 2, rows: 2, fill: 3, show: 1.3 }
     },
     ranks: {
