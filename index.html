@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#aef0dd">
+<meta name="mobile-web-app-capable" content="yes">
+<title>ケロちゃん みるみる</title>
+<meta name="description" content="ケロはかせと いっしょに まいにち めの たいそう！ みる ちからを きたえよう">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&family=Jua&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="stage">
+
+  <section id="who" class="screen">
+    <h2 class="who-title">だれが あそぶ？</h2>
+    <div id="who-list" class="who-list"></div>
+  </section>
+
+  <section id="title" class="screen">
+    <div class="top-left">
+      <button id="btn-land" class="btn icon small" data-icon="home" aria-label="メニューに もどる"></button>
+      <button id="btn-admin" class="btn icon small admin" data-icon="gear" aria-label="管理者メニュー"></button>
+      <button id="btn-user" class="btn small user-chip" hidden></button>
+    </div>
+    <div class="top-row">
+      <button id="btn-voice" class="btn icon small" aria-label="こえ"></button>
+      <button id="btn-sfx" class="btn icon small" aria-label="こうかおん"></button>
+      <button id="btn-music" class="btn icon small" aria-label="おんがく"></button>
+    </div>
+    <button id="btn-install" class="btn small install" hidden><span data-icon="install"></span>ホームに ついか</button>
+    <h1 class="logo">
+      <span class="l1"><b style="--d:0">ケ</b><b style="--d:1">ロ</b><b style="--d:2">ち</b><b style="--d:3">ゃ</b><b style="--d:4">ん</b></span>
+      <span class="l2"><b style="--d:5">み</b><b style="--d:6">る</b><b style="--d:7">み</b><b style="--d:8">る</b></span>
+    </h1>
+    <div class="title-menu">
+      <button id="btn-check" class="btn menu-big check"><span data-icon="eye"></span>きょうの めチェック<span id="check-done" class="done-mark" hidden>できた</span></button>
+      <div class="menu-pair">
+        <button id="btn-train" class="btn menu-big train"><span data-icon="target"></span>トレーニング</button>
+        <button id="btn-stretch" class="btn menu-big stretch"><span data-icon="stretch"></span>ストレッチ</button>
+      </div>
+      <div class="menu-row">
+        <button id="btn-stamps" class="btn menu-small"><span data-icon="stamp"></span>スタンプ</button>
+        <button id="btn-records" class="btn menu-small"><span data-icon="chart"></span>きろく</button>
+        <button id="btn-tips" class="btn menu-small"><span data-icon="bulb"></span>まめちしき</button>
+        <button id="btn-shop" class="btn menu-small"><span data-icon="shop"></span>おみせ<span id="shop-badge" class="badge"></span></button>
+      </div>
+    </div>
+    <div id="credit" class="credit"></div>
+  </section>
+
+  <section id="list" class="screen">
+    <header class="bar"><button id="list-back" class="btn icon" data-icon="back" aria-label="もどる"></button><h2>トレーニング</h2><div id="list-stamps" class="wallet stamp-count"></div></header>
+    <div id="list-body" class="scroll list-body"></div>
+  </section>
+
+  <section id="intro" class="screen">
+    <header class="bar"><button id="intro-back" class="btn icon" data-icon="back" aria-label="もどる"></button><h2 id="intro-name"></h2></header>
+    <div class="intro-card">
+      <canvas id="intro-demo" class="intro-demo" width="440" height="280"></canvas>
+      <p id="intro-help" class="intro-help"></p>
+      <div id="intro-levels" class="levels"></div>
+      <div id="intro-note" class="intro-note"></div>
+      <button id="intro-start" class="btn big start-btn"><span data-icon="next"></span><span id="intro-start-label">はじめる</span></button>
+      <button id="intro-endless" class="btn endless-btn" hidden><span data-icon="heart"></span><span id="intro-endless-label">きろくに ちょうせん</span></button>
+    </div>
+  </section>
+
+  <section id="play" class="screen">
+    <div class="hud">
+      <button id="p-quit" class="btn icon small" data-icon="close" aria-label="やめる"></button>
+      <div id="p-name" class="p-name"></div>
+      <div id="p-dots" class="p-dots"></div>
+    </div>
+    <div id="ctrl" class="ctrl"></div>
+  </section>
+
+  <section id="result" class="screen">
+    <div id="r-name" class="r-name"></div>
+    <div class="r-card">
+      <div id="r-title" class="r-title"></div>
+      <div id="r-stars" class="clear-stars"><i></i><i></i><i></i></div>
+      <div id="r-detail" class="r-detail"></div>
+      <div id="r-badge" class="r-badge"></div>
+      <div id="r-say" class="r-say"></div>
+      <div class="panel-row">
+        <button id="r-again" class="btn icon" data-icon="retry" aria-label="もういちど"></button>
+        <button id="r-next" class="btn big"><span data-icon="next"></span><span id="r-next-label">つぎへ</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="check" class="screen">
+    <header class="bar"><button id="check-back" class="btn icon" data-icon="back" aria-label="もどる"></button><h2>きょうの めチェック</h2></header>
+    <div id="check-card" class="check-card"></div>
+  </section>
+
+  <section id="stretch" class="screen">
+    <header class="bar"><button id="stretch-back" class="btn icon" data-icon="back" aria-label="もどる"></button><h2>めの ストレッチ</h2></header>
+    <div id="st-text" class="st-text"></div>
+    <div id="st-dots" class="st-dots"></div>
+    <button id="st-end" class="btn big st-end" hidden><span data-icon="next"></span>できた！</button>
+  </section>
+
+  <section id="tips" class="screen">
+    <header class="bar"><button id="tips-back" class="btn icon" data-icon="back" aria-label="もどる"></button><h2>めの まめちしき</h2><div id="tips-count" class="wallet"></div></header>
+    <div id="tips-body" class="scroll tips-body"></div>
+  </section>
+
+  <section id="stamps" class="screen">
+    <header class="bar"><button id="stamps-back" class="btn icon" data-icon="back" aria-label="もどる"></button><h2>スタンプ</h2><div id="stamps-count" class="wallet stamp-count"></div></header>
+    <div class="cal-card">
+      <div class="cal-head">
+        <button id="cal-prev" class="btn icon small" data-icon="back" aria-label="まえの つき"></button>
+        <div id="cal-month" class="cal-month"></div>
+        <button id="cal-next" class="btn icon small" data-icon="fwd" aria-label="つぎの つき"></button>
+      </div>
+      <div class="cal-week"><span>にち</span><span>げつ</span><span>か</span><span>すい</span><span>もく</span><span>きん</span><span>ど</span></div>
+      <div id="cal-grid" class="cal-grid"></div>
+    </div>
+    <div id="stamps-next" class="stamps-next"></div>
+  </section>
+
+  <section id="records" class="screen">
+    <header class="bar"><button id="records-back" class="btn icon" data-icon="back" aria-label="もどる"></button><h2>きろく</h2></header>
+    <div id="records-body" class="scroll records-body"></div>
+  </section>
+
+  <section id="shop" class="screen">
+    <header class="bar"><button id="shop-back" class="btn icon" data-icon="back" aria-label="もどる"></button><h2>おみせ</h2><div id="shop-wallet" class="wallet"></div></header>
+    <p id="shop-note" class="shop-note">★を つかって おともだちを ふやそう！</p>
+    <div id="shop-grid" class="shop-grid"></div>
+  </section>
+
+  <div id="tip" class="tip"></div>
+
+  <div id="pause" class="panel">
+    <div class="panel-card">
+      <div class="clear-title small-title">ちょっと おやすみ</div>
+      <div class="panel-col">
+        <button id="pause-go" class="btn big"><span data-icon="next"></span>つづける</button>
+        <button id="pause-quit" class="btn">やめる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay" class="panel">
+    <div class="panel-card ov-card">
+      <canvas id="ov-canvas" class="ov-canvas" width="520" height="300"></canvas>
+      <div id="ov-title" class="ov-title"></div>
+      <div id="ov-text" class="ov-text"></div>
+      <button id="ov-ok" class="btn big"><span id="ov-ok-label">やったね！</span></button>
+    </div>
+  </div>
+
+  <div id="nudge" class="panel">
+    <div class="panel-card">
+      <canvas id="nudge-canvas" class="nudge-canvas" width="300" height="220"></canvas>
+      <div class="ov-text">きょうは たくさん がんばったね！<br>めを やすめて、つづきは また あした！</div>
+      <div class="panel-row">
+        <button id="nudge-more" class="btn">もうすこし</button>
+        <button id="nudge-end" class="btn big">おしまい</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="buy" class="panel">
+    <div class="panel-card buy-card">
+      <canvas id="buy-canvas" class="buy-canvas" width="240" height="240"></canvas>
+      <div id="buy-text" class="buy-text"></div>
+      <div class="panel-row">
+        <button id="buy-no" class="btn">やめる</button>
+        <button id="buy-yes" class="btn big">かう</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="graph" class="panel">
+    <div class="panel-card graph-card">
+      <div id="graph-title" class="parent-title"></div>
+      <div id="graph-levels" class="graph-levels"></div>
+      <canvas id="graph-canvas" class="graph-canvas" width="560" height="380"></canvas>
+      <div id="graph-note" class="graph-note"></div>
+      <button id="graph-close" class="btn wide">とじる</button>
+    </div>
+  </div>
+
+  <div id="pass" class="panel">
+    <div id="pass-card" class="panel-card pass-card">
+      <div class="parent-title">管理者パスワード</div>
+      <div id="pass-dots" class="pass-dots"></div>
+      <div class="keypad">
+        <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
+        <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
+        <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
+        <button class="key small" data-k="del">けす</button><button class="key" data-k="0">0</button><button class="key ok" data-k="ok">OK</button>
+      </div>
+      <button id="pass-close" class="btn wide">閉じる</button>
+    </div>
+  </div>
+
+  <div id="parent" class="panel">
+    <div class="panel-card parent-card">
+      <div class="parent-title">管理者メニュー</div>
+      <div id="p-info" class="parent-info"></div>
+      <button id="p-users" class="btn wide">ユーザー（かぞくモード）</button>
+      <button id="p-all" class="btn wide"></button>
+      <button id="p-stop" class="btn wide"></button>
+      <button id="p-reset" class="btn wide"></button>
+      <div id="p-voice" class="parent-info small"></div>
+      <button id="p-close" class="btn wide">閉じる</button>
+    </div>
+  </div>
+
+  <div id="users" class="panel">
+    <div class="panel-card parent-card">
+      <div class="parent-title">ユーザー</div>
+      <div id="users-list" class="users-list"></div>
+      <button id="users-add" class="btn wide"><span data-icon="plus"></span>ユーザーを ふやす</button>
+      <button id="users-close" class="btn wide">閉じる</button>
+    </div>
+  </div>
+
+  <div id="uedit" class="panel">
+    <div class="panel-card parent-card">
+      <div class="parent-title">ユーザーの せってい</div>
+      <label class="field"><span>なまえ</span><input id="ue-name" type="text" maxlength="10" autocomplete="off" placeholder="れい：はなこ"></label>
+      <div class="seg" id="ue-type"><button data-v="kid">こども</button><button data-v="adult">おとな</button></div>
+      <div class="swatches" id="ue-color"></div>
+      <div class="panel-row">
+        <button id="ue-del" class="btn">けす</button>
+        <button id="ue-ok" class="btn big">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="js/lang.js"></script>
+<script src="js/lang-text.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/art.js"></script>
+<script src="js/pics.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/voice-clips.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/trainings.js"></script>
+<script src="js/tr/shuffle.js"></script>
+<script src="js/tr/rushcount.js"></script>
+<script src="js/tr/flashnum.js"></script>
+<script src="js/tr/flashmark.js"></script>
+<script src="js/tr/triplec.js"></script>
+<script src="js/tr/countc.js"></script>
+<script src="js/tr/peric.js"></script>
+<script src="js/tr/updownc.js"></script>
+<script src="js/tr/quicktouch.js"></script>
+<script src="js/tr/numtouch.js"></script>
+<script src="js/tr/baseball.js"></script>
+<script src="js/tr/boxing.js"></script>
+<script src="js/tr/pingpong.js"></script>
+<script src="js/tr/basket.js"></script>
+<script src="js/tr/volley.js"></script>
+<script src="js/tr/soccer.js"></script>
+<script src="js/tr/football.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+/* ケロちゃん みるみる — offline support.
+   Keeps the game on the device so it plays without a connection.
+   Bump VERSION whenever the game files change. The page looks for a new version
+   whenever it is opened or comes back to the front; the new files are fetched
+   straight from the server (never from the browser's own cache), this worker takes
+   over at once, and the page reloads itself on the title screen.
+   The site hosts other games and the menu, which share the cache storage,
+   so only caches whose names start with "miru-" are ever deleted here. */
+var VERSION = 'miru-v1';
+var FONTS = 'miru-fonts';
+var FILES = [
+  './', 'index.html', 'style.css', 'manifest.webmanifest',
+  'js/lang.js', 'js/lang-text.js', 'js/draw.js', 'js/data.js', 'js/core.js', 'js/art.js', 'js/pics.js', 'js/sound.js', 'js/voice-clips.js', 'js/voice.js', 'js/trainings.js',
+  'js/tr/shuffle.js', 'js/tr/rushcount.js', 'js/tr/flashnum.js', 'js/tr/flashmark.js', 'js/tr/triplec.js', 'js/tr/countc.js',
+  'js/tr/peric.js', 'js/tr/updownc.js', 'js/tr/quicktouch.js', 'js/tr/numtouch.js',
+  'js/tr/baseball.js', 'js/tr/boxing.js', 'js/tr/pingpong.js', 'js/tr/basket.js', 'js/tr/volley.js', 'js/tr/soccer.js', 'js/tr/football.js',
+  'js/app.js',
+  'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'
+];
+
+// ケロはかせ's recorded voice: the list of clip files comes from js/voice-clips.js.
+var VOICE_FILES = [];
+try {
+  importScripts('js/voice-clips.js');
+  VOICE_FILES = Object.keys(VOICE_CLIPS.files).map(function (k) { return VOICE_CLIPS.files[k]; })
+    .filter(function (f, i, all) { return all.indexOf(f) === i; });
+} catch (e) { /* no voice yet */ }
+
+// A file straight from the server, not from the browser's own cache (GitHub Pages lets browsers
+// keep files for 10 minutes, which could otherwise put old files into a new version).
+function fresh(f) { return new Request(f, { cache: 'reload' }); }
+
+self.addEventListener('install', function (e) {
+  e.waitUntil(caches.open(VERSION)
+    .then(function (c) {
+      return c.addAll(FILES.map(fresh)).then(function () {
+        // one by one, so a missing clip never stops the game from being stored
+        return Promise.all(VOICE_FILES.map(function (f) { return c.add(fresh(f)).catch(function () {}); }));
+      });
+    })
+    .then(function () { return self.skipWaiting(); }));
+});
+
+self.addEventListener('activate', function (e) {
+  e.waitUntil(caches.keys().then(function (keys) {
+    return Promise.all(keys.filter(function (k) { return k.indexOf('miru-') === 0 && k !== VERSION && k !== FONTS; })
+      .map(function (k) { return caches.delete(k); }));
+  }).then(function () { return self.clients.claim(); }));
+});
+
+self.addEventListener('fetch', function (e) {
+  var req = e.request;
+  if (req.method !== 'GET') return;
+  var url = new URL(req.url);
+
+  // Game files: answer from the cache at once, refresh it in the background.
+  if (url.origin === self.location.origin) {
+    e.respondWith(caches.open(VERSION).then(function (c) {
+      return c.match(req, { ignoreSearch: true }).then(function (hit) {
+        if (hit && url.pathname.indexOf('/voice/') >= 0) return hit;   // clips never change (a changed line gets a new file)
+        var net = fetch(req.url, { cache: 'no-cache' }).then(function (res) {
+          if (res.ok) c.put(req, res.clone());
+          return res;
+        }).catch(function () { return hit; });
+        return hit || net;
+      });
+    }));
+    return;
+  }
+
+  // Rounded font from Google Fonts: keep a copy for offline play.
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    e.respondWith(caches.open(FONTS).then(function (c) {
+      return c.match(req).then(function (hit) {
+        return hit || fetch(req).then(function (res) { c.put(req, res.clone()); return res; });
+      });
+    }));
+  }
+});

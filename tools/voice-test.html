@@ -1,0 +1,63 @@
+<!doctype html>
+<meta charset="utf-8">
+<base href="../">
+<title>voice test (silent)</title>
+<!-- Checks js/voice.js without making a sound: the phone's voice and the sound module are pretend ones
+     that only write down what they were asked to say. Open tools/voice-test.html?sound=1 on localhost
+     (?sound=1 lets voice.js run as on a phone) and read the page. -->
+<pre id="out">…</pre>
+<script>
+  var log = [];
+  var fakeSynth = {
+    getVoices: function () { return []; },
+    addEventListener: function () {},
+    cancel: function () { log.push('cancel'); },
+    speak: function (u) { log.push('tts:' + u.text + ' (rate ' + u.rate + ', pitch ' + u.pitch + ')'); setTimeout(function () { if (u.onend) u.onend(); }, 40); }
+  };
+  var stubbed = false;
+  try { Object.defineProperty(window, 'speechSynthesis', { value: fakeSynth, configurable: true, writable: true }); stubbed = window.speechSynthesis === fakeSynth; } catch (e) { /* ignore */ }
+  if (!stubbed) { document.getElementById('out').textContent = 'could not replace speechSynthesis: stopped'; throw new Error('stub'); }
+  var off = new OfflineAudioContext(1, 48000, 48000);
+  var Sound = {
+    ready: function () { return true; },
+    decode: function (b) { return off.decodeAudioData(b); },
+    voice: function (buf, done) {
+      log.push('clip ' + buf.duration.toFixed(2) + 's');
+      var t = setTimeout(done, 30);
+      return { stop: function () { clearTimeout(t); log.push('clip stopped'); } };
+    }
+  };
+</script>
+<script src="js/voice-clips.js"></script>
+<script src="js/voice.js"></script>
+<script>
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  async function run() {
+    if (!stubbed || window.speechSynthesis !== fakeSynth) return;   // never with the real voice
+    var out = [];
+    out.push('quiet: ' + Voice.quiet + ', clips: ' + Object.keys(VOICE_CLIPS.files).length + ', credit: ' + Voice.credit);
+    // 1. a name read by the phone, then two clips, in order
+    log = []; Voice.say(['はなこ、', 'こんにちは！', 'きょうも めの たいそう しよう！']); await wait(600);
+    out.push('1: ' + log.join(' / '));
+    // 2. a line without a clip
+    log = []; Voice.say('これは ろくおん されて いない ことば'); await wait(300);
+    out.push('2: ' + log.join(' / '));
+    // 3. a new line stops the one being said
+    log = []; Voice.say(['こんにちは！', 'きょうも めの たいそう しよう！']); await wait(5); Voice.say('よく できました！'); await wait(400);
+    out.push('3: ' + log.join(' / '));
+    // 4. every clip file can be read and decoded
+    var files = VOICE_CLIPS.files, keys = Object.keys(files), bad = [], total = 0;
+    for (var i = 0; i < keys.length; i++) {
+      try {
+        var r = await fetch(files[keys[i]]);
+        var buf = await off.decodeAudioData(await r.arrayBuffer());
+        total += buf.duration;
+        if (!(buf.duration > 0.2)) bad.push(keys[i]);
+      } catch (e) { bad.push(keys[i] + ' (' + e.message + ')'); }
+    }
+    out.push('4: ' + keys.length + ' clips decoded, ' + total.toFixed(1) + 's in all, bad: ' + JSON.stringify(bad));
+    document.getElementById('out').textContent = out.join('\n');
+    window.RESULT = out;
+  }
+  run();
+</script>
