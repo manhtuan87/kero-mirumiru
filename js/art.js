@@ -90,20 +90,46 @@ var Art = (function () {
   // ---------------------------------------------------------------- the rank animals (feet at y = 0, facing right)
   // From the weakest eyes to the sharpest: もぐら, いぬ, ねこ, ふくろう, カメレオン, トンボ, わし.
 
-  function legs4(ctx, xs, top, len, g, run, color) {
-    xs.forEach(function (x, i) {
-      var a = run ? Math.sin(g + [0, Math.PI, Math.PI * 0.5, Math.PI * 1.5][i]) * 0.5 : 0;
-      ctx.save(); ctx.translate(x, top); ctx.rotate(a);
-      roundRect(ctx, -4.5, 0, 9, len, 4.5); paint(ctx, color, INK, 2.6);
-      ctx.restore();
-    });
-  }
-  function wing(ctx, x, y, a, color) {
+  // A leg seen from the side, from the shoulder or hip (x, y) down to the ground (len): thick at the top, thin at the
+  // ankle, a knee that bends (knee +1: forwards, the front legs; -1: backwards, the hind legs), and a paw (or a hoof).
+  function leg(ctx, x, y, len, a, w0, w1, knee, col, hoof) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(a);
-    ctx.beginPath(); ctx.moveTo(4, 2); ctx.quadraticCurveTo(-8, -26, -46, -40); ctx.quadraticCurveTo(-30, -14, -22, 8); ctx.closePath();
-    ctx.lineJoin = 'round'; paint(ctx, color, INK, 2.8);
-    stroke(ctx, [-12, -8, -30, -26], 1.8, 'rgba(90,56,37,.35)');
-    stroke(ctx, [-8, 0, -24, -12], 1.8, 'rgba(90,56,37,.35)');
+    var kx = knee * w0 * 0.3, ky = len * 0.55, fy = len - (hoof ? 6 : 4);
+    ctx.beginPath();
+    ctx.moveTo(-w0 / 2, -4);
+    ctx.quadraticCurveTo(-w0 / 2 + kx * 0.4, ky * 0.6, -w1 / 2 + kx, ky);
+    ctx.quadraticCurveTo(-w1 / 2 + kx * 0.3, fy * 0.9, -w1 / 2, fy);
+    ctx.lineTo(w1 / 2, fy);
+    ctx.quadraticCurveTo(w1 / 2 + kx * 0.3, fy * 0.9, w1 / 2 + kx, ky);
+    ctx.quadraticCurveTo(w0 / 2 + kx * 0.4, ky * 0.6, w0 / 2, -4);
+    ctx.closePath();
+    ctx.lineJoin = 'round'; paint(ctx, col, INK, 2.4);
+    if (hoof) { roundRect(ctx, -w1 / 2 - 1.5, fy - 1, w1 + 3, 7, 2.5); paint(ctx, hoof, INK, 2); }
+    else { ellipse(ctx, 2, fy + 0.5, w1 / 2 + 3, 3.8); paint(ctx, col, INK, 2.2); }
+    ctx.restore();
+  }
+  // A cat's pointed ear, with its pink inside.
+  function catEar(ctx, x, y, rot, col) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+    ctx.beginPath(); ctx.moveTo(-7, 5); ctx.quadraticCurveTo(-4, -8, 0, -14); ctx.quadraticCurveTo(5, -6, 7, 4); ctx.closePath();
+    ctx.lineJoin = 'round'; paint(ctx, col, INK, 2.4);
+    ctx.beginPath(); ctx.moveTo(-3.5, 3); ctx.quadraticCurveTo(-1.5, -5, 0, -8); ctx.quadraticCurveTo(3, -3, 3.5, 2.5); ctx.closePath(); paint(ctx, '#ffb3c6');
+    ctx.restore();
+  }
+  // A big bird's wing seen from the side, raised: broad, with the long feathers at its tip spread like fingers.
+  function bigWing(ctx, x, y, a, col) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+    ctx.beginPath();
+    ctx.moveTo(10, 2);
+    ctx.bezierCurveTo(8, -14, 2, -30, -8, -40);
+    ctx.lineTo(-10, -54); ctx.lineTo(-15, -42);
+    ctx.lineTo(-19, -55); ctx.lineTo(-23, -41);
+    ctx.lineTo(-29, -52); ctx.lineTo(-31, -38);
+    ctx.lineTo(-38, -45); ctx.lineTo(-37, -33);
+    ctx.bezierCurveTo(-30, -20, -22, -8, -14, 4);
+    ctx.closePath();
+    ctx.lineJoin = 'round'; paint(ctx, col, INK, 2.6);
+    [[2, -22, -30, -31], [5, -10, -24, -17]].forEach(function (l) { stroke(ctx, l, 1.8, 'rgba(0,0,0,.18)'); });
     ctx.restore();
   }
 
@@ -128,34 +154,73 @@ var Art = (function () {
   }
 
   function dog(ctx, t, run) {
-    var g = run ? t * 12 : 0, bob = run ? Math.sin(g * 2) * 2 : 0, C = '#f2c48a', E = '#c98b56';
+    var g = run ? t * 12 : 0, bob = run ? -Math.abs(Math.sin(g)) * 2.5 : 0, wag = Math.sin(t * (run ? 14 : 8)) * 5;
+    var C = '#f2c48a', FAR = '#e0ae74', E = '#c98b56', LT = '#fbe3c2';
+    var sw = function (ph) { return run ? Math.sin(g + ph) * 0.5 : 0; };
     ctx.save(); ctx.translate(0, bob);
-    tube(ctx, function () { ctx.beginPath(); ctx.moveTo(-28, -34); ctx.quadraticCurveTo(-44, -44 + Math.sin(t * 12) * 5, -42, -58); }, 6, C);
-    legs4(ctx, [-20, -10, 14, 24], -26, 26, g, run, C);
-    blob(ctx, [['e', 0, -32, 31, 14], ['c', 34, -47, 17], ['e', 48, -41, 11, 7.5]], C);
-    ellipse(ctx, 25, -46, 7, 15, 0.35); paint(ctx, E, INK, 2.4);
-    circle(ctx, 58, -43, 3.6); paint(ctx, '#3a2618');
-    eyeDot(ctx, 40, -52, 3.2); smile(ctx, 50, -35, 3.5); blush(ctx, 36, -39, 3.6);
+    // the far legs (a little darker), the tail, the near legs, then the body over their tops
+    leg(ctx, 15, -30, 31, sw(Math.PI), 9.5, 6.5, 1, FAR);
+    leg(ctx, -20, -30, 31, sw(0), 11, 6.5, -1, FAR);
+    tube(ctx, function () { ctx.beginPath(); ctx.moveTo(-28, -42); ctx.quadraticCurveTo(-40 + wag * 0.3, -48, -38 + wag, -62); }, 6, C);
+    leg(ctx, 19, -30, 31, sw(0), 10, 7, 1, C);
+    leg(ctx, -16, -30, 31, sw(Math.PI), 12, 7, -1, C);
+    ctx.beginPath();
+    ctx.moveTo(-27, -26);
+    ctx.bezierCurveTo(-37, -30, -37, -46, -23, -48);
+    ctx.bezierCurveTo(-8, -51, 8, -50, 19, -47);
+    ctx.bezierCurveTo(30, -44, 30, -30, 23, -26);
+    ctx.bezierCurveTo(12, -22, -1, -26, -10, -25);
+    ctx.bezierCurveTo(-17, -24, -23, -22, -27, -26);
+    ctx.closePath(); ctx.lineJoin = 'round'; paint(ctx, C, INK, 3);
+    // a red collar
+    ctx.save(); ctx.translate(24, -46); ctx.rotate(-1.0); roundRect(ctx, -9, -3, 18, 6, 3); paint(ctx, '#ff6b6b', INK, 2); ctx.restore();
+    // the head, the muzzle, the black nose
+    ellipse(ctx, 34, -57, 14, 13); paint(ctx, C, INK, 3);
+    ctx.beginPath(); ctx.moveTo(41, -62); ctx.quadraticCurveTo(55, -64, 57, -55); ctx.quadraticCurveTo(57, -48, 47, -47); ctx.quadraticCurveTo(41, -47, 39, -51); ctx.closePath();
+    paint(ctx, LT, INK, 2.6);
+    circle(ctx, 56, -57, 3.8); paint(ctx, '#3a2618'); circle(ctx, 55, -58.5, 1.2); paint(ctx, '#fff');
+    ctx.beginPath(); ctx.moveTo(53, -51); ctx.quadraticCurveTo(49, -48.5, 45, -50); ctx.lineCap = 'round'; paint(ctx, null, INK, 1.8);
+    eyeDot(ctx, 38, -61, 3.3);
+    // the floppy ear
+    ctx.save(); ctx.translate(28, -65); ctx.rotate(0.35 + (run ? Math.sin(g * 2) * 0.12 : 0));
+    ctx.beginPath(); ctx.moveTo(-5, 0); ctx.quadraticCurveTo(-9, 12, -4, 20); ctx.quadraticCurveTo(2, 23, 5, 16); ctx.quadraticCurveTo(7, 6, 4, -2); ctx.closePath();
+    paint(ctx, E, INK, 2.4);
+    ctx.restore();
+    blush(ctx, 41, -52, 3.4);
     ctx.restore();
   }
 
   function cat(ctx, t, run) {
-    var g = run ? t * 11 : 0, bob = run ? Math.sin(g * 2) * 2 : 0, C = '#ffb86b', S = '#e08a3c';
+    var g = run ? t * 11 : 0, bob = run ? -Math.abs(Math.sin(g)) * 2.5 : 0, C = '#ffb86b', FAR = '#eba05a', S = '#e08a3c';
+    var sw = function (ph) { return run ? Math.sin(g + ph) * 0.5 : 0; };
     ctx.save(); ctx.translate(0, bob);
-    tube(ctx, function () { ctx.beginPath(); ctx.moveTo(-28, -32); ctx.quadraticCurveTo(-52, -38, -44, -62); }, 6, C);
-    legs4(ctx, [-20, -10, 12, 22], -24, 24, g, run, C);
-    blob(ctx, [['e', 0, -30, 30, 13], ['c', 34, -45, 16]], C);
-    [[25, -55, 28, -71, 36, -59], [37, -59, 45, -70, 47, -52]].forEach(function (e) {
-      ctx.beginPath(); ctx.moveTo(e[0], e[1]); ctx.lineTo(e[2], e[3]); ctx.lineTo(e[4], e[5]); ctx.closePath(); paint(ctx, C, INK, 2.4);
-    });
-    [[-14, -41], [-4, -43], [6, -42]].forEach(function (p) { stroke(ctx, [p[0], p[1], p[0] + 2, p[1] + 8], 2.6, S); });
-    // a big eye: cats see well in the dark
-    ellipse(ctx, 40, -48, 4.6, 5.8); paint(ctx, '#8ee06a', INK, 1.8);
-    ellipse(ctx, 40.6, -48, 1.5, 4.6); paint(ctx, '#2e1d14');
-    circle(ctx, 39, -50, 1.3); paint(ctx, '#fff');
-    ctx.beginPath(); ctx.moveTo(49, -43); ctx.lineTo(52.5, -42); ctx.lineTo(49, -40); ctx.closePath(); paint(ctx, '#ff8fa6');
-    stroke(ctx, [48, -38, 59, -36], 1.4); stroke(ctx, [48, -41, 59, -43], 1.4);
-    blush(ctx, 38, -38, 3.4);
+    // the far legs (a little darker), the tail up with a curl, the near legs, then the body over their tops
+    leg(ctx, 14, -28, 29, sw(Math.PI), 8.5, 5.5, 1, FAR);
+    leg(ctx, -19, -28, 29, sw(0), 10, 5.5, -1, FAR);
+    tube(ctx, function () { ctx.beginPath(); ctx.moveTo(-27, -40); ctx.bezierCurveTo(-43, -38, -50, -54, -42, -66); ctx.quadraticCurveTo(-38, -72, -32, -69); }, 6, C);
+    leg(ctx, 18, -28, 29, sw(0), 9, 6, 1, C);
+    leg(ctx, -15, -28, 29, sw(Math.PI), 11, 6, -1, C);
+    ctx.beginPath();
+    ctx.moveTo(-26, -24);
+    ctx.bezierCurveTo(-36, -28, -36, -44, -22, -46);
+    ctx.bezierCurveTo(-7, -49, 8, -48, 19, -44);
+    ctx.bezierCurveTo(28, -41, 28, -28, 22, -24);
+    ctx.bezierCurveTo(12, -20, -1, -24, -10, -23);
+    ctx.bezierCurveTo(-17, -22, -22, -20, -26, -24);
+    ctx.closePath(); ctx.lineJoin = 'round'; paint(ctx, C, INK, 3);
+    [[-16, -46], [-7, -47], [2, -47]].forEach(function (q) { stroke(ctx, [q[0], q[1], q[0] + 1.5, q[1] + 7], 2.4, S); });
+    // the head: the far ear, the round head, the near ear
+    catEar(ctx, 26, -61, -0.35, FAR);
+    ellipse(ctx, 34, -52, 14.5, 12.5); paint(ctx, C, INK, 3);
+    catEar(ctx, 38, -62, 0.1, C);
+    stroke(ctx, [28, -61, 30, -57], 2, S); stroke(ctx, [33, -63, 34, -58], 2, S);
+    // the muzzle, a pink nose, a little mouth, whiskers and a round dark eye
+    ellipse(ctx, 44, -48, 6.5, 5); paint(ctx, '#fff1dc');
+    ctx.beginPath(); ctx.moveTo(46.5, -51.5); ctx.lineTo(50.5, -51); ctx.lineTo(48, -48.5); ctx.closePath(); paint(ctx, '#ff8fa6', INK, 1.4);
+    ctx.beginPath(); ctx.moveTo(48, -48.5); ctx.quadraticCurveTo(47, -44.5, 43.5, -45.5); ctx.lineCap = 'round'; paint(ctx, null, INK, 1.8);
+    eyeDot(ctx, 38, -54, 3.3);
+    stroke(ctx, [44, -49, 57, -51], 1.3); stroke(ctx, [44, -47, 57, -44.5], 1.3);
+    blush(ctx, 34, -46, 3.4);
     ctx.restore();
   }
 
@@ -196,38 +261,57 @@ var Art = (function () {
     smile(ctx, 42, -24, 3.4); blush(ctx, 38, -21, 3);
   }
 
+  // Seen from above, flying to the right: four long wings straight out from the chest (two up, two down).
   function dragonfly(ctx, t, run) {
-    var f = Math.sin(t * (run ? 40 : 16)) * 0.35, bob = Math.sin(t * 3) * 3;
-    ctx.save(); ctx.translate(0, -48 + bob);
-    tube(ctx, function () { ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-56, 4); }, 6, '#4fb0ff');
-    [-12, -24, -36, -48].forEach(function (x) { stroke(ctx, [x, -2, x, 6], 1.6, '#2b7fcc'); });
-    [[-2, -0.35 - f], [8, 0.25 + f]].forEach(function (w) {
-      ctx.save(); ctx.translate(w[0], -4); ctx.rotate(w[1]);
-      ellipse(ctx, -15, -12, 23, 7, -0.25); paint(ctx, 'rgba(225,242,255,.85)', INK, 2);
+    var f = Math.sin(t * (run ? 42 : 20)), bob = Math.sin(t * 3) * 3, sy = 0.9 + 0.1 * f;
+    ctx.save(); ctx.translate(0, -52 + bob);
+    [[13, -1, 2], [13, 1, 2], [3, -1, -6], [3, 1, -6]].forEach(function (w) {   // [root x, up -1 / down +1, lean of the tip]
+      ctx.save(); ctx.translate(w[0], 0); ctx.scale(1, w[1] * sy);
+      var tip = w[2];
+      ctx.beginPath();
+      ctx.moveTo(-4, 0);
+      ctx.bezierCurveTo(-9 + tip * 0.3, 18, tip - 9, 44, tip - 3, 52);
+      ctx.bezierCurveTo(tip + 3, 57, tip + 10, 50, tip + 7, 36);
+      ctx.bezierCurveTo(6 + tip * 0.3, 16, 5, 6, 4, 0);
+      ctx.closePath();
+      ctx.lineJoin = 'round'; paint(ctx, 'rgba(226,243,255,.85)', INK, 2);
+      stroke(ctx, [0, 3, tip - 1, 46], 1.2, 'rgba(90,56,37,.28)');
+      ellipse(ctx, tip + 2, 45, 2.2, 3.8); paint(ctx, '#56657f');
       ctx.restore();
     });
-    ellipse(ctx, 10, 0, 10, 8); paint(ctx, '#4fb0ff', INK, 2.6);
-    circle(ctx, 24, -2, 9); paint(ctx, '#4fb0ff', INK, 2.6);
-    // big eyes made of many little eyes
-    circle(ctx, 27, -9, 8); paint(ctx, '#7ee0a0', INK, 2.2);
-    [[24, -12], [28, -12], [31, -9], [27, -8], [24, -8], [28, -5]].forEach(function (p) { circle(ctx, p[0], p[1], 1.1); paint(ctx, 'rgba(255,255,255,.85)'); });
-    smile(ctx, 29, 2, 2.6);
+    // the long thin tail in segments, the chest, the head with two big eyes made of many little eyes
+    tube(ctx, function () { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-58, 0); }, 6.5, '#4fb0ff');
+    [-12, -22, -32, -42, -52].forEach(function (x) { stroke(ctx, [x, -3, x, 3], 1.6, '#2b7fcc'); });
+    ellipse(ctx, 9, 0, 11, 7.5); paint(ctx, '#4fb0ff', INK, 2.6);
+    circle(ctx, 21, 0, 6); paint(ctx, '#4fb0ff', INK, 2.4);
+    [-1, 1].forEach(function (s) {
+      circle(ctx, 25, s * 5.5, 6.5); paint(ctx, '#7ee0a0', INK, 2.2);
+      [[23, -1.5], [26.5, -1.5], [24.5, 1.8], [28, 1]].forEach(function (q) { circle(ctx, q[0], s * 5.5 + q[1] * s, 1); paint(ctx, 'rgba(255,255,255,.85)'); });
+      circle(ctx, 27, s * 5.5 - 2.2, 1.6); paint(ctx, '#fff');
+    });
     ctx.restore();
   }
 
   function eagle(ctx, t, run) {
     var f = Math.sin(t * (run ? 12 : 3)), C = '#8a5a32', DK = '#6b4226', HEAD = '#fffaf0';
-    ctx.save(); ctx.translate(0, -44 + f * 3);
-    wing(ctx, 0, -6, 0.2 - f * 0.45, DK);
-    ctx.beginPath(); ctx.moveTo(-24, -2); ctx.lineTo(-52, -8); ctx.lineTo(-54, 8); ctx.lineTo(-24, 6); ctx.closePath(); paint(ctx, HEAD, INK, 2.6);
-    ellipse(ctx, 0, 0, 32, 15, -0.08); paint(ctx, C, INK, 3);
-    circle(ctx, 30, -6, 13); paint(ctx, HEAD, INK, 3);
-    ctx.beginPath(); ctx.moveTo(40, -10); ctx.quadraticCurveTo(53, -9, 48, 2); ctx.lineTo(41, -2); ctx.closePath(); paint(ctx, '#ffd23d', INK, 2.2);
-    // a sharp eye
-    circle(ctx, 34, -9, 4.6); paint(ctx, '#ffd23d', INK, 1.8); eyeDot(ctx, 34.5, -9, 2.4);
-    stroke(ctx, [28, -14.5, 39, -13], 2.4);
-    blush(ctx, 38, -1, 3);
-    wing(ctx, -4, -4, -0.25 + f * 0.6, C);
+    ctx.save(); ctx.translate(0, -40 + f * 3);
+    bigWing(ctx, 2, -6, -0.1 - f * 0.35, DK);   // the far wing
+    // the white tail, spread like a fan
+    ctx.beginPath(); ctx.moveTo(-22, -3); ctx.lineTo(-46, -10); ctx.quadraticCurveTo(-54, 0, -46, 9); ctx.lineTo(-22, 5); ctx.closePath();
+    ctx.lineJoin = 'round'; paint(ctx, HEAD, INK, 2.6);
+    stroke(ctx, [-30, 0, -46, 0], 1.4, 'rgba(90,56,37,.3)');
+    // the body, with the yellow feet tucked under it
+    [[-2, 13], [6, 13]].forEach(function (q) { ellipse(ctx, q[0], q[1] + 1, 4, 2.6); paint(ctx, '#ffd23d', INK, 1.8); });
+    ctx.beginPath(); ctx.moveTo(-24, 2); ctx.bezierCurveTo(-18, -14, 14, -16, 24, -8); ctx.bezierCurveTo(30, 0, 22, 12, 6, 13); ctx.bezierCurveTo(-8, 14, -22, 10, -24, 2); ctx.closePath();
+    paint(ctx, C, INK, 3);
+    // the white head, a hooked yellow beak and a sharp eye
+    circle(ctx, 28, -9, 12.5); paint(ctx, HEAD, INK, 3);
+    ctx.beginPath(); ctx.moveTo(38, -13); ctx.quadraticCurveTo(50, -13, 49, -4); ctx.quadraticCurveTo(48, -1, 45, -3); ctx.lineTo(39, -5); ctx.closePath();
+    paint(ctx, '#ffd23d', INK, 2.2);
+    circle(ctx, 32, -12, 4.2); paint(ctx, '#ffd23d', INK, 1.6); eyeDot(ctx, 32.5, -12, 2.3);
+    stroke(ctx, [26, -17, 37, -15.5], 2.4);
+    blush(ctx, 35, -5, 2.8);
+    bigWing(ctx, -2, -4, -0.3 + f * 0.5, C);   // the near wing
     ctx.restore();
   }
 
@@ -414,6 +498,6 @@ var Art = (function () {
     FONT: FONT, MARKS: MARKS, CUP_COLOR: CUP_COLOR, C_COLOR: C_COLOR, DIR_ANGLE: DIR_ANGLE,
     blob: blob, eyeDot: eyeDot, smile: smile, blush: blush, stroke: stroke, tube: tube, text: text, shade: shade,
     hakase: hakase, animal: animal, stamp: stamp, maru: maru, batsu: batsu,
-    ringC: ringC, dirArrow: dirArrow, mark: mark, cup: cup, disc: disc, balloon: balloon, wing: wing
+    ringC: ringC, dirArrow: dirArrow, mark: mark, cup: cup, disc: disc, balloon: balloon
   };
 }());
