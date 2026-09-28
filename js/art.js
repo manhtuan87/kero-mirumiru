@@ -351,9 +351,10 @@ var Art = (function () {
     ctx.restore();
   }
   // A cup upside down (シャッフル); (x, y) = the middle of its rim, lift = how far it is raised.
-  var CUP_COLORS = ['#ff8fb0', '#6cc6ff', '#ffd23d', '#8bd86a', '#b58cff'];
+  // Every cup has the same colour: with different colours the chick could be found by colour, not with the eyes.
+  var CUP_COLOR = '#6cc6ff';
   function cup(ctx, x, y, w, h, color, lift) {
-    color = color || CUP_COLORS[0];
+    color = color || CUP_COLOR;
     ctx.save(); ctx.translate(x, y - (lift || 0));
     ctx.lineJoin = 'round';
     ctx.beginPath(); ctx.moveTo(-w / 2, 0); ctx.lineTo(-w * 0.36, -h); ctx.quadraticCurveTo(0, -h - w * 0.12, w * 0.36, -h); ctx.lineTo(w / 2, 0); ctx.closePath();
@@ -403,7 +404,7 @@ var Art = (function () {
   }
 
   return {
-    FONT: FONT, MARKS: MARKS, CUP_COLORS: CUP_COLORS, DIR_ANGLE: DIR_ANGLE,
+    FONT: FONT, MARKS: MARKS, CUP_COLOR: CUP_COLOR, DIR_ANGLE: DIR_ANGLE,
     blob: blob, eyeDot: eyeDot, smile: smile, blush: blush, stroke: stroke, tube: tube, text: text, shade: shade,
     hakase: hakase, animal: animal, stamp: stamp, maru: maru, batsu: batsu,
     ringC: ringC, dirArrow: dirArrow, mark: mark, cup: cup, disc: disc, balloon: balloon, wing: wing

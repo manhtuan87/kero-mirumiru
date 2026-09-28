@@ -5,7 +5,7 @@
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var CUP_Y = 380, CUP_W = 62, CUP_H = 74;
 
-  function slotX(n, i) { var gap = Math.min(96, 300 / Math.max(1, n - 1)); return 180 + (i - (n - 1) / 2) * gap; }
+  function slotX(n, i) { var gap = Math.min(96, 280 / Math.max(1, n - 1)); return 180 + (i - (n - 1) / 2) * gap; }   // (5 cups still fit the screen)
 
   // p: { rounds, cups, swaps, speed (swaps per second) }
   // Each round: where the chick starts and the list of swaps [a, b] (slots); ans = the slot at the end.
@@ -29,7 +29,7 @@
   function start(api, p) {
     var D = G.Draw, A = G.Art;
     var rounds = gen(p, api.rnd), ri = -1, phase = 'wait', pt = 0, right = 0;
-    var cups = [], si = 0, sw = null, pick = -1, lift = 0, R = null;
+    var si = 0, sw = null, pick = -1, lift = 0, R = null;
 
     function startRound() {
       ri++;
@@ -40,8 +40,6 @@
         return;
       }
       R = rounds[ri];
-      // cups[k]: the cup that is now in slot k (its colour stays with it)
-      cups = []; for (var k = 0; k < p.cups; k++) cups.push({ color: A.CUP_COLORS[k % 5], x: slotX(p.cups, k), y: CUP_Y });
       si = 0; sw = null; pick = -1;
       phase = 'show'; pt = 0; lift = 1;
       api.progress(ri, rounds.length);
@@ -77,7 +75,6 @@
         else if (phase === 'move' && sw) {
           sw.t += dt;
           if (sw.t >= sw.dur) {
-            var tmp = cups[sw.a]; cups[sw.a] = cups[sw.b]; cups[sw.b] = tmp;
             sw = null;
             if (si < R.swaps.length) stepSwap(); else { phase = 'ask'; pt = 0; api.sfx('select'); }
           }
@@ -87,8 +84,10 @@
       draw: function (c, clock) {
         D.roundRect(c, 20, CUP_Y - 10, 320, 26, 13); D.paint(c, 'rgba(255,255,255,.55)');
         if (!R) return;
-        // where each cup is drawn now (the two moving ones travel on arcs, one over and one under)
-        var pos = cups.map(function (cp, k) { return { x: slotX(p.cups, k), y: CUP_Y }; });
+        // where each cup is drawn now (the two moving ones travel on arcs, one over and one under).
+        // All the cups look the same, so only following them with the eyes tells where the chick went.
+        var pos = [];
+        for (var s = 0; s < p.cups; s++) pos.push({ x: slotX(p.cups, s), y: CUP_Y });
         if (sw) {
           var k = Math.min(1, sw.t / sw.dur), e = k * k * (3 - 2 * k), xa = slotX(p.cups, sw.a), xb = slotX(p.cups, sw.b);
           pos[sw.a] = { x: xa + (xb - xa) * e, y: CUP_Y - Math.sin(k * Math.PI) * 26 };
@@ -106,7 +105,7 @@
           var up = 0;
           if (phase === 'show' && k === R.start) up = lift * 70;
           if ((phase === 'good' || phase === 'bad') && (k === pick || k === R.ans)) up = lift * 70;
-          A.cup(c, pos[k].x, pos[k].y, CUP_W, CUP_H, cups[k].color, up);
+          A.cup(c, pos[k].x, pos[k].y, CUP_W, CUP_H, A.CUP_COLOR, up);
         });
         if (phase === 'show') A.text(c, L('ひよこを よく みててね！'), 180, 150, 22, '#fff', { lw: 6 });
         else if (phase === 'move') A.text(c, L('めで おいかけて！'), 180, 150, 22, '#fff', { lw: 6 });
@@ -145,9 +144,9 @@
     icon: function (c, t) {
       var A = G.Art, D = G.Draw, k = Math.sin((t || 0) * 2.5);
       D.chick(c, 50, 78, 0.55, t || 0, { happy: true });
-      A.cup(c, 22 + k * 6, 82, 30, 36, A.CUP_COLORS[0], 0);
-      A.cup(c, 50, 82, 30, 36, A.CUP_COLORS[1], 26 + Math.max(0, k) * 6);
-      A.cup(c, 78 - k * 6, 82, 30, 36, A.CUP_COLORS[2], 0);
+      A.cup(c, 22 + k * 6, 82, 30, 36, A.CUP_COLOR, 0);
+      A.cup(c, 50, 82, 30, 36, A.CUP_COLOR, 26 + Math.max(0, k) * 6);
+      A.cup(c, 78 - k * 6, 82, 30, 36, A.CUP_COLOR, 0);
     }
   });
 }(typeof Trainings !== 'undefined' ? Trainings : require('../trainings.js')));
