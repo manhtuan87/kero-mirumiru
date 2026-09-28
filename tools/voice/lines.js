@@ -119,7 +119,7 @@ add(L.checkFirst, 'まずは、今日の目チェックから、やってみる�
 add(L.enough, '今日はたくさん頑張ったね！ 目を休めて、続きはまた明日！');
 add(L.newTraining, '新しいトレーニングが、増えたよ！');
 add(L.newHard, '「難しい」で、遊べるようになったよ！');
-add(L.practiceDone, '上手！ 次は本番だよ！');
+add(L.practiceDone, '上手！ 今度は、本当にやってみよう！');
 add(L.tip, '今日の、目の豆知識！');
 add(L.record, '新記録！ すごい！');
 const COMMON = {

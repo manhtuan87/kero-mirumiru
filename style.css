@@ -191,7 +191,13 @@ input { -webkit-user-select: text; user-select: text; touch-action: auto; }
 .lv-btn.locked { background: #e8dfd6; color: #9a8a7c; }
 .lv-btn svg { width: 22px; height: 22px; }
 .intro-note { font-size: 14px; font-weight: 800; min-height: 17px; color: #ff6fa8; }
+.intro-note.best { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }   /* (the best so far: one line, so it never pushes the buttons) */
 .start-btn { width: 250px; flex: none; }
+/* the start button with the practice button beside it (practice can be tried any time; it is never forced) */
+.start-row { display: flex; justify-content: center; gap: 8px; width: 100%; flex: none; }
+.start-row .start-btn { width: auto; flex: 1 1 auto; max-width: 250px; padding: 0 16px; }
+.practice-btn { height: 66px; padding: 0 14px; font-size: 17px; flex: none; }
+.ck-row .practice-btn { height: 60px; }
 .endless-btn {
   width: 250px; height: 46px; flex: none; font-size: 17px; gap: 6px;
   background: linear-gradient(#fff 45%, #ffd9e3);
