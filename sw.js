@@ -6,11 +6,11 @@
    over at once, and the page reloads itself on the title screen.
    The site hosts other games and the menu, which share the cache storage,
    so only caches whose names start with "miru-" are ever deleted here. */
-var VERSION = 'miru-v13';
+var VERSION = 'miru-v14';
 var FONTS = 'miru-fonts';
 var FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
-  'js/lang.js', 'js/lang-text.js', 'js/accounts.js', 'js/draw.js', 'js/data.js', 'js/core.js', 'js/art.js', 'js/pics.js', 'js/sound.js', 'js/voice-clips.js', 'js/voice.js', 'js/trainings.js',
+  'js/lang.js', 'js/lang-text.js', 'js/accounts.js', 'js/draw.js', 'js/data.js', 'js/core.js', 'js/art.js', 'js/pics.js', 'js/sound.js', 'js/voice-clips.js', 'js/voice.js', 'js/sound-panel.js', 'js/trainings.js',
   'js/tr/shuffle.js', 'js/tr/rushcount.js', 'js/tr/flashnum.js', 'js/tr/flashmark.js', 'js/tr/triplec.js', 'js/tr/countc.js',
   'js/tr/peric.js', 'js/tr/updownc.js', 'js/tr/quicktouch.js', 'js/tr/numtouch.js',
   'js/tr/baseball.js', 'js/tr/boxing.js', 'js/tr/pingpong.js', 'js/tr/basket.js', 'js/tr/volley.js', 'js/tr/soccer.js', 'js/tr/football.js',

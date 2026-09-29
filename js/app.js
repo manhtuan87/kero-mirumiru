@@ -2,7 +2,7 @@
    stamps, records, the shop, grown-up settings and the main loop. The trainings themselves are in js/tr/. */
 (function () {
   'use strict';
-  var D = window.Draw, A = window.Art, S = window.Sound, V = window.Voice;
+  var D = window.Draw, A = window.Art, S = window.Sound, V = window.Voice, SP = window.SoundPanel;
   var C = window.Core, DATA = window.Data, T = window.Trainings;
   var W = 360, H = 640;
   var $ = function (id) { return document.getElementById(id); };
@@ -248,6 +248,7 @@
     screen = name;
     SCREENS.forEach(function (id) { $(id).classList.toggle('on', id === name); });
     hideBubble();
+    SP.hide(); SP.fit();   // (the sound window closes; long titles make room for the 🔊 button)
     if (name !== 'play' && name !== 'stretch') releaseWake();
     if (QUIET[name] || (name === 'check' && check && check.stage === 'result')) S.stopMusic();
     else if (save.music) S.startMusic();
@@ -273,6 +274,7 @@
 
   window.addEventListener('popstate', function () {
     ['graph', 'buy', 'pass', 'parent', 'users', 'uedit'].forEach(hidePanel);
+    SP.hide();
     if (navTarget) {
       var tgt = navTarget; navTarget = null;
       if (run) stopRun();
@@ -648,6 +650,11 @@
     if (!run || run.state !== 'paused') return;
     run.state = run.prev || 'play';
     hidePanel('pause');
+  }
+  // While the sound window is open (js/sound-panel.js) the training waits, as when it is paused.
+  function holdRun(on) {
+    if (on) { if (run && !run.done && run.state !== 'paused') { run.held = run.state; run.state = 'paused'; } }
+    else if (run && run.held) { run.state = run.held; run.held = null; }
   }
   // End the session and remove its buttons.
   function stopRun() {
@@ -1719,6 +1726,17 @@
     $('btn-sfx').classList.toggle('off', !save.sfx);
     $('btn-music').classList.toggle('off', !save.music);
     $('btn-voice').classList.toggle('off', !save.voice);
+    SP.refresh();
+  }
+  // One kind of sound on or off, from the buttons on the title or from the sound window (the 🔊 on the other screens).
+  function setSound(kind, value) {
+    save[kind] = value;
+    if (kind === 'voice') V.set(value); else S.set(kind, value);
+    store(); refreshToggles();
+    if (kind === 'music') {
+      if (value && !QUIET[screen] && !(screen === 'check' && check && check.stage === 'result')) S.startMusic(); else S.stopMusic();
+    } else S.play('click');
+    if (kind === 'voice' && value) speak(L('ケロはかせが しゃべるよ！'));
   }
 
   function wire() {
@@ -1736,15 +1754,10 @@
     $('btn-tips').addEventListener('click', function () { S.play('click'); forward(function () { go('tips'); }); });
     $('st-end').addEventListener('click', back);
     $('btn-user').addEventListener('click', function () { if (save.users.length < 2) return; S.play('click'); forward(function () { go('who'); }); });
-    $('btn-sfx').addEventListener('click', function () { save.sfx = !save.sfx; S.set('sfx', save.sfx); store(); refreshToggles(); S.play('click'); });
-    $('btn-music').addEventListener('click', function () {
-      save.music = !save.music; S.set('music', save.music); store(); refreshToggles();
-      if (save.music) S.startMusic(); else S.stopMusic();
-    });
-    $('btn-voice').addEventListener('click', function () {
-      save.voice = !save.voice; V.set(save.voice); store(); refreshToggles(); S.play('click');
-      if (save.voice) speak(L('ケロはかせが しゃべるよ！'));
-    });
+    ['voice', 'sfx', 'music'].forEach(function (k) { $('btn-' + k).addEventListener('click', function () { setSound(k, !save[k]); }); });
+    SP.init(['voice', 'sfx', 'music'].map(function (k) {
+      return { id: k, label: { voice: 'こえ', sfx: 'こうかおん', music: 'おんがく' }[k], icon: k, get: function () { return save[k]; }, set: function (v) { setSound(k, v); } };
+    }), { icon: icon, click: function () { S.play('click'); }, onOpen: function () { holdRun(true); }, onClose: function () { holdRun(false); } });
 
     ['list-back', 'intro-back', 'stamps-back', 'records-back', 'shop-back', 'check-back', 'stretch-back', 'tips-back'].forEach(function (id) { $(id).addEventListener('click', back); });
     $('intro-start').addEventListener('click', function () {
@@ -1840,14 +1853,15 @@
   function step(dt) {
     clock += dt;
     hush = V.busy() ? 0 : hush + dt;
+    var hold = SP.isOpen();   // (what goes on by itself waits while the sound window is open; a training is held in holdRun)
     updateFx(dt);
     if (screen === 'play' && run) { updateRun(dt); if (run) drawRun(ctx); }
     else if (screen === 'title') { updateTitle(dt); drawBackground(4); drawTitle(ctx); }
-    else if (screen === 'result') { updateResult(dt); drawBackground(4); drawResult(ctx); }
-    else if (screen === 'check') { updateCheck(dt); drawBackground(2); drawCheck(ctx); }
+    else if (screen === 'result') { if (!hold) updateResult(dt); drawBackground(4); drawResult(ctx); }
+    else if (screen === 'check') { if (!hold) updateCheck(dt); drawBackground(2); drawCheck(ctx); }
     else if (screen === 'intro') { drawBackground(intro.tr ? catOf(intro.tr.id).theme : 0); drawIntroDemo(dt); }
     else if (screen === 'shop') { updateShop(dt); drawBackground(1); worldTransform(ctx); drawFx(ctx); }
-    else if (screen === 'stretch') { updateStretch(dt); drawBackground(4); drawStretch(ctx); }
+    else if (screen === 'stretch') { if (!hold) updateStretch(dt); drawBackground(4); drawStretch(ctx); }
     else drawBackground(screen === 'stamps' ? 5 : screen === 'records' ? 4 : screen === 'tips' ? 3 : 0);
     if (ov) drawOverlayCanvas(dt);
   }
