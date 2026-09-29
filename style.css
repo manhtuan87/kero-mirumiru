@@ -378,13 +378,15 @@ input { -webkit-user-select: text; user-select: text; touch-action: auto; }
 .graph-note { font-size: 14px; font-weight: 800; text-align: center; line-height: 1.4; min-height: 20px; }
 
 /* ---------- eye stretch ---------- */
+/* the instruction (1 to 3 lines) with the step dots right under it */
+.st-top { position: absolute; left: 16px; right: 16px; top: 74px; display: flex; flex-direction: column; align-items: center; gap: 7px; }
 .st-text {
-  position: absolute; left: 16px; right: 16px; top: 74px; min-height: 64px; padding: 10px 14px;
+  width: 100%; min-height: 58px; padding: 9px 14px;
   display: flex; align-items: center; justify-content: center; text-align: center;
-  font-size: 19px; font-weight: 800; line-height: 1.4; white-space: pre-line;
+  font-size: 18px; font-weight: 800; line-height: 1.38; white-space: pre-line;
   background: rgba(255, 255, 255, .92); border: 3px solid var(--ink); border-radius: 22px;
 }
-.st-dots { position: absolute; left: 0; right: 0; top: 150px; display: flex; justify-content: center; gap: 5px; }
+.st-dots { display: flex; justify-content: center; gap: 5px; }
 .st-dots i { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid var(--ink); background: #fff; }
 .st-dots i.on { background: #6cc6ff; }
 .st-end { position: absolute; left: 70px; right: 70px; top: 424px; }

@@ -260,15 +260,17 @@ Lang.add({
 
   // ---------------------------------------------------------------- the eye stretch
   'めの ストレッチ': ['Thể dục cho mắt', 'Eye Stretch', '눈 스트레칭'],
-  'めの ストレッチ、はじめるよ！ かおは うごかさないで、めだけで ほしを おいかけてね': ['Bắt đầu thể dục cho mắt nào! Giữ yên khuôn mặt, chỉ dùng mắt dõi theo ngôi sao nhé', "Let's start the eye stretch! Keep your face still and follow the star with just your eyes", '눈 스트레칭 시작! 얼굴은 움직이지 말고 눈으로만 별을 따라가'],
-  'うえ と した': ['Lên và xuống', 'Up and down', '위와 아래'],
+  'めの ストレッチ、はじめるよ！ ケロはかせと いっしょに やってみよう': ['Bắt đầu thể dục cho mắt nào! Cùng làm với Giáo sư Kero nhé', "Let's start the eye stretch! Do it together with Dr. Kero", '눈 스트레칭 시작! 케로 박사랑 같이 해 보자'],
+  'がめんから めを はなして、まどの そとの とおくを みよう。20びょう、じっと みてね': ['Rời mắt khỏi màn hình, nhìn thật xa ra ngoài cửa sổ nhé. Nhìn yên 20 giây nhé', 'Look away from the screen, far out of the window. Keep looking for 20 seconds', '화면에서 눈을 떼고 창밖 먼 곳을 보자. 20초 동안 가만히 봐'],
+  'はい、もどって きてね。つぎは まばたきを 3かい やろう': ['Được rồi, quay lại nào. Tiếp theo mình chớp mắt 3 lần nhé', "OK, come back! Now let's blink three times", '자, 돌아와. 다음은 눈 깜빡이기를 세 번 하자'],
+  'そっと とじて': ['Nhắm nhẹ', 'Close gently', '살짝 감고'],
+  'ぎゅっ': ['Nhắm chặt', 'Squeeze', '꼭'],
+  'ぱっ！': ['Mở ra!', 'Open!', '번쩍!'],
+  'かおは うごかさないで、めだけで ほしを ゆっくり おいかけてね。うえ と した': ['Giữ yên khuôn mặt, chỉ dùng mắt dõi theo ngôi sao thật chậm nhé. Lên và xuống', 'Keep your face still and slowly follow the star with just your eyes. Up and down', '얼굴은 움직이지 말고 눈으로만 별을 천천히 따라가. 위와 아래'],
   'みぎ と ひだり': ['Phải và trái', 'Right and left', '오른쪽과 왼쪽'],
-  'ななめ': ['Đường chéo', 'Corner to corner', '대각선'],
   'ぐるっと まわして': ['Xoay một vòng', 'Round and round', '빙글빙글 돌려'],
-  'ちかく と とおく': ['Gần và xa', 'Near and far', '가까이와 멀리'],
-  'ぎゅっと つぶって…… ぱっ！': ['Nhắm chặt mắt…… mở ra!', 'Squeeze your eyes shut… and open!', '꼭 감고…… 번쩍!'],
-  'てのひらで めを おおって、あったかく しよう': ['Lấy lòng bàn tay che mắt cho ấm nhé', 'Cover your eyes with your palms to warm them', '손바닥으로 눈을 덮어서 따뜻하게 하자'],
-  'おしまい！ めが すっきり したね': ['Xong rồi! Mắt thấy dễ chịu hẳn nhỉ', 'All done! Your eyes feel fresh!', '끝! 눈이 개운해졌지'],
+  'めを とじて、10びょう やすもう': ['Nhắm mắt lại, nghỉ 10 giây nhé', 'Close your eyes and rest for 10 seconds', '눈을 감고 10초 쉬자'],
+  'はい、めを あけて。おしまい！ めが すっきり したね': ['Mở mắt ra nào. Xong rồi! Mắt thấy dễ chịu hẳn nhỉ', 'Open your eyes. All done! Your eyes feel fresh!', '자, 눈을 떠. 끝! 눈이 개운해졌지'],
 
   // ---------------------------------------------------------------- the eye facts
   'めの まめちしき': ['Điều thú vị', 'Eye Facts', '눈 상식'],

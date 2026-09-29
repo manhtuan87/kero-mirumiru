@@ -156,21 +156,30 @@
     pause: 'ちょっと おやすみ'
   };
 
-  // The eye stretch: [what ケロはかせ says, how long (s), what the star does].
+  /* The eye stretch: [what ケロはかせ says first, how long the exercise then lasts (s), what happens] — about 1 min 50 s.
+     Built on what has evidence (2026-09-29, the user's choice):
+     - far: looking away from the screen at something far (6 m or more) for 20 s or more — 日本眼科医会「30分画面を見たら
+       1回は20秒以上遠くを見よう」, the American Academy of Ophthalmology's 20-20-20 rule. (A star growing on the screen does
+       not change the focus, so the old ちかく と とおく is gone.)
+     - blink: blinking exercises help dry eyes (clinical trials: close gently 2 s, squeeze 2 s, open) — 3 rounds here.
+     - updown / leftright / circle: moving the eyes has no proven effect on eyesight (AAO) and fast movements are advised
+       against by eye doctors, so they are slow (a sweep takes 5.2 s) and short, as a warm-up with the star.
+     - rest: the eyes closed for 10 s (palming has no evidence; closing the eyes is enough). */
   var STRETCH = [
-    ['めの ストレッチ、はじめるよ！ かおは うごかさないで、めだけで ほしを おいかけてね', 3.5, 'intro'],
-    ['うえ と した', 6, 'updown'],
-    ['みぎ と ひだり', 6, 'leftright'],
-    ['ななめ', 6, 'diagonal'],
-    ['ぐるっと まわして', 7, 'circle'],
-    ['ちかく と とおく', 7, 'nearfar'],
-    ['ぎゅっと つぶって…… ぱっ！', 5, 'blink'],
-    ['てのひらで めを おおって、あったかく しよう', 6, 'palm'],
-    ['おしまい！ めが すっきり したね', 3, 'end']
+    ['めの ストレッチ、はじめるよ！ ケロはかせと いっしょに やってみよう', 0.8, 'intro'],
+    ['がめんから めを はなして、まどの そとの とおくを みよう。20びょう、じっと みてね', 20, 'far'],
+    ['はい、もどって きてね。つぎは まばたきを 3かい やろう', 15, 'blink'],
+    ['かおは うごかさないで、めだけで ほしを ゆっくり おいかけてね。うえ と した', 10.4, 'updown'],
+    ['みぎ と ひだり', 10.4, 'leftright'],
+    ['ぐるっと まわして', 13.6, 'circle'],
+    ['めを とじて、10びょう やすもう', 10, 'rest'],
+    ['はい、めを あけて。おしまい！ めが すっきり したね', 1.5, 'end']
   ];
+  // what ケロはかせ says during the blinks (the eyes are shut, so the rhythm is heard): [seconds into each 5 s round, words]
+  var BLINK = [[0, 'そっと とじて'], [2, 'ぎゅっ'], [4, 'ぱっ！']];
 
   return {
     ANIMALS: ANIMALS, CATS: CATS, TRAININGS: TRAININGS, HARD_RANK: HARD_RANK, HARD_STAMPS: HARD_STAMPS,
-    CHECK: CHECK, LEVELS: LEVELS, PICS: PICS, TIPS: TIPS, LINES: LINES, STRETCH: STRETCH
+    CHECK: CHECK, LEVELS: LEVELS, PICS: PICS, TIPS: TIPS, LINES: LINES, STRETCH: STRETCH, BLINK: BLINK
   };
 }));

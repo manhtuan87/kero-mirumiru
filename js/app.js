@@ -1315,7 +1315,7 @@
     $('graph-note').textContent = L('いちばん いい きろく：{best}', { best: animalName(x.rank) + paren(resText(x.bt)) }) + '\n' + L('あそんだ かず：{n}かい', { n: x.plays });
   }
 
-  // ---------------------------------------------------------------- めの ストレッチ (the eye stretch, about a minute, no score)
+  // ---------------------------------------------------------------- めの ストレッチ (the eye stretch, about two minutes, no score)
 
   var stretch = null;
   function startStretch() {
@@ -1330,10 +1330,11 @@
     if (!st) return;
     st.i++; st.t = 0; st.w = 0; st.go = false;
     if (st.i >= DATA.STRETCH.length) { st.done = true; st.i = DATA.STRETCH.length - 1; $('st-end').hidden = false; return; }
-    var step = DATA.STRETCH[st.i];
+    var step = DATA.STRETCH[st.i], prev = st.i ? DATA.STRETCH[st.i - 1][2] : null;
     $('st-text').textContent = step[0];
     speak(step[0]);
-    if (step[2] === 'end') { confetti(40); S.play('fanfare'); } else S.play(st.i ? 'soft' : 'go');
+    // (after looking away or with the eyes shut, a clear chime says "back to the screen")
+    if (step[2] === 'end') { confetti(40); S.play('fanfare'); } else S.play(prev === 'far' || prev === 'rest' ? 'win' : st.i ? 'soft' : 'go');
     var h = '';
     for (var k = 0; k < DATA.STRETCH.length; k++) h += '<i class="' + (k <= st.i ? 'on' : '') + '"></i>';
     $('st-dots').innerHTML = h;
@@ -1347,41 +1348,68 @@
       if ((st.w >= 0.8 && quietFor(0.3)) || st.w >= 15) st.go = true;
       return;
     }
+    var step = DATA.STRETCH[st.i], before = st.t;
     st.t += dt;
-    if (st.t >= DATA.STRETCH[st.i][1]) nextStretch();
+    if (step[2] === 'blink') blinkCues(before, st.t);
+    // looking away / eyes shut: a soft tick for each of the last 3 seconds
+    var r0 = step[1] - before, r1 = step[1] - st.t;
+    if ((step[2] === 'far' || step[2] === 'rest') && r1 > 0 && r1 < 3 && Math.ceil(r0) !== Math.ceil(r1)) S.play('tick');
+    if (st.t >= step[1]) nextStretch();
   }
-  // where the star is (for the eyes to follow), and ケロはかせ's eyes
-  function stretchPose(kind, t) {
-    var cx = 180, cy = 318, o = { star: null, size: 16, eyes: 'open' };
+  // まばたき: rounds of 5 s — close gently (2 s), squeeze (2 s), open — each said aloud, as the eyes are shut
+  function blinkCues(a, b) {
+    var rounds = Math.round(DATA.STRETCH[stretch.i][1] / 5);
+    DATA.BLINK.forEach(function (cue) {
+      for (var k = 0; k < rounds; k++) {
+        var at = k * 5 + cue[0];
+        if (a <= at && at < b) { speak(L(cue[1])); addWord(L(cue[1]), 180, 300, cue[0] === 2 ? 50 : 40, cue[0] === 4 ? '#ffd23d' : '#ff8fc0', 1.3); }
+      }
+    });
+  }
+  // where the star is (for the eyes to follow), ケロはかせ's eyes, and the countdown while looking away.
+  // Before the exercise starts (go), everything waits in its first position.
+  var SWEEP = 5.2, ROUND = 6.8;   // seconds for one slow sweep up and down (or side to side), one round of the circle
+  function stretchPose(kind, t, go) {
+    var cx = 180, cy = 318, o = { star: null, size: 16, eyes: 'open', look: null, count: null };
     var wave = function (period) { return Math.sin(t * Math.PI * 2 / period); };
     if (kind === 'intro' || kind === 'end') o.star = { x: cx, y: cy };
-    else if (kind === 'updown') o.star = { x: cx, y: cy + wave(2.6) * 135 };
-    else if (kind === 'leftright') o.star = { x: cx + wave(2.6) * 140, y: cy };
-    else if (kind === 'diagonal') { var d = wave(2.6); o.star = Math.floor(t / 2.6) % 2 ? { x: cx + d * 120, y: cy + d * 120 } : { x: cx - d * 120, y: cy + d * 120 }; }
-    else if (kind === 'circle') { var a = (t < 3.5 ? 1 : -1) * t * Math.PI * 2 / 3.4; o.star = { x: cx + Math.cos(a) * 130, y: cy + Math.sin(a) * 128 }; }
-    else if (kind === 'nearfar') { var z = (1 - Math.cos(t * Math.PI * 2 / 3.4)) / 2; o.star = { x: cx, y: cy }; o.size = 8 + z * 64; }
-    else if (kind === 'blink') o.eyes = (t % 2.4) < 1.3 ? 'shut' : 'open';
-    else if (kind === 'palm') o.eyes = 'palm';
+    else if (kind === 'updown') o.star = { x: cx, y: cy + wave(SWEEP) * 118 };
+    else if (kind === 'leftright') o.star = { x: cx + wave(SWEEP) * 140, y: cy };
+    else if (kind === 'circle') { var a = (t < ROUND ? 1 : -1) * t * Math.PI * 2 / ROUND; o.star = { x: cx + Math.cos(a) * 128, y: cy + Math.sin(a) * 116 }; }
+    else if (kind === 'far') { o.look = { x: 260, y: -330 }; o.count = true; }
+    else if (kind === 'rest') { o.eyes = go ? 'shut' : 'open'; o.count = true; }
+    else if (kind === 'blink') o.eyes = go && (t % 5) < 4 ? 'shut' : 'open';
     return o;
+  }
+  // a ring that empties as the seconds go by, with the seconds left (and far-away hills when looking far)
+  function countdown(c, left, total, kind) {
+    var cx = 180, cy = 300, k = Math.max(0, Math.min(1, left / total));
+    D.circle(c, cx, cy, 94); D.paint(c, 'rgba(255,255,255,.6)', D.INK, 3);
+    c.save(); c.beginPath(); c.arc(cx, cy, 80, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2);
+    c.lineWidth = 14; c.lineCap = 'round'; c.strokeStyle = kind === 'far' ? '#6cc6ff' : '#b58cff'; c.stroke(); c.restore();
+    A.text(c, String(Math.max(0, Math.ceil(left - 1e-6))), cx, cy - 10, 66, '#fff', { lw: 11 });
+    if (kind === 'far') {
+      c.beginPath(); c.moveTo(cx - 46, cy + 58); c.lineTo(cx - 18, cy + 30); c.lineTo(cx + 2, cy + 48); c.lineTo(cx + 22, cy + 32); c.lineTo(cx + 48, cy + 58); c.closePath();
+      D.paint(c, '#8fd46a', D.INK, 2.5);
+      D.circle(c, cx + 34, cy + 30, 7); D.paint(c, '#ffd23d', D.INK, 2);
+    } else {
+      A.text(c, 'z z', cx + 2, cy + 46, 22, '#b58cff', { lw: 5 });
+    }
   }
   function drawStretch(c) {
     worldTransform(c);
     var st = stretch;
     if (!st) return;
-    var step = DATA.STRETCH[st.i], o = stretchPose(step[2], st.t);
+    var step = DATA.STRETCH[st.i], o = stretchPose(step[2], st.t, st.go);
     if (o.star) {
       D.circle(c, o.star.x, o.star.y, o.size * 1.7); D.paint(c, 'rgba(255,255,255,.35)');
       D.sparkle(c, o.star.x, o.star.y, o.size, '#ffd23d');
     }
-    var kx = 180, ky = 590;
+    if (o.count) countdown(c, step[1] - st.t, step[1], step[2]);
+    var kx = 180, ky = 590, look = o.look || (o.star ? { x: o.star.x - kx, y: o.star.y - (ky - 60) } : null);
     c.save(); c.translate(kx, ky); c.scale(1.05, 1.05);
-    D.critter(c, { x: 0, y: 0, t: clock, kind: 'frog', look: o.star ? { x: o.star.x - kx, y: o.star.y - (ky - 60) } : null,
+    D.critter(c, { x: 0, y: 0, t: clock, kind: 'frog', look: look,
       mode: step[2] === 'end' ? 'happy' : 'idle', mt: st.t, blink: o.eyes !== 'open', wear: A.hakase });
-    if (o.eyes === 'palm') {
-      // warm hands over the eyes
-      [-1, 1].forEach(function (sd) { D.ellipse(c, sd * 21, -26, 22, 17, sd * 0.3); D.paint(c, '#ffd8b5', D.INK, 3); });
-      D.circle(c, 0, -26, 58); D.paint(c, 'rgba(255,190,120,.18)');
-    }
     c.restore();
     drawFx(c);
   }

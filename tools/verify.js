@@ -283,8 +283,17 @@ run('football', (tr, p, lv, r) => {
 console.log('data');
 check(Data.TIPS.length === 48 && new Set(Data.TIPS).size === 48, '48 different eye facts');
 check(Data.ANIMALS.length === 7 && new Set(Data.ANIMALS.map(a => a.id)).size === 7, 'seven animals');
-check(Data.STRETCH.every(s => typeof s[0] === 'string' && s[1] > 1 && s[1] < 10), 'stretch steps');
-{ const total = Data.STRETCH.reduce((a, s) => a + s[1], 0); check(total >= 40 && total <= 75, 'the stretch takes about a minute (' + total + ' s)'); }
+check(Data.STRETCH.every(s => typeof s[0] === 'string' && s[1] > 0 && s[1] <= 20), 'stretch steps');
+{ // the evidence-based parts (see data.js): 20 s looking far, whole blink rounds of 5 s, slow sweeps, a rest with the eyes closed
+  const step = kind => Data.STRETCH.find(s => s[2] === kind);
+  check(step('far') && step('far')[1] >= 20, 'the stretch looks far away for 20 s or more');
+  check(step('blink') && step('blink')[1] % 5 === 0 && Data.BLINK.length === 3, 'the blinks come in rounds of 5 s');
+  check(['updown', 'leftright'].every(k => step(k) && Math.abs(step(k)[1] / 5.2 - Math.round(step(k)[1] / 5.2)) < 1e-9), 'the eye sweeps are whole slow sweeps');
+  check(step('rest') && step('rest')[1] >= 10, 'the eyes rest closed');
+  check(!Data.STRETCH.some(s => ['nearfar', 'palm', 'diagonal'].includes(s[2])), 'the steps without evidence are gone');
+  const total = Data.STRETCH.reduce((a, s) => a + s[1], 0);
+  check(total >= 75 && total <= 100, 'the exercises take about 1.5 minutes, plus what ケロはかせ says (' + total + ' s)');
+}
 check(Data.PICS.length >= 20 && new Set(Data.PICS.map(x => x.id)).size === Data.PICS.length, 'pictures');
 
 // ---------------------------------------------------------------- save data and rules
