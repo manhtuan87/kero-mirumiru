@@ -354,6 +354,7 @@ Lang.add({
   '管理者メニュー': ['Menu quản lý', 'Admin menu', '관리자 메뉴'],
   'ユーザー（かぞくモード）': ['Người chơi (chế độ gia đình)', 'Players (family mode)', '사용자 (가족 모드)'],
   'ユーザー': ['Người chơi', 'Players', '사용자'],
+  'ケロちゃん ランドと ぜんぶの ゲームで おなじ ユーザーだよ': ['Người chơi dùng chung cho Thế giới Kero và mọi trò chơi', 'The same players in Kero Land and every game', '케로 랜드와 모든 게임에서 같은 사용자예요'],
   'ユーザーを ふやす': ['Thêm người chơi', 'Add a player', '사용자 추가'],
   'ユーザーの せってい': ['Cài đặt người chơi', 'Player settings', '사용자 설정'],
   'なまえ': ['Tên', 'Name', '이름'],

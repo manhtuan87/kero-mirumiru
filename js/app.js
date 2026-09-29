@@ -29,6 +29,7 @@
   // ---------------------------------------------------------------- save data
 
   var save = C.load(LS || NOSTORE);
+  syncUsers();
   function store() { C.store(LS || NOSTORE, save); }
   function ud() { return C.udata(save); }
   function me() { return C.user(save); }
@@ -69,10 +70,25 @@
   function resKeep(x) { return x && typeof x === 'object' ? JSON.stringify(x) : (x || ''); }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
-  // The nickname set in ケロちゃん ランド (shared by every game on the site) stands in for the first user's name
-  // when that user has none of its own.
-  function landName() { try { return (localStorage.getItem('kero-name') || '').trim().slice(0, C.NAME_MAX); } catch (e) { return ''; } }
-  function nameOf(u) { return u.name || (u === save.users[0] ? landName() : ''); }
+  // The players are shared by every game on the site (js/accounts.js): chosen and edited in ケロちゃん ランド,
+  // and here too. This game keeps its records per player, under the shared ids.
+  function nameOf(u) { return u.name; }
+  // The players and the one playing now, from the shared list. The first time, this game's own players join it
+  // (the same name is the same player; see Accounts.adopt) and their records move to the shared ids.
+  function syncUsers() {
+    Accounts.reload();
+    if (!save.shared) {
+      var map = Accounts.adopt(save.users.map(function (u) { return { id: u.id, name: u.name, type: u.type, color: u.color }; }));
+      var data = {};
+      Object.keys(save.data).forEach(function (id) { if (map[id]) data[map[id]] = save.data[id]; });
+      save.data = data;
+      save.shared = true;
+    }
+    save.users = Accounts.list();
+    save.cur = Accounts.cur().id;
+    C.udata(save);   // (a new player starts with fresh records)
+    store();
+  }
   function initial(u) { var n = nameOf(u); return n ? n.charAt(0) : '★'; }
   function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* ignore */ } }
   function easeOut(k) { return 1 - Math.pow(1 - k, 3); }
@@ -367,7 +383,7 @@
       b.innerHTML = '<span class="udot" style="background:' + C.COLORS[u.color] + '">' + esc(initial(u)) + '</span>' +
         '<span>' + esc(nameOf(u) || L('なまえなし')) + '</span><small>' + L(u.type === 'adult' ? 'おとな' : 'こども') + '</small>';
       b.addEventListener('click', function () {
-        S.play('click'); save.cur = u.id; store();
+        S.play('click'); Accounts.setCur(u.id); syncUsers();
         if (history.state && history.state.miru) backTo('title'); else go('title');
       });
       list.appendChild(b);
@@ -1603,13 +1619,10 @@
   }
   function saveEdit() {
     var name = $('ue-name').value.trim().slice(0, C.NAME_MAX);
-    if (editing.id) {
-      save.users.forEach(function (u) { if (u.id === editing.id) { u.name = name; u.type = editing.type; u.color = editing.color; } });
-    } else {
-      var u = C.addUser(save, name, editing.type);
-      if (u) u.color = editing.color;
-    }
-    store();
+    // (the shared list: the change shows in ケロちゃん ランド and every game)
+    if (editing.id) Accounts.update(editing.id, { name: name, type: editing.type, color: editing.color });
+    else Accounts.add(name, editing.type, editing.color);
+    syncUsers();
     hidePanel('uedit');
     buildUsers(); showPanel('users');
     refreshTitle();
@@ -1786,7 +1799,7 @@
     $('ue-ok').addEventListener('click', function () { S.play('click'); saveEdit(); });
     $('ue-del').addEventListener('click', function () {
       if (!delArmed) { delArmed = true; $('ue-del').textContent = L('もう一度で けす'); return; }
-      C.removeUser(save, editing.id); store();
+      Accounts.remove(editing.id); syncUsers();
       hidePanel('uedit'); buildUsers(); showPanel('users'); refreshTitle();
     });
 
@@ -1849,7 +1862,13 @@
   makeStampImages();
   wire();
   history.replaceState({ root: 1 }, '');
-  if (save.users.length > 1) { go('who'); } else go('title');
+  go('title');   // (who plays is chosen in ケロちゃん ランド; the name on the title switches players)
+  // The players may have been changed in ケロちゃん ランド or another game meanwhile.
+  window.addEventListener('pageshow', function (e) { if (e.persisted && Accounts.changed()) location.reload(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden || !Accounts.changed()) return;
+    if (screen === 'title') { syncUsers(); refreshTitle(); } else if (screen === 'who') { syncUsers(); buildWho(); }
+  });
   requestAnimationFrame(frame);
 
   // Offline play and updates. sw.js keeps the game on the phone. A new version is looked for whenever
