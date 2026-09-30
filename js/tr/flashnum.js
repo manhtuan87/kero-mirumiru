@@ -1,7 +1,8 @@
 /* ぱっと すうじ (the original: 瞬間数字, 瞬間視) — a number shows for a blink, somewhere on the screen.
    What was it? Children pick it from four; grown-ups type it.
    おに: two numbers show at the same time, one in the top half and one in the bottom half; tell the top one,
-   then the bottom one. */
+   then the bottom one (the half asked now has a yellow frame, and the grown-ups' pad says うえ / した).
+   A number never comes twice in a run. */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
@@ -26,20 +27,22 @@
     while (out.length < k) out.push(String(+s + out.length + 1));
     return out;
   }
-  // One number to remember: { n, x, y, opts (four to pick from), ans (the right one of opts) }; not: a number to avoid.
-  function one(p, r, box, not) {
+  // One number to remember: { n, x, y, opts (four to pick from), ans (the right one of opts) }; used: the numbers of
+  // the run so far (not again)
+  function one(p, r, box, used) {
     var s = digits(r, p.len);
-    for (var t = 0; t < 20 && s === not; t++) s = digits(r, p.len);
+    for (var t = 0; t < 60 && used.indexOf(s) >= 0; t++) s = digits(r, p.len);
+    used.push(s);
     var opts = U.shuffle(r, [s].concat(lookalikes(r, s, 3)));
     return { n: s, x: BOX.x0 + r() * (BOX.x1 - BOX.x0), y: box.y0 + r() * (box.y1 - box.y0), opts: opts, ans: opts.indexOf(s) };
   }
 
   // p: { rounds, len (digits), show (s) }; おに: pair (two numbers a round: { pair: [top, bottom] })
   function gen(p, r) {
-    var out = [];
+    var out = [], used = [];
     for (var i = 0; i < p.rounds; i++) {
-      if (p.pair) { var top = one(p, r, HALVES[0]); out.push({ pair: [top, one(p, r, HALVES[1], top.n)] }); }
-      else out.push(one(p, r, BOX));
+      if (p.pair) { var top = one(p, r, HALVES[0], used); out.push({ pair: [top, one(p, r, HALVES[1], used)] }); }
+      else out.push(one(p, r, BOX, used));
     }
     return out;
   }
@@ -49,7 +52,11 @@
     var rounds = gen(p, api.rnd), ri = -1, phase = 'wait', pt = 0, right = 0, R = null, qi = 0, said = [], ch = null, pad = null;
     var total = rounds.length * (p.pair ? 2 : 1);
     function Q() { return R.pair ? R.pair[qi] : R; }   // (the number asked now)
-    if (p.adult) { pad = api.answerPad({ top: 390, show: true, expect: function () { return R ? +Q().n : 0; }, onAnswer: function (v) { answer(String(v)); } }); pad.enable(false); }
+    if (p.adult) {
+      pad = api.answerPad({ top: 390, show: true, expect: function () { return R ? +Q().n : 0; }, onAnswer: function (v) { answer(String(v)); },
+        label: function () { return R && R.pair ? L(qi ? 'した' : 'うえ') : ''; } });   // (おに: which of the two to type)
+      pad.enable(false);
+    }
 
     function startRound() {
       ri++;
@@ -69,6 +76,7 @@
       phase = 'ask'; pt = 0;
       api.timer(p.limit, timeUp);
       if (ch) { ch.remove(); ch = null; }
+      if (R.pair && qi) api.sfx('hop');   // (now the bottom one)
       if (pad) { pad.enable(true); return; }
       var q = Q();
       ch = api.choices(q.opts.map(function (s) { return { label: s, size: s.length > 2 ? 34 : 42 }; }), function (i) { answer(q.opts[i], i); },
@@ -81,7 +89,7 @@
       var sp = spot();
       api.ng(sp.x, sp.y, 46);
       if (ch) { ch.mark(Q().ans, 'hint'); ch.enable(false); }
-      if (pad) pad.enable(false);
+      if (pad) { pad.enable(false); pad.hint(null); }
       said[qi] = false;
       after(false);
     }
@@ -91,7 +99,8 @@
       var q = Q(), good = v === q.n, sp = spot();
       if (good) { right++; api.ok(sp.x, sp.y, 56); if (ch) ch.mark(i, 'ok'); }
       else { api.ng(sp.x, sp.y, 46); if (ch) { ch.mark(i, 'ng'); ch.mark(q.ans, 'hint'); } }
-      if (ch) ch.enable(false); if (pad) pad.enable(false);
+      if (ch) ch.enable(false);
+      if (pad) { pad.enable(false); pad.hint(null); }
       said[qi] = good;
       after(good);
     }
@@ -111,7 +120,7 @@
         if (phase === 'ready' && pt > 0.9) { phase = 'flash'; pt = 0; api.sfx('pop'); }
         else if (phase === 'flash' && pt > p.show) ask();
         else if (phase === 'between' && pt > (said[0] ? 0.55 : 1.2)) { qi = 1; ask(); }
-        else if (phase === 'ask' && p.practice && pt > 2.5 && ch) ch.hint(Q().ans);
+        else if (phase === 'ask' && p.practice && pt > 2.5) { if (ch) ch.hint(Q().ans); else if (pad && Q().n.length === 1) pad.hint(+Q().n); }
         else if ((phase === 'good' && pt > 1.0) || (phase === 'bad' && pt > 1.8)) startRound();
       },
       draw: function (c, clock) {
@@ -133,8 +142,12 @@
             A.text(c, L('？'), 180, 270, 70, '#fff', { lw: 12 });
           } else {
             A.text(c, L(qi === 0 ? 'うえの すうじは？' : 'したの すうじは？'), 180, 110, 24, '#fff', { lw: 7 });
-            if (qi === 1 || phase === 'between') { var t0 = R.pair[0]; A.text(c, t0.n, t0.x, t0.y, size(t0.n), said[0] ? '#ff8fc0' : '#6cc6ff', { lw: 8 }); }
-            if (phase === 'ask') A.text(c, L('？'), 180, qi ? 332 : 190, 60, '#fff', { lw: 11 });
+            if (phase === 'between') { var t0 = R.pair[0]; A.text(c, t0.n, t0.x, t0.y, size(t0.n), said[0] ? '#ff8fc0' : '#6cc6ff', { lw: 8 }); }
+            else {   // (the half asked now, in a yellow frame; the top one's answer is not left there when the bottom one is asked)
+              var hy = qi ? 332 : 190;
+              D.roundRect(c, 34, hy - 56, 292, 112, 18); D.paint(c, 'rgba(255,244,176,.5)', '#ffd23d', 5);
+              A.text(c, L('？'), 180, hy, 60, '#fff', { lw: 11 });
+            }
           }
         } else if (phase === 'good' || phase === 'bad') {
           (R.pair || [R]).forEach(function (q, k) {

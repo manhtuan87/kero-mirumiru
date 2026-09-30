@@ -750,7 +750,8 @@
   /* Number pad. Children tap the answer (0-10). Grown-ups type digits (phone layout);
      the answer is judged as soon as it has as many digits as the right answer (like the original's handwriting).
      o: { top, expect: function () -> the right answer, onAnswer: function (value), show: the digits typed so far
-     are shown above the keys (for answers of several digits) } */
+     are shown above the keys (for answers of several digits), label: function () -> a word shown before them
+     (which answer this is, when a training asks two: うえ / した) } */
   function makeAnswerPad(r, o) {
     var adult = !!r.params.adult, el = document.createElement('div'), btns = {}, bufEl = null;
     var pad = { buf: '', el: el, off: false };
@@ -761,6 +762,8 @@
       var want = String(o.expect()).length, cells = pad.buf.split('');
       while (cells.length < want) cells.push('–');
       bufEl.textContent = cells.join(' ');
+      var lab = o.label ? o.label() : '';
+      if (lab) { var tag = document.createElement('small'); tag.textContent = lab; bufEl.insertBefore(tag, bufEl.firstChild); }
     }
     function key(k) {
       if (!tapOk(r) || pad.off) return;

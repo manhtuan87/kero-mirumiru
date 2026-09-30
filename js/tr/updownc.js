@@ -4,7 +4,14 @@
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
-  var MID = 300;
+  var TOP = 126;   // (the white area where the Cs show starts under the words at the top)
+
+  // Where things go at a level: the star (mid) with the Cs spread above and below it, the white area around them
+  // (top to bottom: never over the words at the top, however far the Cs spread), and the answer buttons (at, h).
+  function layout(p) {
+    var m = p.size + 14, mid = Math.max(300, TOP + m + p.spread), bottom = mid + p.spread + m, at = Math.max(500, bottom + 8);
+    return { mid: mid, top: mid - p.spread - m, bottom: bottom, at: at, h: Math.min(86, 640 - 12 - at) };
+  }
 
   // p: { q, show (s), size, spread (how far up and down) }; おに: dirs: 8, near (share of the different pairs only 45° apart)
   // Half of the pairs are the same way (in a shuffled order), half are not.
@@ -21,6 +28,7 @@
   function start(api, p) {
     var D = G.Draw, A = G.Art, ring = p.dirs === 8 ? A.ringC8 : A.ringC;   // (おに: slantwise too)
     var qs = gen(p, api.rnd), qi = -1, Q = null, phase = 'wait', pt = 0, right = 0, ch = null;
+    var LY = layout(p), MID = LY.mid;
 
     function next() {
       qi++;
@@ -38,7 +46,7 @@
       phase = 'ask'; pt = 0;
       api.timer(p.limit, timeUp);
       ch = api.choices([{ label: L('おなじ'), size: 30 }, { label: L('ちがう'), size: 30 }], function (i) { answer(i === 0, i); },
-        { top: 500, h: 86, cols: 2, gap: 16, left: 26, right: 26 });
+        { top: LY.at, h: LY.h, cols: 2, gap: 16, left: 26, right: 26 });
     }
     function timeUp() {   // (no answer in time: the right one is shown)
       if (phase !== 'ask') return;
@@ -69,7 +77,7 @@
       },
       draw: function (c) {
         if (!Q) return;
-        D.roundRect(c, 20, MID - p.spread - 40, 320, p.spread * 2 + 80, 26); D.paint(c, 'rgba(255,255,255,.4)');
+        D.roundRect(c, 20, LY.top, 320, LY.bottom - LY.top, 26); D.paint(c, 'rgba(255,255,255,.4)');
         A.text(c, L(phase === 'ask' || phase === 'good' || phase === 'bad' ? 'おなじ むき だった？' : 'まんなかの ほしを みててね'), 180, 104, 21, '#fff', { lw: 6 });
         D.sparkle(c, 180, MID, 13 + Math.sin(pt * 8) * 2, '#ffd23d');
         if (phase === 'flash' || phase === 'good' || phase === 'bad') {
@@ -107,6 +115,7 @@
     },
     gen: gen,
     start: start,
+    layout: layout,
     icon: function (c, t) {
       var A = G.Art, D = G.Draw, on = Math.sin((t || 0) * 3) > -0.3;
       D.sparkle(c, 50, 52, 8, '#ffd23d');

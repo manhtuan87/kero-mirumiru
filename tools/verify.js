@@ -155,8 +155,10 @@ run('flashnum', (tr, p, lv, r) => {
       if (p.pair) check(x.x >= 70 && x.x <= 290 && (k === 0 ? x.y >= 150 && x.y <= 230 : x.y >= 290 && x.y <= 370), `flashnum ${lv} place of the ${k ? 'bottom' : 'top'} number`);
       else check(x.x >= 70 && x.x <= 290 && x.y >= 150 && x.y <= 370, `flashnum ${lv} place`);
     });
-    if (p.pair) check(R.pair[0].n !== R.pair[1].n || p.len === 1, `flashnum ${lv} the two numbers are the same`);
   });
+  // a number never comes twice in a run (the same number again looks as if the question had not changed)
+  const all = rs.flatMap(R => p.pair ? R.pair.map(x => x.n) : [R.n]);
+  check(new Set(all).size === all.length, `flashnum ${lv} the same number twice in a run`);
 });
 
 run('flashmark', (tr, p, lv, r) => {
@@ -186,23 +188,28 @@ run('triplec', (tr, p, lv, r) => {
 });
 
 const BOX_COUNT = { x0: 50, y0: 160, x1: 310, y1: 420 };
-let countcNear = 0, countcAll = 0;
+let countcClose = 0, countcSame = 0, countcAll = 0;
 run('countc', (tr, p, lv, r) => {
   const rs = tr.gen(p, r);
   check(rs.length === p.rounds, `countc ${lv} count`);
+  // several Cs at once (2026-09-30), a few times over
+  check(span(p.per)[0] >= 2 && p.waves >= 2, `countc ${lv}: Cs one at a time`);
   rs.forEach(x => {
-    check(x.cs.length === p.items, `countc ${lv} Cs`);
-    const n = x.cs.filter(c => c.dir === x.target).length, [a, b] = span(p.hits);
+    check(x.waves.length === p.waves && x.waves.every(w => w.length >= span(p.per)[0] && w.length <= span(p.per)[1]), `countc ${lv} Cs at once`);
+    const cs = x.waves.flat(), n = cs.filter(c => c.dir === x.target).length, [a, b] = span(p.hits);
     check(n === x.ans && n >= a && n <= b, `countc ${lv} answer`);
+    check(p.adult || x.ans <= 10, `countc ${lv} an answer over 10 (the children's pad ends at 10)`);
     const nd = p.dirs || 4;
-    if (p.near) check(x.cs.some(c => (c.dir - x.target + nd) % nd === 1 || (x.target - c.dir + nd) % nd === 1) || p.items - x.ans < 3, `countc ${lv} no C only a little turned`);
-    x.cs.forEach((c, i) => {
-      check(c.dir >= 0 && c.dir < nd && inBox(c, BOX_COUNT), `countc ${lv} C`);
-      if (i) { countcAll++; if (dist(c, x.cs[i - 1]) <= 90) countcNear++; }
-    });
+    if (p.near) check(cs.some(c => (c.dir - x.target + nd) % nd === 1 || (x.target - c.dir + nd) % nd === 1) || cs.length - x.ans < 3, `countc ${lv} no C only a little turned`);
+    x.waves.forEach((w, k) => w.forEach((c, i) => {
+      check(c.dir >= 0 && c.dir < nd && inBox(c, BOX_COUNT) && tr.fits(c, p), `countc ${lv} C out of its place`);
+      w.forEach((o, j) => { if (j > i) { countcAll++; if (dist(c, o) < 2 * p.size + 16) countcClose++; } });
+      if (k) x.waves[k - 1].forEach(o => { if (dist(c, o) < 1.5 * p.size) countcSame++; });
+    }));
   });
 });
-check(countcNear / countcAll < 0.002, `countc: a C often shows next to the one before (${countcNear} / ${countcAll})`);
+check(countcClose / countcAll < 0.001, `countc: Cs shown at once too close (${countcClose} / ${countcAll})`);
+check(countcSame / countcAll < 0.002, `countc: a C just where one was the time before (${countcSame} / ${countcAll})`);
 
 run('peric', (tr, p, lv, r) => {
   const qs = tr.gen(p, r);
@@ -223,6 +230,10 @@ run('updownc', (tr, p, lv, r) => {
   qs.forEach(q => check((q.a === q.b) === q.same && q.a >= 0 && q.a < (p.dirs || 4) && q.b >= 0 && q.b < (p.dirs || 4), `updownc ${lv} same / not the same`));
   check(!p.oni || p.dirs === 8, `updownc ${lv}: おに has the slantwise Cs`);
   check(qs.some(q => q.same) || qs.length < 5, `updownc ${lv} never the same`);
+  // the white area (and the Cs) under the words at the top (they end at about y 118), the buttons on the screen
+  const ly = tr.layout(p);
+  check(ly.top >= 124 && ly.mid - p.spread - p.size >= 132, `updownc ${lv} the Cs show over the words at the top`);
+  check(ly.mid + p.spread + p.size <= ly.at - 12 && ly.h >= 76 && ly.at + ly.h <= 630, `updownc ${lv} answer buttons`);
 });
 
 const BOX_QUICK = { x0: 50, y0: 150, x1: 310, y1: 560 };

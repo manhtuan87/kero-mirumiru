@@ -250,8 +250,13 @@ input { -webkit-user-select: text; user-select: text; touch-action: auto; }
 .kpad.adult .nkey { width: auto; height: 42px; font-size: 25px; border-radius: 13px; }
 .kpad.adult .nkey.del { font-size: 16px; }
 .kbuf {
-  grid-column: 1 / -1; height: 30px; display: flex; align-items: center; justify-content: center;
+  grid-column: 1 / -1; height: 30px; display: flex; align-items: center; justify-content: center; position: relative;
   font: 800 24px/1 var(--font); letter-spacing: 3px; background: #fff; border: 3px solid var(--ink); border-radius: 12px;
+}
+/* which answer is typed now (ぱっと すうじ おに: うえ / した) */
+.kbuf small {
+  position: absolute; left: 6px; top: 50%; transform: translateY(-50%); padding: 3px 8px;
+  font: 800 14px/1 var(--font); letter-spacing: 0; color: var(--ink); background: #ffd23d; border: 2px solid var(--ink); border-radius: 9px;
 }
 .nkey.hint, .cho.hint, .bigb.hint { animation: hintglow .8s ease-in-out infinite; }
 .nkey.shake, .cho.shake { animation: shake .25s 2; }

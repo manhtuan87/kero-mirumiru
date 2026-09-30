@@ -1,42 +1,59 @@
-/* かぞえて C (the original: カウントC, 眼球運動) — first a "C" to look for; then Cs open this way and that
-   pop up all over the screen, one after another. How many were open the same way as the first?
+/* かぞえて C (the original: カウントC, 眼球運動) — first a "C" to look for; then Cs open this way and that pop up
+   all over the screen, several at once, a few times over. How many were open the same way as the first, in all?
+   (Several at once since 2026-09-30: one at a time looked too easy.)
    おに: the Cs open slantwise too, and many are only a little turned from the one to count. */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var BOX = { x0: 50, y0: 160, x1: 310, y1: 420 };
+  var CORNER = { x: 318, y: 116, r: 28 };   // (the C to count, small in the corner while the others show)
 
-  // p: { rounds, items, hits: [a, b], show (s each), gap (s), size }; おに: dirs: 8, near (share of the others that are
-  // only 45° off the one to count)
+  // Where a C may show: under the words at the top, off the corner, above the number pad.
+  function fits(q, p) {
+    return q.y - p.size >= 134 && q.y + p.size <= (p.adult ? 440 : 462) &&
+      Math.hypot(q.x - CORNER.x, q.y - CORNER.y) > CORNER.r + p.size + 8;
+  }
+
+  // p: { rounds, waves (how many times Cs pop up), per: [a, b] (Cs at once), hits: [a, b] (the ones to count, in all),
+  // show (s each time), gap (s), size }; おに: dirs: 8, near (share of the others that are only 45° off the one to count)
   function gen(p, r) {
     var out = [], nd = p.dirs || 4;
     for (var i = 0; i < p.rounds; i++) {
-      var target = U.int(r, 0, nd - 1), hits = U.span(r, p.hits), dirs = [];
-      for (var k = 0; k < p.items; k++) {
+      var target = U.int(r, 0, nd - 1), per = [], total = 0, k;
+      for (k = 0; k < p.waves; k++) { per.push(U.span(r, p.per)); total += per[k]; }
+      var hits = Math.min(U.span(r, p.hits), total), dirs = [];
+      for (k = 0; k < total; k++) {
         if (k < hits) dirs.push(target);
         else if (p.near && (k === hits || r() < p.near)) dirs.push((target + (r() < 0.5 ? 1 : nd - 1)) % nd);   // (at least one)
         else { var d = U.int(r, 0, nd - 2); dirs.push(d >= target ? d + 1 : d); }
       }
       dirs = U.shuffle(r, dirs);
-      var last = null;
-      var cs = dirs.map(function (d) {
-        // each C somewhere new, not on top of the one before
-        var q;
-        for (var t = 0; t < 30; t++) {
-          q = { x: BOX.x0 + r() * (BOX.x1 - BOX.x0), y: BOX.y0 + r() * (BOX.y1 - BOX.y0) };
-          if (!last || Math.hypot(q.x - last.x, q.y - last.y) > 90) break;
+      var waves = [], at = 0, before = [];
+      per.forEach(function (n) {
+        var cs = [];
+        for (var j = 0; j < n; j++) {
+          // apart from the others of the same time, and not just where one was the time before
+          var best = { x: 180, y: 290 }, bestK = -1;
+          for (var t = 0; t < 80; t++) {
+            var q = { x: BOX.x0 + r() * (BOX.x1 - BOX.x0), y: BOX.y0 + r() * (BOX.y1 - BOX.y0) }, kk = 9;
+            if (!fits(q, p)) continue;
+            cs.forEach(function (o) { kk = Math.min(kk, Math.hypot(q.x - o.x, q.y - o.y) / (2 * p.size + 16)); });
+            before.forEach(function (o) { kk = Math.min(kk, Math.hypot(q.x - o.x, q.y - o.y) / (1.5 * p.size)); });
+            if (kk > bestK) { best = q; bestK = kk; }
+            if (kk >= 1) break;
+          }
+          cs.push({ x: best.x, y: best.y, dir: dirs[at++] });
         }
-        last = q;
-        return { x: q.x, y: q.y, dir: d };
+        waves.push(cs); before = cs;
       });
-      out.push({ target: target, cs: cs, ans: hits });
+      out.push({ target: target, waves: waves, ans: hits });
     }
     return out;
   }
 
   function start(api, p) {
     var D = G.Draw, A = G.Art, ring = p.dirs === 8 ? A.ringC8 : A.ringC;   // (おに: slantwise too)
-    var rounds = gen(p, api.rnd), ri = -1, phase = 'wait', pt = 0, right = 0, R = null, ci = 0;
+    var rounds = gen(p, api.rnd), ri = -1, phase = 'wait', pt = 0, right = 0, R = null, wi = 0;
     var pad = api.answerPad({ expect: function () { return R ? R.ans : 0; }, onAnswer: answer });
     pad.enable(false);
 
@@ -48,7 +65,7 @@
         api.finish({ score: right, acc: right / rounds.length, text: U.res.right(right, rounds.length) });
         return;
       }
-      R = rounds[ri]; ci = 0;
+      R = rounds[ri]; wi = 0;
       phase = 'target'; pt = 0;
       pad.enable(false);
       api.progress(ri, rounds.length);
@@ -76,10 +93,10 @@
       update: function (dt, playing) {
         pt += dt;
         if (!playing) return;
-        if (phase === 'target' && pt > 1.8) { phase = 'show'; pt = 0; ci = 0; api.sfx('pop'); }
+        if (phase === 'target' && pt > 1.8) { phase = 'show'; pt = 0; wi = 0; api.sfx('pop'); }
         else if (phase === 'show' && pt > p.show + p.gap) {
-          ci++; pt = 0;
-          if (ci >= R.cs.length) { phase = 'ask'; pad.enable(true); api.timer(p.limit, timeUp); } else api.sfx('pop');
+          wi++; pt = 0;
+          if (wi >= R.waves.length) { phase = 'ask'; pad.enable(true); api.timer(p.limit, timeUp); } else api.sfx('pop');
         } else if (phase === 'ask' && p.practice && pt > 3) pad.hint(R.ans);
         else if ((phase === 'good' && pt > 1.1) || (phase === 'bad' && pt > 1.9)) { pad.hint(null); startRound(); }
       },
@@ -93,10 +110,10 @@
           return;
         }
         // the C to count, small in the corner
-        A.disc(c, 318, 116, 28, '#fff4b0', 3);
-        ring(c, 318, 116, 18, R.target);
+        A.disc(c, CORNER.x, CORNER.y, CORNER.r, '#fff4b0', 3);
+        ring(c, CORNER.x, CORNER.y, 18, R.target);
         A.text(c, L(phase === 'ask' ? 'いくつ あった？' : 'おなじ むきは いくつ？'), 150, 116, 21, '#fff', { lw: 6, max: 230 });
-        if (phase === 'show' && pt < p.show) { var q = R.cs[ci]; ring(c, q.x, q.y, p.size, q.dir); }
+        if (phase === 'show' && pt < p.show) R.waves[wi].forEach(function (q) { ring(c, q.x, q.y, p.size, q.dir); });
         if (phase === 'good' || phase === 'bad') A.text(c, L('こたえは {n}', { n: R.ans }), 180, 290, 30, '#fff', { lw: 8 });
       },
       peek: function () { return phase === 'ask' ? { pad: R.ans } : null; },   // for playtesting
@@ -106,21 +123,21 @@
 
   T.register({
     id: 'countc', name: 'かぞえて C', orig: 'カウントC', kind: 'count',
-    help: 'さいしょに でた Cと おなじ むきの Cが\nいくつ でたか かぞえてね！',
+    help: 'Cが いっぺんに いくつも でるよ。\nさいしょの Cと おなじ むきの Cを\nぜんぶ かぞえてね！',
     oniHelp: 'ななめ むきの Cも でるよ。\nおなじ むきだけ かぞえてね！',
     levels: {
-      e: { rounds: 6, items: 5, hits: [1, 3], show: 0.9, gap: 0.25, size: 34, limit: 10 },
-      n: { rounds: 6, items: 7, hits: [2, 4], show: 0.7, gap: 0.2, size: 30, limit: 8 },
-      h: { rounds: 6, items: 9, hits: [2, 5], show: 0.5, gap: 0.15, size: 26, limit: 7 },
-      ae: { rounds: 6, items: 10, hits: [2, 5], show: 0.45, gap: 0.14, size: 24, limit: 7 },
-      a: { rounds: 6, items: 12, hits: [3, 6], show: 0.38, gap: 0.12, size: 22, limit: 6 },
-      ah: { rounds: 6, items: 15, hits: [4, 8], show: 0.3, gap: 0.1, size: 20, limit: 6 },
-      test: { rounds: 5, items: 7, hits: [2, 4], show: 0.6, gap: 0.2, size: 28, limit: 8 },
-      testA: { rounds: 5, items: 11, hits: [3, 6], show: 0.4, gap: 0.12, size: 22, limit: 6 },
-      practice: { rounds: 2, items: 4, hits: [1, 2], show: 1.1, gap: 0.3, size: 36 },
-      o: { rounds: 6, items: 10, hits: [2, 5], show: 0.5, gap: 0.15, size: 26, dirs: 8, near: 0.6, limit: 8 },
-      ao: { rounds: 6, items: 16, hits: [4, 8], show: 0.28, gap: 0.1, size: 20, dirs: 8, near: 0.6, limit: 7 },
-      practiceO: { rounds: 2, items: 4, hits: [1, 2], show: 1.1, gap: 0.3, size: 36, dirs: 8, near: 0.5 }
+      e: { rounds: 6, waves: 3, per: [2, 3], hits: [2, 4], show: 1.5, gap: 0.35, size: 32, limit: 10 },
+      n: { rounds: 6, waves: 3, per: [3, 4], hits: [3, 6], show: 1.3, gap: 0.3, size: 28, limit: 9 },
+      h: { rounds: 6, waves: 4, per: [3, 5], hits: [4, 8], show: 1.1, gap: 0.25, size: 25, limit: 8 },
+      ae: { rounds: 6, waves: 3, per: [4, 5], hits: [4, 7], show: 1.0, gap: 0.22, size: 24, limit: 8 },
+      a: { rounds: 6, waves: 4, per: [4, 6], hits: [5, 10], show: 0.85, gap: 0.2, size: 22, limit: 7 },
+      ah: { rounds: 6, waves: 4, per: [5, 7], hits: [6, 12], show: 0.7, gap: 0.18, size: 20, limit: 7 },
+      test: { rounds: 5, waves: 3, per: 3, hits: [2, 5], show: 1.2, gap: 0.3, size: 28, limit: 9 },
+      testA: { rounds: 5, waves: 3, per: [5, 6], hits: [4, 8], show: 0.85, gap: 0.2, size: 22, limit: 7 },
+      practice: { rounds: 2, waves: 2, per: 2, hits: [1, 2], show: 1.8, gap: 0.4, size: 34 },
+      o: { rounds: 6, waves: 3, per: [4, 5], hits: [3, 7], show: 1.2, gap: 0.25, size: 25, dirs: 8, near: 0.6, limit: 9 },
+      ao: { rounds: 6, waves: 4, per: [5, 6], hits: [5, 10], show: 0.8, gap: 0.2, size: 20, dirs: 8, near: 0.6, limit: 8 },
+      practiceO: { rounds: 2, waves: 2, per: 2, hits: [1, 2], show: 1.8, gap: 0.4, size: 34, dirs: 8, near: 0.5 }
     },
     ranks: {
       e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], o: [6, 5, 4, 3, 2, 1],
@@ -129,11 +146,14 @@
     },
     gen: gen,
     start: start,
+    fits: fits,
     icon: function (c, t) {
-      var A = G.Art, k = Math.floor((t || 0) * 2) % 4;
+      // the C to count in the corner; around it, three Cs at once, then three others
+      var A = G.Art, ph = ((t || 0) * 1.2) % 2, k = Math.floor(ph);
       A.disc(c, 30, 30, 21, '#fff4b0', 2.4);
       A.ringC(c, 30, 30, 14, 1);
-      [[70, 36, 1], [34, 74, 2], [74, 74, 1], [52, 52, 0]].forEach(function (q, i) { if (i === k) A.ringC(c, q[0], q[1], 15, q[2]); });
+      var sets = [[[72, 34, 1], [32, 76, 2], [74, 76, 1]], [[78, 32, 3], [50, 64, 1], [82, 80, 1]]];
+      if (ph - k < 0.8) sets[k].forEach(function (q) { A.ringC(c, q[0], q[1], 14, q[2]); });
     }
   });
 }(typeof Trainings !== 'undefined' ? Trainings : require('../trainings.js')));

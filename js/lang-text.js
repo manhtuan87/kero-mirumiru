@@ -93,7 +93,7 @@ Lang.add({
   'すうじが いっしゅんだけ でるよ。\nなんの すうじ だったか こたえてね！': ['Một con số hiện ra trong chớp mắt.\nĐó là số mấy nhỉ?', 'A number flashes for a moment.\nWhat number was it?', '숫자가 한순간만 나와.\n무슨 숫자였는지 맞혀 봐!'],
   'いろいろな マークが いっしゅん でるよ。\n○が あった ばしょを タッチしてね！': ['Nhiều hình hiện ra trong chớp mắt.\nChạm vào chỗ có hình tròn ○ nhé!', 'Lots of shapes flash for a moment.\nTap where the circle ○ was!', '여러 가지 모양이 한순간 나와.\n○가 있던 곳을 터치해!'],
   'いろいろな ばしょに「C」が でるよ。\nでた じゅんばんに、Cの あいてる ほう\n（↑ → ↓ ←）を こたえてね！': ['Chữ “C” hiện ra ở nhiều chỗ khác nhau.\nTheo đúng thứ tự, hãy chọn phía\nchữ C mở ra (↑ → ↓ ←) nhé!', 'A “C” pops up in different places.\nIn the same order, answer which way\neach C was open (↑ → ↓ ←)!', '여러 곳에 「C」가 나와.\n나온 순서대로 C가 열린 쪽\n(↑ → ↓ ←)을 골라 봐!'],
-  'さいしょに でた Cと おなじ むきの Cが\nいくつ でたか かぞえてね！': ['Đếm xem có bao nhiêu chữ C\nquay cùng hướng với chữ C đầu tiên nhé!', 'Count how many Cs face the same way\nas the first C!', '처음 나온 C와 같은 방향의 C가\n몇 개 나왔는지 세어 봐!'],
+  'Cが いっぺんに いくつも でるよ。\nさいしょの Cと おなじ むきの Cを\nぜんぶ かぞえてね！': ['Nhiều chữ C sẽ hiện ra cùng lúc.\nĐếm hết chữ C quay cùng hướng\nvới chữ C đầu tiên nhé!', 'Lots of Cs pop up at once.\nCount all the Cs that face\nthe same way as the first C!'],
   'まんなかの「C」と おなじ むきの Cを\nまわりから さがして タッチしてね！\nはやさを はかるよ': ['Tìm ở xung quanh chữ C quay cùng hướng\nvới chữ “C” ở giữa, rồi chạm vào nhé!\nCó bấm giờ đó', 'Find the C around the edge that faces\nthe same way as the “C” in the middle, and tap it!\nWe time how fast you are', '가운데 「C」와 같은 방향의 C를\n주변에서 찾아서 터치해!\n빠르기를 재'],
   'まんなかの ほしを みていてね。\nうえと したに「C」が いっしゅん でるよ。\nおなじ むきか ちがう むきか こたえてね！': ['Nhìn vào ngôi sao ở giữa nhé.\nHai chữ “C” hiện ra ở trên và dưới trong chớp mắt.\nChúng cùng hướng hay khác hướng?', 'Keep looking at the star in the middle.\nTwo “C”s flash at the top and bottom.\nDo they face the same way or not?', '가운데 별을 보고 있어.\n위와 아래에 「C」가 한순간 나와.\n같은 방향인지 다른 방향인지 맞혀 봐!'],
   'あちこちに しかくが でては きえるよ。\nきえる まえに すばやく タッチしてね！': ['Các ô vuông hiện ra rồi biến mất khắp nơi.\nChạm thật nhanh trước khi chúng biến mất nhé!', 'Squares pop up here and there and vanish.\nTap each one quickly before it is gone!', '여기저기 네모가 나왔다 사라져.\n사라지기 전에 빨리 터치해!'],
@@ -409,6 +409,8 @@ Lang.add({
   'すうじが 2つ ぱっと でるよ': ['Hai con số sắp hiện ra', 'Two numbers are coming'],
   'うえの すうじは？': ['Số ở trên là số mấy?', 'What was the top number?'],
   'したの すうじは？': ['Số ở dưới là số mấy?', 'What was the bottom number?'],
+  'うえ': ['Trên', 'Top'],
+  'した': ['Dưới', 'Bottom'],
   'きえる まえに タッチ！ ×は さわらないでね': ['Chạm trước khi biến mất! Đừng chạm ô ×', 'Tap before they vanish! Not the × ones'],
   'ミットを 2つ タッチ！': ['Chạm cả 2 cái găng!', 'Tap both mitts!'],
   'ボールは 2つ！ たかい ところで タッチ！': ['Có 2 quả bóng! Chạm khi bóng ở trên cao!', 'Two balls! Tap them up high!']
