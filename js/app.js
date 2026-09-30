@@ -274,6 +274,9 @@
 
   window.addEventListener('popstate', function () {
     ['graph', 'buy', 'pass', 'parent', 'users', 'uedit'].forEach(hidePanel);
+    // A stamp/unlock/practice-done card (or the "enough for today" card) waiting for a tap
+    // never got its own back-button handling, so it stayed on top of whatever screen came next.
+    if (ov || ovQueue.length) { ovQueue.length = 0; ov = null; hidePanel('overlay'); hidePanel('nudge'); }
     SP.hide();
     if (navTarget) {
       var tgt = navTarget; navTarget = null;
