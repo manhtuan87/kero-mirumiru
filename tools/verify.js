@@ -21,11 +21,15 @@ function check(ok, msg) {
   ngs[msg]++;
 }
 const RUNS = 300;
-function levelsOf(tr) { return Object.keys(tr.levels).filter(l => l !== 'practice'); }
+// (practice, practiceO and practiceAO are the practice runs of the levels, not levels of their own)
+function levelsOf(tr) { return Object.keys(tr.levels).filter(l => !/^practice/.test(l)); }
+const ONI = ['o', 'ao'];
 function params(tr, lv, practice) {
-  const p = Object.assign({}, tr.levels[lv]);
-  if (practice) Object.assign(p, tr.levels.practice || {}, { practice: true });
-  p.adult = ['ae', 'a', 'ah', 'testA'].indexOf(lv) >= 0;
+  const p = Object.assign({}, tr.levels[lv]), oni = ONI.includes(lv);
+  const pr = oni ? (lv === 'ao' && tr.levels.practiceAO) || tr.levels.practiceO : tr.levels.practice;
+  if (practice) Object.assign(p, pr || tr.levels.practice || {}, { practice: true });
+  p.adult = ['ae', 'a', 'ah', 'ao', 'testA'].indexOf(lv) >= 0;
+  p.oni = oni;
   return p;
 }
 function eachParams(tr, fn) {
@@ -55,6 +59,7 @@ check(Data.TRAININGS.filter(t => t.cat === 'sports').length === 7, 'seven sports
 }
 // the most a count training can score at a level
 function maxScore(tr, p) {
+  if (tr.id === 'flashnum' && p.pair) return p.rounds * 2;   // (おに: two numbers a round)
   if (['shuffle', 'rushcount', 'flashnum', 'flashmark', 'triplec', 'countc', 'basket'].includes(tr.id)) return p.rounds;
   if (tr.id === 'updownc') return p.q;
   return p.n;
@@ -63,7 +68,8 @@ T.list.forEach(tr => {
   check(['time', 'count'].includes(tr.kind), tr.id + ' kind');
   check(typeof tr.icon === 'function' && typeof tr.start === 'function' && typeof tr.gen === 'function', tr.id + ' icon, start and gen');
   check(typeof tr.name === 'string' && typeof tr.help === 'string' && tr.help.length > 10, tr.id + ' name and help');
-  ['e', 'n', 'h', 'ae', 'a', 'ah', 'practice'].forEach(lv => check(!!tr.levels[lv], tr.id + ' misses level ' + lv));
+  ['e', 'n', 'h', 'o', 'ae', 'a', 'ah', 'ao', 'practice', 'practiceO'].forEach(lv => check(!!tr.levels[lv], tr.id + ' misses level ' + lv));
+  check(typeof tr.oniHelp === 'string' && tr.oniHelp.length > 10, tr.id + ' needs the explanation of its おに');
   if (tr.sport) check(!!tr.levels.endless && tr.levels.endless.endless === true, tr.id + ' needs an endless level');
   Object.keys(tr.ranks).forEach(lv => {
     const c = tr.ranks[lv], test = lv === 'test' || lv === 'testA';
@@ -90,16 +96,26 @@ function run(id, fn) {
 }
 
 run('shuffle', (tr, p, lv, r) => {
-  const rs = tr.gen(p, r);
+  const rs = tr.gen(p, r), two = p.rows === 2, n = two ? 2 * p.cols : p.cups;
   check(rs.length === p.rounds, `shuffle ${lv} count`);
+  check(!p.oni || two, `shuffle ${lv}: おに has two rows`);
   rs.forEach(x => {
     let pos = x.start;
     const [a0, b0] = span(p.swaps);
     check(x.swaps.length >= a0 && x.swaps.length <= b0, `shuffle ${lv} swaps ${x.swaps.length}`);
-    x.swaps.forEach(([a, b]) => {
-      check(a !== b && a >= 0 && b >= 0 && a < p.cups && b < p.cups, `shuffle ${lv} bad swap ${a},${b}`);
-      if (pos === a) pos = b; else if (pos === b) pos = a;
+    x.swaps.forEach((sw, k) => {
+      check(sw.length === 2 || (two && p.double && sw.length === 4 && k > 0), `shuffle ${lv} two pairs at once only at おとな おに`);
+      if (sw.length === 4) check(new Set(sw).size === 4, `shuffle ${lv} two pairs at once share a cup`);
+      for (let q = 0; q < sw.length; q += 2) {
+        const a = sw[q], b = sw[q + 1];
+        check(a !== b && a >= 0 && b >= 0 && a < n && b < n, `shuffle ${lv} bad swap ${a},${b}`);
+        if (two) check(Math.abs(a % p.cols - b % p.cols) <= 1, `shuffle ${lv} two rows: a swap with a cup that is not next to it`);
+        if (pos === a) pos = b; else if (pos === b) pos = a;
+      }
+      const last = x.swaps[k - 1];
+      if (two && last) check(!(last[0] === sw[1] && last[1] === sw[0]) && !(last[0] === sw[0] && last[1] === sw[1]), `shuffle ${lv} straight back the way it came`);
     });
+    if (two) check(x.swaps.some(sw => Math.floor(sw[0] / p.cols) !== Math.floor(sw[1] / p.cols)) || x.swaps.length < 4, `shuffle ${lv} two rows but no swap between them`);
     check(pos === x.ans, `shuffle ${lv} answer`);
     check(x.swaps.some(([a, b]) => a === x.start || b === x.start), `shuffle ${lv} the chick's cup never moves`);
   });
@@ -116,19 +132,30 @@ run('rushcount', (tr, p, lv, r) => {
     if (p.letters) check(x.items.every(i => /^[A-Z]$/.test(i)), `rushcount ${lv} letters`);
     else check(x.items.every(i => ids.includes(i)), `rushcount ${lv} pictures`);
     check(x.dirs.every(d => d === 1 || d === -1), `rushcount ${lv} directions`);
-    if (!p.mix) check(x.dirs.every(d => d === -1), `rushcount ${lv} one way only`);
+    if (p.lanes === 2) {   // (おに: half in each lane, the top one to the right, the bottom one to the left)
+      check(x.lanes.filter(l => l === 0).length === Math.ceil(p.items / 2) && x.lanes.every(l => l === 0 || l === 1), `rushcount ${lv} two lanes`);
+      check(x.lanes.every((l, k) => x.dirs[k] === (l === 0 ? 1 : -1)), `rushcount ${lv} each lane has its own way`);
+    } else if (!p.mix) check(x.dirs.every(d => d === -1), `rushcount ${lv} one way only`);
+    check(!p.oni || p.lanes === 2, `rushcount ${lv}: おに has two lanes`);
   });
 });
 
 run('flashnum', (tr, p, lv, r) => {
   const rs = tr.gen(p, r);
   check(rs.length === p.rounds, `flashnum ${lv} count`);
-  rs.forEach(x => {
-    check(x.n.length === p.len && /^[1-9][0-9]*$/.test(x.n), `flashnum ${lv} number ${x.n}`);
-    check(x.opts.length === 4 && new Set(x.opts).size === 4 && x.opts[x.ans] === x.n, `flashnum ${lv} choices`);
-    check(x.opts.every(o => /^[1-9][0-9]*$/.test(o)), `flashnum ${lv} a choice starts with 0`);
-    check(x.opts.filter(o => o.length === p.len).length >= 3, `flashnum ${lv} choices of another length`);
-    check(x.x >= 70 && x.x <= 290 && x.y >= 150 && x.y <= 370, `flashnum ${lv} place`);
+  check(!p.oni || p.pair, `flashnum ${lv}: おに shows two numbers`);
+  rs.forEach(R => {
+    const qs = p.pair ? R.pair : [R];
+    check(qs.length === (p.pair ? 2 : 1), `flashnum ${lv} numbers a round`);
+    qs.forEach((x, k) => {
+      check(x.n.length === p.len && /^[1-9][0-9]*$/.test(x.n), `flashnum ${lv} number ${x.n}`);
+      check(x.opts.length === 4 && new Set(x.opts).size === 4 && x.opts[x.ans] === x.n, `flashnum ${lv} choices`);
+      check(x.opts.every(o => /^[1-9][0-9]*$/.test(o)), `flashnum ${lv} a choice starts with 0`);
+      check(x.opts.filter(o => o.length === p.len).length >= 3, `flashnum ${lv} choices of another length`);
+      if (p.pair) check(x.x >= 70 && x.x <= 290 && (k === 0 ? x.y >= 150 && x.y <= 230 : x.y >= 290 && x.y <= 370), `flashnum ${lv} place of the ${k ? 'bottom' : 'top'} number`);
+      else check(x.x >= 70 && x.x <= 290 && x.y >= 150 && x.y <= 370, `flashnum ${lv} place`);
+    });
+    if (p.pair) check(R.pair[0].n !== R.pair[1].n || p.len === 1, `flashnum ${lv} the two numbers are the same`);
   });
 });
 
@@ -139,6 +166,9 @@ run('flashmark', (tr, p, lv, r) => {
     const ks = Object.keys(x.marks).map(Number);
     check(ks.length === Math.min(p.fill, p.cols * p.rows) && ks.every(k => k >= 0 && k < p.cols * p.rows), `flashmark ${lv} marks`);
     check(x.marks[x.ans] === 'maru' && ks.filter(k => x.marks[k] === 'maru').length === 1, `flashmark ${lv} exactly one ○`);
+    const alike = ks.filter(k => /^cmaru[0-7]$|^nijumaru$/.test(x.marks[k])).length;
+    check(p.alike ? alike >= 1 : alike === 0, `flashmark ${lv} marks like ○ only (and always) at おに`);
+    check(ks.every(k => /^(maru|sankaku|shikaku|batsu|hoshi|cmaru[0-7]|nijumaru)$/.test(x.marks[k])), `flashmark ${lv} a mark nobody can draw`);
   });
 });
 
@@ -149,7 +179,7 @@ run('triplec', (tr, p, lv, r) => {
   rs.forEach(x => {
     check(x.cs.length === p.k, `triplec ${lv} Cs`);
     x.cs.forEach((a, i) => {
-      check(a.dir >= 0 && a.dir <= 3 && inBox(a, BOX_TRIPLE), `triplec ${lv} C`);
+      check(a.dir >= 0 && a.dir < (p.dirs || 4) && inBox(a, BOX_TRIPLE), `triplec ${lv} C`);
       x.cs.forEach((b, j) => { if (i < j) check(dist(a, b) >= 2 * p.size + 10, `triplec ${lv} Cs too close (${Math.round(dist(a, b))})`); });
     });
   });
@@ -164,8 +194,10 @@ run('countc', (tr, p, lv, r) => {
     check(x.cs.length === p.items, `countc ${lv} Cs`);
     const n = x.cs.filter(c => c.dir === x.target).length, [a, b] = span(p.hits);
     check(n === x.ans && n >= a && n <= b, `countc ${lv} answer`);
+    const nd = p.dirs || 4;
+    if (p.near) check(x.cs.some(c => (c.dir - x.target + nd) % nd === 1 || (x.target - c.dir + nd) % nd === 1) || p.items - x.ans < 3, `countc ${lv} no C only a little turned`);
     x.cs.forEach((c, i) => {
-      check(c.dir >= 0 && c.dir <= 3 && inBox(c, BOX_COUNT), `countc ${lv} C`);
+      check(c.dir >= 0 && c.dir < nd && inBox(c, BOX_COUNT), `countc ${lv} C`);
       if (i) { countcAll++; if (dist(c, x.cs[i - 1]) <= 90) countcNear++; }
     });
   });
@@ -188,7 +220,8 @@ run('peric', (tr, p, lv, r) => {
 run('updownc', (tr, p, lv, r) => {
   const qs = tr.gen(p, r);
   check(qs.length === p.q, `updownc ${lv} count`);
-  qs.forEach(q => check((q.a === q.b) === q.same && q.a >= 0 && q.a <= 3 && q.b >= 0 && q.b <= 3, `updownc ${lv} same / not the same`));
+  qs.forEach(q => check((q.a === q.b) === q.same && q.a >= 0 && q.a < (p.dirs || 4) && q.b >= 0 && q.b < (p.dirs || 4), `updownc ${lv} same / not the same`));
+  check(!p.oni || p.dirs === 8, `updownc ${lv}: おに has the slantwise Cs`);
   check(qs.some(q => q.same) || qs.length < 5, `updownc ${lv} never the same`);
 });
 
@@ -196,7 +229,10 @@ const BOX_QUICK = { x0: 50, y0: 150, x1: 310, y1: 560 };
 let quickClose = 0, quickPairs = 0;
 run('quicktouch', (tr, p, lv, r) => {
   const list = tr.gen(p, r);
-  check(list.length === p.n, `quicktouch ${lv} count`);
+  check(list.length === p.n + (p.bad || 0), `quicktouch ${lv} count`);
+  check(list.filter(a => a.bad).length === (p.bad || 0), `quicktouch ${lv} × squares`);
+  check(!list[0].bad && !list[1].bad && list.every((a, i) => !a.bad || !list[i - 1].bad), `quicktouch ${lv} a × square first, or two in a row`);
+  check(!p.oni || (p.bad > 0 && p.drift > 0), `quicktouch ${lv}: おに has × squares and moving squares`);
   list.forEach((a, i) => {
     check(inBox(a, BOX_QUICK) && a.life === p.life, `quicktouch ${lv} square`);
     if (i) check(a.at > list[i - 1].at, `quicktouch ${lv} order`);
@@ -218,6 +254,7 @@ run('baseball', (tr, p, lv, r) => {
   const ps = tr.gen(p, r);
   check(ps.length === p.n, `baseball ${lv} count`);
   ps.forEach(x => check(x.time >= p.time[0] * 0.95 - 1e-9 && x.time <= Math.max(p.time[0] * 1.05, p.time[1]) + 1e-9 && Math.abs(x.curve) <= (p.curve || 0), `baseball ${lv} pitch`));
+  ps.forEach(x => check((!x.vanish || p.vanish) && (!x.change || (p.change && (x.change === 1 || x.change === -1))), `baseball ${lv} a trick ball below おに`));
 });
 
 run('boxing', (tr, p, lv, r) => {
@@ -228,6 +265,7 @@ run('boxing', (tr, p, lv, r) => {
   as.forEach(a => {
     if (a.punch) { check(a.punch === 1 || a.punch === -1, `boxing ${lv} punch`); return; }
     check(a.spot >= 0 && a.spot < p.spots && a.spot !== last, `boxing ${lv} mitt spot`);
+    if (a.spot2 != null) check(p.twin && a.spot2 >= 0 && a.spot2 < p.spots && a.spot2 !== a.spot, `boxing ${lv} the second mitt`);
     last = a.spot;
   });
 });
@@ -236,6 +274,7 @@ run('pingpong', (tr, p, lv, r) => {
   const ss = tr.gen(p, r);
   check(ss.length === p.n, `pingpong ${lv} count`);
   ss.forEach(s => check(s.x1 >= 40 && s.x1 <= 320 && s.bounce > 0.5 && s.bounce < 0.75, `pingpong ${lv} shot`));
+  ss.forEach(s => check((s.speed === 1 || (p.smash && s.speed === 0.6)) && (s.x2 == null || (p.kink && s.x2 >= 60 && s.x2 <= 300 && Math.abs(s.x2 - s.x1) >= 60)), `pingpong ${lv} smash / turning ball`));
 });
 
 const BOX_BASKET = { x0: 60, y0: 200, x1: 300, y1: 500 };
@@ -244,6 +283,13 @@ run('basket', (tr, p, lv, r) => {
   check(rs.length === p.rounds, `basket ${lv} count`);
   rs.forEach(x => {
     check(x.pl.length === p.players && x.pl.filter(q => q.mate).length === p.mates, `basket ${lv} players`);
+    if (p.swaps) {   // (おに: each change of places is a teammate with a player of the other team)
+      check(x.pl.every(q => q.path && q.path.length === p.swaps + 1), `basket ${lv} changes of places`);
+      for (let k = 1; k <= p.swaps; k++) {
+        const moved = x.pl.filter(q => q.path[k].x !== q.path[k - 1].x || q.path[k].y !== q.path[k - 1].y);
+        check(moved.length === 2 && moved.filter(q => q.mate).length === 1, `basket ${lv} a change of places that is not a teammate with the other team`);
+      }
+    } else check(x.pl.every(q => !q.path), `basket ${lv} changes of places below おに`);
     x.pl.forEach((a, i) => {
       check(inBox(a, BOX_BASKET) && inBox({ x: a.x1, y: a.y1 }, BOX_BASKET), `basket ${lv} player off the court`);
       x.pl.forEach((b, j) => { if (i < j) check(dist(a, b) >= 60, `basket ${lv} players on top of each other`); });
@@ -269,6 +315,12 @@ run('soccer', (tr, p, lv, r) => {
     check(x.defs.every(d => distToLine(d, BALL, free) > 24), `soccer ${lv} the free teammate is blocked`);
     x.mates.forEach((m, k) => { if (k !== x.free) check(x.defs.some(d => distToLine(d, BALL, m) < 12), `soccer ${lv} a teammate nobody blocks`); });
     check(x.defs.length >= p.mates - 1, `soccer ${lv} defenders`);
+    if (x.shift) {   // (おに: after the defender moves, the old free teammate is blocked and the new one is free)
+      check(!!p.shift && x.shift.free !== x.free && x.shift.at >= 0.3 && x.shift.at <= 0.65, `soccer ${lv} the move`);
+      const after = x.defs.map((d, k) => k === x.shift.def ? x.shift.to : d);
+      check(after.every(d => distToLine(d, BALL, x.mates[x.shift.free]) >= 34), `soccer ${lv} after the move the new free teammate is blocked`);
+      check(distToLine(x.shift.to, BALL, free) < 12, `soccer ${lv} the moving defender does not block the old free teammate`);
+    }
   });
 });
 
@@ -277,6 +329,13 @@ run('football', (tr, p, lv, r) => {
   check(ws.reduce((a, w) => a + w.lanes.length, 0) === p.n, `football ${lv} rushers in all`);
   ws.forEach(w => check(w.lanes.length >= 1 && w.lanes.length <= 2 && new Set(w.lanes).size === w.lanes.length && w.lanes.every(l => l >= 0 && l <= 2) && w.gap > 0, `football ${lv} wave`));
   if (!p.two) check(ws.every(w => w.lanes.length === 1), `football ${lv} two at once at a level without them`);
+  ws.forEach(w => {
+    if (!w.zigs) { check(!p.zig, `football ${lv} no lane changes at おに`); return; }
+    check(w.zigs.length === w.lanes.length && w.zigAt.every(y => y >= 250 && y <= 320), `football ${lv} lane changes`);
+    const to = w.lanes.map((l, i) => l + w.zigs[i]);
+    check(to.every(l => l >= 0 && l <= 2) && w.zigs.every((z, i) => !z || w.lanes.indexOf(w.lanes[i] + z) < 0), `football ${lv} a lane change into a lane that is taken`);
+    check(new Set(to).size === to.length, `football ${lv} two rushers end in the same lane`);
+  });
 });
 
 // ---------------------------------------------------------------- data
@@ -391,6 +450,26 @@ console.log('save data');
   check(C.stampDays(C.udata(s2)).filter(x => x.big).length === 2, 'every 5th stamp is はなまる');
   const s3 = C.fresh(); s3.all = true;
   check(Data.TRAININGS.every(t => C.isOpen(s3, t.id) && C.hardOpen(s3, t.id)), 'the admin switch opens everything');
+  check(Data.TRAININGS.every(t => C.oniOpen(s3, t.id, 'o') && C.oniOpen(s3, t.id, 'ao')), 'the admin switch opens every おに');
+}
+{ // おに: ★3 at むずかしい (grown-ups: おとな むずかしい) opens it for that training; 20 stamps open all of them
+  const s4 = C.fresh(), hc = T.byId.shuffle.ranks.h;
+  check(!C.oniOpen(s4, 'shuffle', 'o') && !C.levelOpen(s4, 'shuffle', 'o') && C.levelOpen(s4, 'shuffle', 'e'), 'おに is closed at first');
+  const w2 = C.addRun(s4, { id: 'shuffle', level: 'h', kind: 'count', cuts: hc, score: 6, acc: 5 / 6, text: '', today: '2026-10-01' });
+  check(w2.stars === 2 && !C.oniOpen(s4, 'shuffle', 'o') && !w2.opened.oni.length, '★2 at むずかしい does not open おに');
+  const w3 = C.addRun(s4, { id: 'shuffle', level: 'h', kind: 'count', cuts: hc, score: 6, acc: 1, text: '', today: '2026-10-01' });
+  check(w3.stars === 3 && w3.opened.oni.length === 1 && w3.opened.oni[0].id === 'shuffle' && w3.opened.oni[0].lv === 'o' && C.oniOpen(s4, 'shuffle', 'o'), '★3 at むずかしい opens おに');
+  check(!C.oniOpen(s4, 'shuffle', 'ao') && !C.oniOpen(s4, 'flashnum', 'o'), 'only おに of that training (おとな おに waits for おとな むずかしい)');
+  const w4 = C.addRun(s4, { id: 'shuffle', level: 'ah', kind: 'count', cuts: T.byId.shuffle.ranks.ah, score: 6, acc: 1, text: '', today: '2026-10-01' });
+  check(w4.opened.oni.length === 1 && w4.opened.oni[0].lv === 'ao' && C.oniOpen(s4, 'shuffle', 'ao'), '★3 at おとな むずかしい opens おとな おに');
+  C.addRun(s4, { id: 'shuffle', level: 'o', kind: 'count', cuts: T.byId.shuffle.ranks.o, score: 4, acc: 4 / 6, text: '', today: '2026-10-01' });
+  const back4 = C.sanitize(JSON.parse(JSON.stringify(s4)));
+  check(back4.data.u1.rec.shuffle.o && back4.data.u1.rec.shuffle.o.best === 4, 'the records of おに survive a save');
+  const s5 = C.fresh();
+  for (let d = 1; d <= 19; d++) C.addRun(s5, { id: 'shuffle', level: 'e', kind: 'count', cuts: T.byId.shuffle.ranks.e, score: 1, text: '', today: '2026-11-' + String(d).padStart(2, '0') });
+  check(!C.oniOpen(s5, 'shuffle', 'o'), '19 stamps do not open おに');
+  const w5 = C.addRun(s5, { id: 'shuffle', level: 'e', kind: 'count', cuts: T.byId.shuffle.ranks.e, score: 1, text: '', today: '2026-11-20' });
+  check(Data.TRAININGS.every(t => C.oniOpen(s5, t.id, 'o') && C.oniOpen(s5, t.id, 'ao')) && w5.opened.oni.length === Data.TRAININGS.length * 2, '20 stamps open every おに');
 }
 
 Object.keys(ngs).filter(m => ngs[m] > 1).forEach(m => console.log(`  (${ngs[m]} times) ${m}`));

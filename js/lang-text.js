@@ -376,7 +376,42 @@ Lang.add({
   'パソコンでの確認中は 音も声も出しません（アドレスに ?sound=1 を付けると出ます）。': ['Khi kiểm tra trên máy tính, trò chơi không phát âm thanh hay giọng nói (thêm ?sound=1 vào địa chỉ để bật).', 'While testing on a computer there is no sound or voice (add ?sound=1 to the address to hear it).', '컴퓨터에서 확인할 때는 소리도 목소리도 나오지 않아요 (주소에 ?sound=1을 붙이면 나와요).'],
   'この ことばの こえ：スマホの 読み上げの 声が 見つかりました。': ['Giọng tiếng Việt: đã tìm thấy giọng đọc trên điện thoại.', "English voice: the phone's text-to-speech voice was found.", '한국어 목소리: 휴대폰의 음성 읽기 목소리를 찾았어요.'],
   'この ことばの こえ：スマホに 声が 見つかりません。Android の「設定 → システム → 言語と入力 → テキスト読み上げ」で この ことばの 音声データを 入れると しゃべります。': ['Giọng tiếng Việt: chưa tìm thấy giọng đọc trên điện thoại. Vào “Cài đặt → Hệ thống → Ngôn ngữ và phương thức nhập → Chuyển văn bản thành giọng nói” của Android, tải dữ liệu giọng tiếng Việt thì Giáo sư Kero sẽ nói.', 'English voice: no voice was found on the phone. Install the English voice data in Android “Settings → System → Languages & input → Text-to-speech output” and Dr. Kero will talk.', '한국어 목소리: 휴대폰에서 목소리를 찾지 못했어요. Android의 “설정 → 시스템 → 언어 및 입력 → 텍스트 음성 변환”에서 한국어 음성 데이터를 설치하면 말해요.'],
-  'この ことばの こえ：このブラウザでは 使えません。': ['Giọng tiếng Việt: trình duyệt này không hỗ trợ.', "English voice: this browser can't speak.", '한국어 목소리: 이 브라우저에서는 쓸 수 없어요.']
+  'この ことばの こえ：このブラウザでは 使えません。': ['Giọng tiếng Việt: trình duyệt này không hỗ trợ.', "English voice: this browser can't speak.", '한국어 목소리: 이 브라우저에서는 쓸 수 없어요.'],
+
+  // ---------------------------------------------------------------- おに (鬼モード, 2026-09-30; no Korean from here on)
+  'おに': ['Siêu khó', 'Super hard'],
+  'おとな おに': ['Người lớn · Siêu khó', 'Grown-up · Super hard'],
+  '「{level}」は「{from}」で ★3つか、スタンプ {n}こで あくよ': ['Mức “{level}” sẽ mở khi được ★3 ở mức “{from}”, hoặc có {n} con dấu', '“{level}” opens with ★3 at “{from}”, or with {n} stamps'],
+  '「おに」が あそべるよ！': ['Đã chơi được mức “Siêu khó”!', 'You can play “Super hard” now!'],
+  'ぜんぶの トレーニングで「おに」が えらべるよ': ['Giờ bài nào cũng chọn được mức “Siêu khó”', 'You can choose “Super hard” in every training'],
+  '「おに」で あそべるように なったよ！ ちょうせん してみてね': ['Giờ con chơi được mức “Siêu khó” rồi! Thử thách xem nào!', 'You can play “Super hard” now! Give it a try!'],
+  'おにを のりこえたね！ すごい！': ['Con vượt qua mức Siêu khó rồi! Giỏi quá!', 'You beat “Super hard”! Amazing!'],
+  'おにも へっちゃら だね！': ['Siêu khó cũng không làm khó được con!', '“Super hard” is no problem for you!'],
+  // the explanations of おに (their twists)
+  'コップが 2だんに なるよ。\nよこ・たて・ななめにも いれかわるよ！': ['Các cốc xếp thành 2 hàng.\nCốc đổi chỗ ngang, dọc và cả chéo nữa!', 'The cups stand in 2 rows.\nThey swap sideways, up and down, and slantwise too!'],
+  'うえと したの 2れつで いっしょに ながれるよ。\nりょうほう あわせて かぞえてね！': ['Hình bay vèo trên 2 hàng cùng lúc, trên và dưới.\nĐếm cả hai hàng cộng lại nhé!', 'Pictures zoom along 2 lanes at once, top and bottom.\nCount them all together!'],
+  'すうじが うえと したに 2つ でるよ。\nうえ、したの じゅんに こたえてね！': ['Có 2 con số hiện ra, một ở trên, một ở dưới.\nTrả lời số ở trên trước, rồi đến số ở dưới nhé!', 'Two numbers show, one at the top and one at the bottom.\nTell the top one first, then the bottom one!'],
+  '○に にた マークも まざるよ。\nほんとうの ○を さがしてね！': ['Có lẫn cả những hình trông giống ○.\nHãy tìm đúng hình ○ thật nhé!', 'Some marks look like ○.\nFind the real ○!'],
+  'ななめ むきの Cも でるよ。\n8つの やじるしから こたえてね！': ['Có cả chữ C mở chéo.\nChọn trong 8 mũi tên nhé!', 'Some Cs open slantwise.\nAnswer with the 8 arrows!'],
+  'ななめ むきの Cも でるよ。\nおなじ むきだけ かぞえてね！': ['Có cả chữ C mở chéo.\nChỉ đếm những chữ C cùng hướng thôi nhé!', 'Some Cs open slantwise.\nCount only the ones open the same way!'],
+  'ななめ むきの Cも まざるよ。\nおなじ むきを さがしてね！': ['Có lẫn cả chữ C mở chéo.\nHãy tìm chữ C cùng hướng nhé!', 'Slantwise Cs are mixed in.\nFind the one open the same way!'],
+  'ななめ むきの Cも でるよ。\nちょっとの ちがいも みのがさないでね！': ['Có cả chữ C mở chéo.\nKhác một chút thôi cũng đừng bỏ sót nhé!', 'Some Cs open slantwise.\nDon’t miss even a small difference!'],
+  'しかくが うごくよ。\n×の しかくは さわらないでね！': ['Các ô vuông sẽ di chuyển.\nĐừng chạm vào ô có dấu × nhé!', 'The squares move.\nDon’t tap the squares with a ×!'],
+  'タッチする たびに、\nパネルが 2まい いれかわるよ！': ['Mỗi lần con chạm,\n2 ô số sẽ đổi chỗ cho nhau!', 'Every time you tap one,\ntwo panels change places!'],
+  'とちゅうで きえる ボールや、\nはやさが かわる ボールが くるよ！': ['Sẽ có bóng biến mất giữa đường,\nvà cả bóng đổi tốc độ nữa!', 'Some balls vanish on the way,\nand some change speed!'],
+  'ミットが 2つ いっしょに でるよ。\nどっちも タッチしてね！': ['Có lúc 2 cái găng hiện ra cùng lúc.\nChạm vào cả hai nhé!', 'Sometimes two mitts come at once.\nTap both!'],
+  'すごく はやい スマッシュや、\nはねて まがる ボールが くるよ！': ['Sẽ có cú đập bóng rất nhanh,\nvà bóng nảy lên rồi đổi hướng!', 'Watch out for super fast smashes,\nand balls that turn when they bounce!'],
+  'かげに なった あと、せんしゅが いれかわるよ。\nめで おいかけてね！': ['Sau khi thành bóng đen, các cầu thủ sẽ đổi chỗ.\nDõi mắt theo nhé!', 'After they turn into shadows, players change places.\nFollow them with your eyes!'],
+  'ボールが 2つ あがるよ。\nどっちも スパイクしてね！': ['Có 2 quả bóng được tung lên.\nĐập cả hai quả nhé!', 'Two balls go up.\nSpike them both!'],
+  'パスの まえに あいてが うごくよ。\nさいごまで よく みてね！': ['Đối thủ sẽ di chuyển trước khi con chuyền.\nNhìn kỹ đến phút cuối nhé!', 'The other team moves before you pass.\nWatch carefully till the end!'],
+  'とちゅうで みちを かえる あいてが いるよ。\nよく みて よけてね！': ['Có đối thủ đổi đường chạy giữa chừng.\nNhìn kỹ rồi né nhé!', 'Some players change lanes on the way.\nWatch and dodge!'],
+  // new words inside the trainings
+  'すうじが 2つ ぱっと でるよ': ['Hai con số sắp hiện ra', 'Two numbers are coming'],
+  'うえの すうじは？': ['Số ở trên là số mấy?', 'What was the top number?'],
+  'したの すうじは？': ['Số ở dưới là số mấy?', 'What was the bottom number?'],
+  'きえる まえに タッチ！ ×は さわらないでね': ['Chạm trước khi biến mất! Đừng chạm ô ×', 'Tap before they vanish! Not the × ones'],
+  'ミットを 2つ タッチ！': ['Chạm cả 2 cái găng!', 'Tap both mitts!'],
+  'ボールは 2つ！ たかい ところで タッチ！': ['Có 2 quả bóng! Chạm khi bóng ở trên cao!', 'Two balls! Tap them up high!']
 });
 
 // The big title, one line per row (each letter hops on its own).

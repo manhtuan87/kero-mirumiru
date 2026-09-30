@@ -47,6 +47,26 @@ const HELP_READ = {
   soccer: '赤い相手が、邪魔をしているよ。邪魔されていない、緑の味方へ、ボールから指をスライドして、パス！',
   football: 'ボールを持って走るよ。相手が突っ込んでくるから、左か右をタッチして、よけてね！'
 };
+// おに: the twist of each training, said when おに is chosen
+const ONI_HELP_READ = {
+  shuffle: 'コップが、2段になるよ。横、縦、斜めにも、入れ替わるよ！',
+  rushcount: '上と下の、2列で、一緒に流れるよ。両方合わせて、数えてね！',
+  flashnum: '数字が、上と下に、2つ出るよ。上、下の順に、答えてね！',
+  flashmark: '丸に似たマークも、混ざるよ。本当の丸を、探してね！',
+  triplec: '斜め向きのシーも、出るよ。8つの矢印から、答えてね！',
+  countc: '斜め向きのシーも、出るよ。同じ向きだけ、数えてね！',
+  peric: '斜め向きのシーも、混ざるよ。同じ向きを、探してね！',
+  updownc: '斜め向きのシーも、出るよ。ちょっとの違いも、見逃さないでね！',
+  quicktouch: '四角が動くよ。バツの四角は、触らないでね！',
+  numtouch: 'タッチするたびに、パネルが2枚、入れ替わるよ！',
+  baseball: '途中で消えるボールや、速さが変わるボールが、来るよ！',
+  boxing: 'ミットが2つ、一緒に出るよ。どっちもタッチしてね！',
+  pingpong: 'すごく速いスマッシュや、跳ねて曲がるボールが、来るよ！',
+  basket: '影になった後、選手が入れ替わるよ。目で追いかけてね！',
+  volley: 'ボールが2つ上がるよ。どっちもスパイクしてね！',
+  soccer: 'パスの前に、相手が動くよ。最後までよく見てね！',
+  football: '途中で道を変える相手が、いるよ。よく見て、よけてね！'
+};
 const ANIMAL_READ = { もぐら: 'モグラ', いぬ: '犬', ねこ: '猫', ふくろう: 'フクロウ', カメレオン: 'カメレオン', トンボ: 'トンボ', わし: 'ワシ' };
 const CHECK_READ = {
   dotai: '動くものを見るのが、得意だね！', shunkan: '一瞬で見るのが、得意だね！', gankyu: '目を動かすのが、得意だね！',
@@ -127,6 +147,9 @@ add(L.checkFirst, 'まずは、今日の目チェックから、やってみる�
 add(L.enough, '今日はたくさん頑張ったね！ 目を休めて、続きはまた明日！');
 add(L.newTraining, '新しいトレーニングが、増えたよ！');
 add(L.newHard, '「難しい」で、遊べるようになったよ！');
+add(L.newOni, '「鬼」で、遊べるようになったよ！ 挑戦してみてね。');
+add(L.oniGood[0], '鬼を、乗り越えたね！ すごい！');
+add(L.oniGood[1], '鬼も、へっちゃらだね！');
 add(L.practiceDone, '上手！ 今度は、本当にやってみよう！');
 add(L.tip, '今日の、目の豆知識！');
 add(L.record, '新記録！ すごい！');
@@ -152,6 +175,7 @@ add('はなまる スタンプ！', 'はなまるスタンプ！');
 // training names (new training cards) and how to play them
 T.list.forEach(tr => add(tr.name, TRAINING_READ[tr.id]));
 T.list.forEach(tr => add(tr.help, HELP_READ[tr.id]));
+T.list.forEach(tr => { if (tr.oniHelp) add(tr.oniHelp, ONI_HELP_READ[tr.id]); });
 
 // ---------------------------------------------------------------- the daily eye check
 add('きょうの めチェック！ 5つの テストを するよ', '今日の、目チェック！ 五つのテストをするよ。');

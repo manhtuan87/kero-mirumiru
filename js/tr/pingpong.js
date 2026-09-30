@@ -1,16 +1,21 @@
 /* たっきゅう (the original sports training: 卓球 — 動体視力, 眼球運動, 眼と手の協応) — the ball comes over the
    net, bounces, and flies towards you: tap the ball as it reaches your end to hit it back. Keep the rally going.
-   p.endless: きろくに ちょうせん, until three misses, getting faster. */
+   p.endless: きろくに ちょうせん, until three misses, getting faster.
+   おに: smashes (much faster) and balls that turn aside when they bounce. */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var TOP = 150, NET = 330, BOT = 510, ZONE = [455, 545];
 
-  // p: { n (returns to make), time (s from the far end to you), spread (how far left and right it lands) }
+  // p: { n (returns to make), time (s from the far end to you), spread (how far left and right it lands) };
+  // おに: smash (chance of a smash: 0.6 of the time), kink (chance of a ball that turns aside at the bounce)
   function gen(p, r, count) {
     var out = [];
     for (var i = 0; i < (count || p.n); i++) {
-      out.push({ x0: 180 + (r() - 0.5) * 120, x1: 180 + (r() - 0.5) * p.spread * 2, bounce: 0.55 + r() * 0.15, spin: (r() - 0.5) * p.spin });
+      var x = { x0: 180 + (r() - 0.5) * 120, x1: 180 + (r() - 0.5) * p.spread * 2, bounce: 0.55 + r() * 0.15, spin: (r() - 0.5) * p.spin, speed: 1 };
+      if (p.smash && i > 0 && r() < p.smash) x.speed = 0.6;
+      if (p.kink && r() < p.kink) x.x2 = Math.max(60, Math.min(300, x.x1 + (x.x1 > 180 ? -1 : 1) * (80 + r() * 50)));
+      out.push(x);
     }
     return out;
   }
@@ -20,7 +25,7 @@
     var shots = gen(p, api.rnd, p.endless ? 400 : p.n), si = -1, S0 = null, phase = 'wait', pt = 0, bt = 0;
     var hits = 0, misses = 0, tries = 0, back = null, word = '', wordT = 0;
 
-    function dur() { return p.time * (p.endless ? Math.max(0.5, 1 - hits * 0.01) : 1); }
+    function dur() { return p.time * (p.endless ? Math.max(0.5, 1 - hits * 0.01) : 1) * (S0 && S0.speed || 1); }
     function next() {
       si++;
       api.hand(null);
@@ -34,6 +39,10 @@
     // where the ball is: k 0 (the far end) .. 1 (your end) and beyond; it bounces once on your side
     function ballAt(k) {
       var y = TOP + (BOT - TOP) * k, x = S0.x0 + (S0.x1 - S0.x0) * k + Math.sin(k * Math.PI) * S0.spin;
+      if (S0.x2 != null && k > S0.bounce) {   // (おに: after the bounce it heads somewhere else)
+        var xb = S0.x0 + (S0.x1 - S0.x0) * S0.bounce + Math.sin(S0.bounce * Math.PI) * S0.spin;
+        x = xb + (S0.x2 - xb) * (k - S0.bounce) / (1 - S0.bounce);
+      }
       var hgt = k < S0.bounce ? Math.sin(k / S0.bounce * Math.PI) * 60 : Math.sin((k - S0.bounce) / (1.25 - S0.bounce) * Math.PI) * 45;
       return { x: x, y: y, h: Math.max(0, hgt), r: 8 + 6 * k };
     }
@@ -77,6 +86,10 @@
         if (phase === 'come') {
           var b = ballAt(bt / dur());
           D.ellipse(c, b.x, b.y, b.r * 0.9, b.r * 0.35); D.paint(c, 'rgba(0,0,0,.2)');
+          if (S0.speed < 1) {   // (a smash: a streak behind the ball)
+            var b2 = ballAt(Math.max(0, bt / dur() - 0.08));
+            c.save(); c.globalAlpha = 0.45; D.circle(c, b2.x, b2.y - b2.h, b.r * 0.8); D.paint(c, '#ffd9a0'); c.restore();
+          }
           D.circle(c, b.x, b.y - b.h, b.r); D.paint(c, '#fff6e0', D.INK, 2.2);
         }
         if (back && back.t < 0.5) {
@@ -109,6 +122,7 @@
   T.register({
     id: 'pingpong', name: 'たっきゅう', orig: '卓球', kind: 'count', sport: true,
     help: 'あいてが うった ボールが とんで くるよ。\nてまえに きた ボールを タッチして\nうちかえそう！ ラリーを つづけてね',
+    oniHelp: 'すごく はやい スマッシュや、\nはねて まがる ボールが くるよ！',
     levels: {
       e: { n: 15, time: 1.7, spread: 50, spin: 0 },
       n: { n: 20, time: 1.3, spread: 80, spin: 20 },
@@ -117,9 +131,15 @@
       a: { n: 24, time: 0.82, spread: 120, spin: 55 },
       ah: { n: 28, time: 0.7, spread: 130, spin: 70 },
       endless: { n: 20, time: 1.35, spread: 90, spin: 25, endless: true },
-      practice: { n: 4, time: 2.0, spread: 30, spin: 0 }
+      practice: { n: 4, time: 2.0, spread: 30, spin: 0 },
+      o: { n: 20, time: 1.0, spread: 110, spin: 40, smash: 0.25, kink: 0.35 },
+      ao: { n: 28, time: 0.72, spread: 130, spin: 70, smash: 0.3, kink: 0.45 },
+      practiceO: { n: 4, time: 2.0, spread: 30, spin: 0, smash: 0, kink: 1 }
     },
-    ranks: { e: [15, 14, 12, 10, 7, 4], n: [20, 19, 17, 14, 10, 6], h: [20, 18, 16, 13, 9, 5], ae: [20, 18, 16, 13, 9, 5], a: [24, 22, 19, 15, 11, 6], ah: [28, 26, 22, 17, 12, 7] },
+    ranks: {
+      e: [15, 14, 12, 10, 7, 4], n: [20, 19, 17, 14, 10, 6], h: [20, 18, 16, 13, 9, 5], o: [20, 18, 16, 13, 9, 5],
+      ae: [20, 18, 16, 13, 9, 5], a: [24, 22, 19, 15, 11, 6], ah: [28, 26, 22, 17, 12, 7], ao: [28, 26, 22, 17, 12, 7]
+    },
     gen: gen,
     start: start,
     icon: function (c, t) {

@@ -1,12 +1,14 @@
 /* バレー (the original sports training: バレー — 眼球運動, 周辺視野) — your teammate tosses the ball up by the
    net. Tap the ball while it is high up (in the band) to spike it into the other court.
-   p.endless: きろくに ちょうせん, until three misses. */
+   p.endless: きろくに ちょうせん, until three misses.
+   おに: two balls go up one just after the other — spike both. */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var FLOOR = 540, NET_X = 250, BAND = [170, 250];
 
-  // p: { n (tosses), time (s up and down), spread (how far the tosses vary) }
+  // p: { n (tosses), time (s up and down), spread (how far the tosses vary) };
+  // おに: lag (the second ball of a pair goes up when the first has done this much of its way)
   function gen(p, r, count) {
     var out = [];
     for (var i = 0; i < (count || p.n); i++) {
@@ -17,25 +19,30 @@
 
   function start(api, p) {
     var D = G.Draw, A = G.Art;
-    var tosses = gen(p, api.rnd, p.endless ? 300 : p.n), ti = -1, X = null, phase = 'wait', pt = 0, bt = 0;
-    var hits = 0, misses = 0, tries = 0, spike = null, word = '', wordT = 0;
+    var tosses = gen(p, api.rnd, p.endless ? 300 : p.n), ti = 0, phase = 'wait', pt = 0;
+    var hits = 0, misses = 0, tries = 0, spikes = [], word = '', wordT = 0, balls = [];
+    var perSet = p.lag != null ? 2 : 1;
 
-    function dur() { return X.time * (p.endless ? Math.max(0.55, 1 - hits * 0.012) : 1); }
+    function dur(b) { return b.X.time * (p.endless ? Math.max(0.55, 1 - hits * 0.012) : 1); }
     function next() {
-      ti++;
       api.hand(null);
       if (p.endless ? misses >= 3 : tries >= p.n) {
         phase = 'end';
         api.finish({ score: hits, acc: hits / p.n, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 600 });
         return;
       }
-      X = tosses[ti % tosses.length]; phase = 'set'; pt = 0; bt = 0; spike = null;
+      // one ball, or (おに) two: the second goes up when the first is part of its way
+      balls = [];
+      for (var k = 0; k < perSet && (p.endless || ti < p.n); k++) balls.push({ X: tosses[ti++ % tosses.length], bt: 0, state: 'wait', start: 0 });
+      if (balls[1]) balls[1].start = p.lag * dur(balls[0]);
+      phase = 'set'; pt = 0;
     }
-    // the tossed ball: from the setter's hands up to its top and down again (k 0 .. 1)
-    function ballAt(k) {
-      var x = X.x0 + (X.x1 - X.x0) * k, start = 470;
-      return { x: x, y: start - (start - X.top) * (1 - Math.pow(2 * k - 1, 2)) };
+    // a tossed ball: from the setter's hands up to its top and down again (k 0 .. 1)
+    function ballAt(b, k) {
+      var x = b.X.x0 + (b.X.x1 - b.X.x0) * k, start = 470;
+      return { x: x, y: start - (start - b.X.top) * (1 - Math.pow(2 * k - 1, 2)) };
     }
+    function inBand(b, m) { var k = b.bt / dur(b), q = ballAt(b, k); return k > 0.2 && q.y >= BAND[0] - m && q.y <= BAND[1] + m; }
     function done(ok) {
       tries++;
       if (ok) { hits++; api.sfx('ok'); } else misses++;
@@ -48,14 +55,22 @@
       begin: next,
       update: function (dt, playing) {
         pt += dt; wordT = Math.max(0, wordT - dt);
-        if (spike) spike.t += dt;
+        spikes.forEach(function (s) { s.t += dt; });
         if (!playing) return;
-        if (phase === 'set' && pt > 0.5) { phase = 'toss'; pt = 0; bt = 0; api.sfx('pop'); }
+        if (phase === 'set' && pt > 0.5) { phase = 'toss'; pt = 0; }
         else if (phase === 'toss') {
-          bt += dt;
-          var k = bt / dur(), b = ballAt(k);
-          if (p.practice) { if (b.y > BAND[0] && b.y < BAND[1] && k > 0.2) api.hand(b.x + 8, b.y + 10); else api.hand(null); }
-          if (k > 1) { done(false); phase = 'after'; pt = 0; api.sfx('ng'); }
+          balls.forEach(function (b) {
+            if (b.state === 'wait' && pt >= b.start) { b.state = 'fly'; b.bt = 0; api.sfx('pop'); }
+            else if (b.state === 'fly') {
+              b.bt += dt;
+              if (b.bt / dur(b) > 1) { b.state = 'missed'; done(false); api.sfx('ng'); }
+            }
+          });
+          if (p.practice) {
+            var hb = balls.filter(function (b) { return b.state === 'fly' && inBand(b, 0); })[0];
+            if (hb) { var hq = ballAt(hb, hb.bt / dur(hb)); api.hand(hq.x + 8, hq.y + 10); } else api.hand(null);
+          }
+          if (balls.every(function (b) { return b.state === 'spiked' || b.state === 'missed'; })) { phase = 'after'; pt = 0; api.hand(null); }
         } else if (phase === 'after' && pt > 0.9) next();
       },
       draw: function (c, clock) {
@@ -74,33 +89,42 @@
         D.critter(c, { x: 0, y: 0, noSeat: true, t: clock, kind: 'cat', look: { x: 60, y: -200 }, mode: 'idle', mt: pt });
         c.restore();
         // you, jumping when you spike
-        var jump = spike ? Math.sin(Math.min(1, spike.t * 2.5) * Math.PI) * 60 : 0;
+        var sp = spikes[spikes.length - 1], jump = sp ? Math.sin(Math.min(1, sp.t * 2.5) * Math.PI) * 60 : 0;
         c.save(); c.translate(200, FLOOR - 10 - jump); c.scale(0.55, 0.55);
-        D.critter(c, { x: 0, y: 0, noSeat: true, t: clock, kind: api.partner, look: { x: -100, y: -200 }, mode: spike ? 'happy' : 'idle', mt: spike ? spike.t : 0 });
+        D.critter(c, { x: 0, y: 0, noSeat: true, t: clock, kind: api.partner, look: { x: -100, y: -200 }, mode: sp && sp.t < 1 ? 'happy' : 'idle', mt: sp ? sp.t : 0 });
         c.restore();
-        if (phase === 'toss') { var b = ballAt(bt / dur()); ball(c, b.x, b.y); }
-        if (spike && spike.t < 0.6) {
-          var kk = spike.t / 0.6;
-          ball(c, spike.x + (330 - spike.x) * kk, spike.y + (FLOOR - 16 - spike.y) * kk);
-        }
+        if (phase === 'toss') balls.forEach(function (b) { if (b.state === 'fly') { var q = ballAt(b, b.bt / dur(b)); ball(c, q.x, q.y); } });
+        spikes.forEach(function (s) {
+          if (s.t >= 0.6) return;
+          var kk = s.t / 0.6;
+          ball(c, s.x + (330 - s.x) * kk, s.y + (FLOOR - 16 - s.y) * kk);
+        });
         if (wordT > 0) A.text(c, L(word), 180, 330, 34, word === 'スパイク！' ? '#ffd23d' : '#fff', { lw: 8 });
-        A.text(c, L('たかい ところで タッチ！'), 180, 104, 22, '#fff', { lw: 6 });
+        A.text(c, L(perSet > 1 ? 'ボールは 2つ！ たかい ところで タッチ！' : 'たかい ところで タッチ！'), 180, 104, perSet > 1 ? 20 : 22, '#fff', { lw: 6, max: 330 });
         if (p.endless) for (var h = 0; h < 3; h++) D.heart(c, 290 + h * 24, 138, 9, h < 3 - misses ? '#ff6f91' : 'rgba(255,255,255,.5)');
       },
       peek: function () {   // for playtesting: spike now?
         if (phase !== 'toss') return null;
-        var k = bt / dur(), b = ballAt(k);
-        return k > 0.3 && b.y > BAND[0] + 12 && b.y < BAND[1] - 12 ? { now: true, x: b.x, y: b.y } : null;
+        var b = balls.filter(function (x) { return x.state === 'fly' && x.bt / dur(x) > 0.3 && inBand(x, -12); })[0];
+        if (!b) return null;
+        var q = ballAt(b, b.bt / dur(b));
+        return { now: true, x: q.x, y: q.y };
       },
       down: function (q) {
         if (phase !== 'toss') return;
-        var b = ballAt(bt / dur());
-        if (Math.hypot(q.x - b.x, q.y - b.y) > 70) return;
-        var ok = b.y >= BAND[0] - 8 && b.y <= BAND[1] + 8 && bt / dur() > 0.2;
-        if (ok) { spike = { x: b.x, y: b.y, t: 0 }; api.sfx('thud'); api.burst(b.x, b.y, 8, '#fff6a8'); }
+        // the flying ball nearest to the finger
+        var best = null, bd = 1e9;
+        balls.forEach(function (b) {
+          if (b.state !== 'fly') return;
+          var w = ballAt(b, b.bt / dur(b)), d = Math.hypot(q.x - w.x, q.y - w.y);
+          if (d < bd) { bd = d; best = b; }
+        });
+        if (!best || bd > 70) return;
+        var w = ballAt(best, best.bt / dur(best)), ok = inBand(best, 8);
+        if (ok) { spikes.push({ x: w.x, y: w.y, t: 0 }); api.sfx('thud'); api.burst(w.x, w.y, 8, '#fff6a8'); }
         else api.sfx('ng');
+        best.state = ok ? 'spiked' : 'missed';
         done(ok);
-        phase = 'after'; pt = 0;
       }
     };
     function ball(c, x, y) {
@@ -117,17 +141,24 @@
   T.register({
     id: 'volley', name: 'バレー', orig: 'バレー', kind: 'count', sport: true,
     help: 'みかたが ボールを あげるよ。\nボールが たかい ところ（しろい おび）に\nきたら タッチして スパイク！',
+    oniHelp: 'ボールが 2つ あがるよ。\nどっちも スパイクしてね！',
     levels: {
       e: { n: 10, time: 2.2, spread: 30 },
       n: { n: 10, time: 1.7, spread: 60 },
       h: { n: 12, time: 1.35, spread: 80 },
+      o: { n: 12, time: 1.5, spread: 80, lag: 0.45 },
       ae: { n: 12, time: 1.35, spread: 80 },
       a: { n: 12, time: 1.1, spread: 90 },
       ah: { n: 14, time: 0.9, spread: 100 },
+      ao: { n: 14, time: 1.0, spread: 100, lag: 0.3 },
       endless: { n: 10, time: 1.8, spread: 60, endless: true },
-      practice: { n: 3, time: 2.6, spread: 20 }
+      practice: { n: 3, time: 2.6, spread: 20 },
+      practiceO: { n: 4, time: 2.6, spread: 20, lag: 0.8 }
     },
-    ranks: { e: [10, 9, 8, 6, 4, 2], n: [10, 9, 8, 6, 4, 2], h: [12, 11, 9, 7, 5, 3], ae: [12, 11, 9, 7, 5, 3], a: [12, 11, 9, 7, 5, 3], ah: [14, 13, 11, 8, 6, 3] },
+    ranks: {
+      e: [10, 9, 8, 6, 4, 2], n: [10, 9, 8, 6, 4, 2], h: [12, 11, 9, 7, 5, 3], o: [12, 11, 9, 7, 5, 3],
+      ae: [12, 11, 9, 7, 5, 3], a: [12, 11, 9, 7, 5, 3], ah: [14, 13, 11, 8, 6, 3], ao: [14, 13, 11, 8, 6, 3]
+    },
     gen: gen,
     start: start,
     icon: function (c, t) {

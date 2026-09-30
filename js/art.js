@@ -87,6 +87,23 @@ var Art = (function () {
     ctx.restore();
   }
 
+  // おに: ケロはかせ with two little oni horns sticking out from under his cap (drawn first, so the cap sits over them).
+  function hakaseOni(ctx, kind) {
+    if (kind !== 'frog') return;
+    ctx.save();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    for (var k = -1; k <= 1; k += 2) {
+      ctx.save(); ctx.translate(-3 + k * 25, -46); ctx.rotate(k * 0.42);
+      ctx.beginPath(); ctx.moveTo(-8.5, 6); ctx.quadraticCurveTo(-7, -12, k * 3, -27); ctx.quadraticCurveTo(7, -12, 8.5, 6); ctx.closePath();
+      paint(ctx, '#fff1b3', INK, 3);
+      ctx.beginPath(); ctx.moveTo(-6.4, -4); ctx.quadraticCurveTo(0, -7, 6.4, -4); paint(ctx, null, '#f0a93a', 3);
+      ctx.beginPath(); ctx.moveTo(-4.6, -13); ctx.quadraticCurveTo(k * 1.2, -15.5, 4.8, -13); paint(ctx, null, '#f0a93a', 2.6);
+      ctx.restore();
+    }
+    ctx.restore();
+    hakase(ctx, kind);
+  }
+
   // ---------------------------------------------------------------- the rank animals (feet at y = 0, facing right)
   // From the weakest eyes to the sharpest: もぐら, いぬ, ねこ, ふくろう, カメレオン, トンボ, わし.
 
@@ -402,13 +419,17 @@ var Art = (function () {
   // ---------------------------------------------------------------- the eye trainings' own pictures
 
   // Directions: 0 up, 1 right, 2 down, 3 left.
+  // With the diagonals too (おに, 8 directions): 0 up, 1 up-right, 2 right, 3 down-right, 4 down, 5 down-left, 6 left, 7 up-left.
   var DIR_ANGLE = [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
+  var DIR8_ANGLE = [0, 1, 2, 3, 4, 5, 6, 7].map(function (k) { return -Math.PI / 2 + k * Math.PI / 4; });
   // The "C" of an eye chart (a ring with a gap), gap towards dir.
   // Black, as on a real eye chart; a light colour (a C that was tapped by mistake) gets the brown outline of the stickers.
   var C_COLOR = '#222222';
-  function ringC(ctx, x, y, r, dir, color) {
+  function ringC(ctx, x, y, r, dir, color) { ringAt(ctx, x, y, r, DIR_ANGLE[dir], color); }
+  function ringC8(ctx, x, y, r, dir, color) { ringAt(ctx, x, y, r, DIR8_ANGLE[dir], color); }
+  function ringAt(ctx, x, y, r, a, color) {
     color = color || C_COLOR;
-    var mid = r * 0.8, w = r * 0.42, a = DIR_ANGLE[dir], gap = Math.asin(Math.min(0.9, w * 0.62 / mid));
+    var mid = r * 0.8, w = r * 0.42, gap = Math.asin(Math.min(0.9, w * 0.62 / mid));
     ctx.save(); ctx.lineCap = 'butt';
     if (isLight(color)) { ctx.beginPath(); ctx.arc(x, y, mid, a + gap - 0.1, a - gap + 0.1 + TAU); ctx.lineWidth = w + Math.max(3, r * 0.14); ctx.strokeStyle = INK; ctx.stroke(); }
     ctx.beginPath(); ctx.arc(x, y, mid, a + gap, a - gap + TAU); ctx.lineWidth = w; ctx.strokeStyle = color; ctx.stroke();
@@ -419,26 +440,33 @@ var Art = (function () {
     return ((n >> 16) * 0.299 + ((n >> 8) & 255) * 0.587 + (n & 255) * 0.114) / 255 > 0.6;
   }
   // A chunky arrow pointing dir.
-  function dirArrow(ctx, x, y, s, dir, color) {
-    ctx.save(); ctx.translate(x, y); ctx.rotate(DIR_ANGLE[dir] + Math.PI / 2); ctx.scale(s, s);
+  function dirArrow(ctx, x, y, s, dir, color) { arrowAt(ctx, x, y, s, DIR_ANGLE[dir], color); }
+  function dirArrow8(ctx, x, y, s, dir, color) { arrowAt(ctx, x, y, s, DIR8_ANGLE[dir], color); }
+  function arrowAt(ctx, x, y, s, a, color) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a + Math.PI / 2); ctx.scale(s, s);
     ctx.beginPath(); ctx.moveTo(0, -21); ctx.lineTo(17, -2); ctx.lineTo(7, -2); ctx.lineTo(7, 18); ctx.lineTo(-7, 18); ctx.lineTo(-7, -2); ctx.lineTo(-17, -2); ctx.closePath();
     ctx.lineJoin = 'round'; paint(ctx, color || '#ffb347', INK, 3);
     ctx.restore();
   }
-  // Marks for ぱっと まる: maru ○ (the one to find), sankaku △, shikaku □, batsu ×, hoshi ☆.
+  // Marks for ぱっと まる: maru ○ (the one to find), sankaku △, shikaku □, batsu ×, hoshi ☆;
+  // and at おに the ones that look like ○: cmaru (a ring with a gap, like a C; 'cmaru3' opens towards DIR8 3) and nijumaru ◎.
+  // Every mark has the same colour: with the ○ alone in red it could be found by its colour instead of its shape (2026-09-30).
   var MARKS = ['maru', 'sankaku', 'shikaku', 'batsu', 'hoshi'];
-  var MARK_COLORS = { maru: '#ff5a7a', sankaku: '#4fb0ff', shikaku: '#6cc157', batsu: '#b58cff', hoshi: '#ffb020' };
+  var MARK_COLOR = '#ff5a7a';
   function mark(ctx, kind, x, y, r) {
     ctx.save(); ctx.translate(x, y); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     var w = r * 0.3;
     ctx.beginPath();
     if (kind === 'maru') circle(ctx, 0, 0, r * 0.74);
+    else if (kind.indexOf('cmaru') === 0) { var ca = DIR8_ANGLE[+kind.slice(5) || 0]; ctx.arc(0, 0, r * 0.74, ca + 0.5, ca - 0.5 + TAU); }
+    else if (kind === 'nijumaru') { circle(ctx, 0, 0, r * 0.8); ctx.moveTo(r * 0.36, 0); ctx.arc(0, 0, r * 0.36, 0, TAU); }
     else if (kind === 'sankaku') { ctx.moveTo(0, -r * 0.82); ctx.lineTo(r * 0.8, r * 0.62); ctx.lineTo(-r * 0.8, r * 0.62); ctx.closePath(); }
     else if (kind === 'shikaku') roundRect(ctx, -r * 0.66, -r * 0.66, r * 1.32, r * 1.32, r * 0.08);
     else if (kind === 'batsu') { ctx.moveTo(-r * 0.62, -r * 0.62); ctx.lineTo(r * 0.62, r * 0.62); ctx.moveTo(r * 0.62, -r * 0.62); ctx.lineTo(-r * 0.62, r * 0.62); }
     else if (kind === 'hoshi') D.starPath(ctx, r * 0.86, r * 0.4);
+    if (kind === 'nijumaru') w *= 0.72;   // (two thinner rings, about as heavy as one ○)
     ctx.lineWidth = w + 4.5; ctx.strokeStyle = INK; ctx.stroke();
-    ctx.lineWidth = w; ctx.strokeStyle = MARK_COLORS[kind] || '#fff'; ctx.stroke();
+    ctx.lineWidth = w; ctx.strokeStyle = MARK_COLOR; ctx.stroke();
     ctx.restore();
   }
   // A cup upside down (シャッフル); (x, y) = the middle of its rim, lift = how far it is raised.
@@ -495,9 +523,10 @@ var Art = (function () {
   }
 
   return {
-    FONT: FONT, MARKS: MARKS, CUP_COLOR: CUP_COLOR, C_COLOR: C_COLOR, DIR_ANGLE: DIR_ANGLE,
+    FONT: FONT, MARKS: MARKS, CUP_COLOR: CUP_COLOR, C_COLOR: C_COLOR, DIR_ANGLE: DIR_ANGLE, DIR8_ANGLE: DIR8_ANGLE,
     blob: blob, eyeDot: eyeDot, smile: smile, blush: blush, stroke: stroke, tube: tube, text: text, shade: shade,
-    hakase: hakase, animal: animal, stamp: stamp, maru: maru, batsu: batsu,
-    ringC: ringC, dirArrow: dirArrow, mark: mark, cup: cup, disc: disc, balloon: balloon
+    hakase: hakase, hakaseOni: hakaseOni, animal: animal, stamp: stamp, maru: maru, batsu: batsu,
+    ringC: ringC, ringC8: ringC8, ringAt: ringAt, dirArrow: dirArrow, dirArrow8: dirArrow8, arrowAt: arrowAt,
+    mark: mark, cup: cup, disc: disc, balloon: balloon
   };
 }());

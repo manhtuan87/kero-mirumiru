@@ -1,6 +1,7 @@
 /* サッカー (the original sports training: サッカー — 周辺視野, 眼球運動) — you have the ball. Look around:
    the other team (red) stands in the way of all your teammates but one. Slide from the ball towards the free
-   teammate to pass (a tap on the teammate works too). p.endless: きろくに ちょうせん, until three misses. */
+   teammate to pass (a tap on the teammate works too). p.endless: きろくに ちょうせん, until three misses.
+   おに: part of the way through the time, a defender moves over to the free teammate — and another one is free. */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
@@ -11,11 +12,24 @@
   // Where teammates may stand: above the ball, inside the pitch; seen from the ball, from A0 (left) to A1 (right).
   var FIELD = { x0: 40, x1: 320, y0: 180, y1: 430 }, A0 = -2.45, A1 = -0.69, GAP = 0.48;
 
-  // p: { n (plays), mates, extra (defenders that block nobody), time (s to pass) }
+  // p: { n (plays), mates, extra (defenders that block nobody), time (s to pass) }; おに: shift (chance that a defender moves)
   function gen(p, r, count) {
     var out = [];
-    for (var i = 0; i < (count || p.n); i++) out.push(play(p, r));
+    for (var i = 0; i < (count || p.n); i++) out.push(withShift(p, r, play(p, r)));
     return out;
+  }
+  // おに: the defender in the way of another teammate moves over to the free one, so that other teammate is free now.
+  // play.shift = { at (part of the time), def (which defender), to (where it goes), free (the teammate free after it) }
+  function withShift(p, r, X) {
+    if (!p.shift || r() >= p.shift || X.mates.length < 2) return X;
+    var nf = U.pick(r, U.range(0, X.mates.length - 1).filter(function (k) { return k !== X.free; })), j = -1, bd = 1e9;
+    X.defs.forEach(function (d, k) { var dd = distToLine(d, BALL, X.mates[nf]); if (dd < bd) { bd = dd; j = k; } });
+    if (j < 0 || bd > 34) return X;
+    var q = lerp(BALL, X.mates[X.free], 0.5 + r() * 0.2), to = { x: q.x + (r() - 0.5) * 10, y: q.y + (r() - 0.5) * 10 };
+    var defs2 = X.defs.map(function (d, k) { return k === j ? to : d; });
+    if (defs2.some(function (d) { return distToLine(d, BALL, X.mates[nf]) < 34; })) return X;
+    X.shift = { at: 0.35 + r() * 0.25, def: j, to: to, free: nf };
+    return X;
   }
   // One play: the teammates stand in clearly different directions from the ball (so a slide picks one of them),
   // a defender stands on the way to each of them but one, and nobody stands on the way to that free one.
@@ -64,6 +78,13 @@
     var D = G.Draw, A = G.Art;
     var plays = gen(p, api.rnd, p.endless ? 200 : p.n), pi = -1, X = null, phase = 'wait', pt = 0;
     var hits = 0, misses = 0, tries = 0, drag = null, kick = null, word = '', wordT = 0;
+    var shiftGo = -1;   // (おに: when the defender started to move, -1 not yet)
+    function freeNow() { return X.shift && shiftGo >= 0 ? X.shift.free : X.free; }
+    function defAt(k) {
+      if (!X.shift || k !== X.shift.def || shiftGo < 0) return X.defs[k];
+      var e = Math.min(1, (pt - shiftGo) / 0.35); e = e * e * (3 - 2 * e);
+      return lerp(X.defs[k], X.shift.to, e);
+    }
 
     function limit() { return p.time * (p.endless ? Math.max(0.55, 1 - hits * 0.015) : 1); }
     function next() {
@@ -74,7 +95,7 @@
         api.finish({ score: hits, acc: hits / p.n, text: p.endless ? U.res.endless(hits) : U.res.hit(hits, p.n), delay: 600 });
         return;
       }
-      X = plays[pi % plays.length]; phase = 'look'; pt = 0; kick = null;
+      X = plays[pi % plays.length]; phase = 'look'; pt = 0; kick = null; shiftGo = -1;
     }
     function done(ok, w) {
       tries++;
@@ -93,9 +114,9 @@
       api.sfx('whoosh');
       if (best < 0 || bd > 0.35) { kick = { to: { x: BALL.x + Math.cos(a) * 420, y: BALL.y + Math.sin(a) * 420 }, t: 0 }; done(false, 'そとへ…'); return; }
       var m = X.mates[best];
-      if (best === X.free) { kick = { to: m, t: 0 }; api.sfx('cheer'); done(true, 'ナイスパス！'); }
+      if (best === freeNow()) { kick = { to: m, t: 0 }; api.sfx('cheer'); done(true, 'ナイスパス！'); }
       else {
-        var blocker = X.defs.reduce(function (b, d) { return !b || distToLine(d, BALL, m) < distToLine(b, BALL, m) ? d : b; }, null);
+        var blocker = X.defs.map(function (d, k) { return defAt(k); }).reduce(function (b, d) { return !b || distToLine(d, BALL, m) < distToLine(b, BALL, m) ? d : b; }, null);
         kick = { to: blocker || m, t: 0 }; done(false, 'とられた！');
       }
     }
@@ -109,7 +130,8 @@
         if (!playing) return;
         if (phase === 'look' && pt > 0.35) { phase = 'play'; pt = 0; }
         else if (phase === 'play') {
-          if (p.practice && pt > 1.8) { var f = X.mates[X.free]; api.hand(f.x + 8, f.y + 10); }
+          if (X.shift && shiftGo < 0 && pt >= X.shift.at * limit()) { shiftGo = pt; api.sfx('step'); }   // (おに: a defender moves)
+          if (p.practice && pt > 1.8 && !(X.shift && shiftGo < 0)) { var f = X.mates[freeNow()]; api.hand(f.x + 8, f.y + 10); }
           if (pt > limit()) { api.ng(BALL.x, BALL.y - 40, 30); done(false, 'おそい！'); }
         } else if (phase === 'after' && pt > 0.9) next();
       },
@@ -123,8 +145,8 @@
         D.roundRect(c, 130, 132, 100, 14, 4); D.paint(c, '#fffdf5', D.INK, 2.4);
         if (!X) return;
         var sway = Math.sin(clock * 3 + X.sway) * 3;
-        X.defs.forEach(function (d) { player(c, d.x + sway, d.y, '#ff6b6b', clock); });
-        X.mates.forEach(function (m, k) { player(c, m.x, m.y, '#5ccf52', clock, phase === 'after' && k === X.free && hits && word === 'ナイスパス！'); });
+        X.defs.forEach(function (d0, k) { var d = defAt(k); player(c, d.x + sway, d.y, '#ff6b6b', clock); });
+        X.mates.forEach(function (m, k) { player(c, m.x, m.y, '#5ccf52', clock, phase === 'after' && k === freeNow() && hits && word === 'ナイスパス！'); });
         // you and the ball
         c.save(); c.translate(BALL.x, BALL.y + 34); c.scale(0.5, 0.5);
         D.critter(c, { x: 0, y: 0, noSeat: true, t: clock, kind: api.partner, look: { x: 0, y: -300 }, mode: 'idle', mt: 0 });
@@ -141,8 +163,8 @@
         if (p.endless) for (var h = 0; h < 3; h++) D.heart(c, 290 + h * 24, 164, 9, h < 3 - misses ? '#ff6f91' : 'rgba(255,255,255,.5)');
       },
       peek: function () {   // for playtesting: slide towards the free teammate
-        if (phase !== 'play') return null;
-        var f = X.mates[X.free];
+        if (phase !== 'play' || (X.shift && shiftGo < 0)) return null;   // (おに: a good player waits to see who is free)
+        var f = X.mates[freeNow()];
         return { swipe: [BALL.x, BALL.y - 20, BALL.x + (f.x - BALL.x) * 0.4, BALL.y - 20 + (f.y - BALL.y) * 0.4] };
       },
       down: function (q, id) { if (phase === 'play') drag = { x0: q.x, y0: q.y, x: q.x, y: q.y, id: id, moved: false }; },
@@ -178,6 +200,7 @@
   T.register({
     id: 'soccer', name: 'サッカー', orig: 'サッカー', kind: 'count', sport: true,
     help: 'あかい あいてが じゃまを しているよ。\nじゃまされて いない みかた（みどり）へ\nボールから ゆびを スライドして パス！',
+    oniHelp: 'パスの まえに あいてが うごくよ。\nさいごまで よく みてね！',
     levels: {
       e: { n: 8, mates: 2, extra: 0, time: 5 },
       n: { n: 10, mates: 3, extra: 1, time: 4 },
@@ -186,9 +209,15 @@
       a: { n: 12, mates: 4, extra: 2, time: 2.4 },
       ah: { n: 12, mates: 4, extra: 3, time: 2.0 },
       endless: { n: 10, mates: 3, extra: 1, time: 4, endless: true },
-      practice: { n: 3, mates: 2, extra: 0, time: 8 }
+      practice: { n: 3, mates: 2, extra: 0, time: 8 },
+      o: { n: 10, mates: 3, extra: 2, time: 3.2, shift: 0.6 },
+      ao: { n: 12, mates: 4, extra: 3, time: 2.2, shift: 0.8 },
+      practiceO: { n: 3, mates: 2, extra: 0, time: 8, shift: 1 }
     },
-    ranks: { e: [8, 7, 6, 5, 3, 2], n: [10, 9, 8, 6, 4, 2], h: [10, 9, 8, 6, 4, 2], ae: [10, 9, 8, 6, 4, 2], a: [12, 11, 9, 7, 5, 3], ah: [12, 11, 9, 7, 5, 3] },
+    ranks: {
+      e: [8, 7, 6, 5, 3, 2], n: [10, 9, 8, 6, 4, 2], h: [10, 9, 8, 6, 4, 2], o: [10, 9, 8, 6, 4, 2],
+      ae: [10, 9, 8, 6, 4, 2], a: [12, 11, 9, 7, 5, 3], ah: [12, 11, 9, 7, 5, 3], ao: [12, 11, 9, 7, 5, 3]
+    },
     gen: gen,
     start: start,
     icon: function (c, t) {

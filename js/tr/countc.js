@@ -1,18 +1,21 @@
 /* かぞえて C (the original: カウントC, 眼球運動) — first a "C" to look for; then Cs open this way and that
-   pop up all over the screen, one after another. How many were open the same way as the first? */
+   pop up all over the screen, one after another. How many were open the same way as the first?
+   おに: the Cs open slantwise too, and many are only a little turned from the one to count. */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var BOX = { x0: 50, y0: 160, x1: 310, y1: 420 };
 
-  // p: { rounds, items, hits: [a, b], show (s each), gap (s), size }
+  // p: { rounds, items, hits: [a, b], show (s each), gap (s), size }; おに: dirs: 8, near (share of the others that are
+  // only 45° off the one to count)
   function gen(p, r) {
-    var out = [];
+    var out = [], nd = p.dirs || 4;
     for (var i = 0; i < p.rounds; i++) {
-      var target = U.int(r, 0, 3), hits = U.span(r, p.hits), dirs = [];
+      var target = U.int(r, 0, nd - 1), hits = U.span(r, p.hits), dirs = [];
       for (var k = 0; k < p.items; k++) {
         if (k < hits) dirs.push(target);
-        else { var d = U.int(r, 0, 2); dirs.push(d >= target ? d + 1 : d); }
+        else if (p.near && (k === hits || r() < p.near)) dirs.push((target + (r() < 0.5 ? 1 : nd - 1)) % nd);   // (at least one)
+        else { var d = U.int(r, 0, nd - 2); dirs.push(d >= target ? d + 1 : d); }
       }
       dirs = U.shuffle(r, dirs);
       var last = null;
@@ -32,7 +35,7 @@
   }
 
   function start(api, p) {
-    var D = G.Draw, A = G.Art;
+    var D = G.Draw, A = G.Art, ring = p.dirs === 8 ? A.ringC8 : A.ringC;   // (おに: slantwise too)
     var rounds = gen(p, api.rnd), ri = -1, phase = 'wait', pt = 0, right = 0, R = null, ci = 0;
     var pad = api.answerPad({ expect: function () { return R ? R.ans : 0; }, onAnswer: answer });
     pad.enable(false);
@@ -86,14 +89,14 @@
         if (phase === 'target') {
           A.text(c, L('この むきの Cを かぞえてね！'), 180, 104, 21, '#fff', { lw: 6 });
           A.disc(c, 180, 290, 76, '#fff4b0', 3);   // (the C to count sits on yellow, as in the corner later)
-          A.ringC(c, 180, 290, 52 + Math.sin(pt * 6) * 2, R.target);
+          ring(c, 180, 290, 52 + Math.sin(pt * 6) * 2, R.target);
           return;
         }
         // the C to count, small in the corner
         A.disc(c, 318, 116, 28, '#fff4b0', 3);
-        A.ringC(c, 318, 116, 18, R.target);
+        ring(c, 318, 116, 18, R.target);
         A.text(c, L(phase === 'ask' ? 'いくつ あった？' : 'おなじ むきは いくつ？'), 150, 116, 21, '#fff', { lw: 6, max: 230 });
-        if (phase === 'show' && pt < p.show) { var q = R.cs[ci]; A.ringC(c, q.x, q.y, p.size, q.dir); }
+        if (phase === 'show' && pt < p.show) { var q = R.cs[ci]; ring(c, q.x, q.y, p.size, q.dir); }
         if (phase === 'good' || phase === 'bad') A.text(c, L('こたえは {n}', { n: R.ans }), 180, 290, 30, '#fff', { lw: 8 });
       },
       peek: function () { return phase === 'ask' ? { pad: R.ans } : null; },   // for playtesting
@@ -104,6 +107,7 @@
   T.register({
     id: 'countc', name: 'かぞえて C', orig: 'カウントC', kind: 'count',
     help: 'さいしょに でた Cと おなじ むきの Cが\nいくつ でたか かぞえてね！',
+    oniHelp: 'ななめ むきの Cも でるよ。\nおなじ むきだけ かぞえてね！',
     levels: {
       e: { rounds: 6, items: 5, hits: [1, 3], show: 0.9, gap: 0.25, size: 34, limit: 10 },
       n: { rounds: 6, items: 7, hits: [2, 4], show: 0.7, gap: 0.2, size: 30, limit: 8 },
@@ -113,10 +117,14 @@
       ah: { rounds: 6, items: 15, hits: [4, 8], show: 0.3, gap: 0.1, size: 20, limit: 6 },
       test: { rounds: 5, items: 7, hits: [2, 4], show: 0.6, gap: 0.2, size: 28, limit: 8 },
       testA: { rounds: 5, items: 11, hits: [3, 6], show: 0.4, gap: 0.12, size: 22, limit: 6 },
-      practice: { rounds: 2, items: 4, hits: [1, 2], show: 1.1, gap: 0.3, size: 36 }
+      practice: { rounds: 2, items: 4, hits: [1, 2], show: 1.1, gap: 0.3, size: 36 },
+      o: { rounds: 6, items: 10, hits: [2, 5], show: 0.5, gap: 0.15, size: 26, dirs: 8, near: 0.6, limit: 8 },
+      ao: { rounds: 6, items: 16, hits: [4, 8], show: 0.28, gap: 0.1, size: 20, dirs: 8, near: 0.6, limit: 7 },
+      practiceO: { rounds: 2, items: 4, hits: [1, 2], show: 1.1, gap: 0.3, size: 36, dirs: 8, near: 0.5 }
     },
     ranks: {
-      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1],
+      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], o: [6, 5, 4, 3, 2, 1],
+      ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1], ao: [6, 5, 4, 3, 2, 1],
       test: [5, 5, 4, 3, 2, 1], testA: [5, 5, 4, 3, 2, 1]
     },
     gen: gen,

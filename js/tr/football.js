@@ -1,19 +1,31 @@
 /* アメフト (the original sports training: アメフト — 瞬間視, 周辺視野) — run up the field with the ball while
    the other team rushes at you. Tap the left or right side (or slide) to step into a free lane and get past.
-   p.endless: きろくに ちょうせん, until three tackles. */
+   p.endless: きろくに ちょうせん, until three tackles.
+   おに: some rushers change lanes on the way (into a lane next to theirs that nobody of their wave takes). */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var LANES = [80, 180, 280], ME_Y = 520;
 
-  // p: { n (rushers), speed (px/s), every (s between waves), two (chance of two at once) }
+  // p: { n (rushers), speed (px/s), every (s between waves), two (chance of two at once) };
+  // おに: zig (chance that a rusher changes lanes on the way: zigs[i] = -1 / 1 for lanes[i], at the height zigAt[i])
   // Waves of one or two rushers, n rushers in all.
   function gen(p, r, count) {
     var out = [], left = count || p.n;
     while (left > 0) {
       var a = U.int(r, 0, 2), lanes = [a];
       if (left > 1 && r() < p.two) { var b = U.int(r, 0, 1); lanes.push(b >= a ? b + 1 : b); }
-      out.push({ lanes: lanes, gap: p.every * (0.85 + r() * 0.3) });
+      var w = { lanes: lanes, gap: p.every * (0.85 + r() * 0.3) };
+      if (p.zig) {
+        w.zigs = lanes.map(function (l) {
+          if (r() >= p.zig) return 0;
+          var ways = [-1, 1].filter(function (d) { return l + d >= 0 && l + d <= 2 && lanes.indexOf(l + d) < 0; });
+          return ways.length ? U.pick(r, ways) : 0;
+        });
+        if (w.zigs[0] && w.zigs[1] && lanes[0] + w.zigs[0] === lanes[1] + w.zigs[1]) w.zigs[1] = 0;   // (not both into the same lane)
+        w.zigAt = lanes.map(function () { return 250 + r() * 70; });
+      }
+      out.push(w);
       left -= lanes.length;
     }
     return out;
@@ -47,11 +59,14 @@
         next -= dt;
         if (next <= 0 && (p.endless || wi < waves.length)) {
           var w = waves[wi++ % waves.length];
-          w.lanes.forEach(function (l) { rushers.push({ lane: l, y: 130, done: false }); });
+          w.lanes.forEach(function (l, i) { rushers.push({ lane: l, y: 130, done: false, zig: w.zigs ? w.zigs[i] : 0, zigAt: w.zigAt ? w.zigAt[i] : 0, x: LANES[l] }); });
           next = w.gap;
         }
         rushers.forEach(function (rs) {
           rs.y += speed() * 1.15 * dt;
+          if (rs.zig && !rs.zigged && rs.y > rs.zigAt) { rs.zigged = true; rs.from = LANES[rs.lane]; rs.lane += rs.zig; rs.zt = 0; }   // (おに: into the next lane)
+          if (rs.zigged && rs.zt < 1) rs.zt = Math.min(1, rs.zt + dt / 0.28);
+          rs.x = rs.zigged ? rs.from + (LANES[rs.lane] - rs.from) * rs.zt * rs.zt * (3 - 2 * rs.zt) : LANES[rs.lane];
           if (!rs.done && rs.y > ME_Y - 30 && rs.y < ME_Y + 20 && rs.lane === me && stun <= 0) {
             rs.done = true; rs.hit = true; tackles++;
             stun = 0.6; word = 'タックル！'; wordT = 0.7;
@@ -79,10 +94,11 @@
         c.restore();
         rushers.forEach(function (rs) {
           if (rs.y < 130 || rs.y > 600) return;
-          c.save(); c.translate(LANES[rs.lane], rs.y + 14); c.scale(0.42, 0.42);
+          var rx = rs.x != null ? rs.x : LANES[rs.lane];
+          c.save(); c.translate(rx, rs.y + 14); c.scale(0.42, 0.42);
           D.critter(c, { x: 0, y: 0, noSeat: true, t: clock, kind: 'dog', look: { x: 0, y: 300 }, mode: rs.hit ? 'happy' : 'idle', mt: 0 });
           c.restore();
-          D.roundRect(c, LANES[rs.lane] - 16, rs.y + 13, 32, 15, 5); D.paint(c, '#ff6b6b', D.INK, 2);   // (on the body)
+          D.roundRect(c, rx - 16, rs.y + 13, 32, 15, 5); D.paint(c, '#ff6b6b', D.INK, 2);   // (on the body)
         });
         // you, with the ball
         c.save(); c.translate(meX, ME_Y + 16 + (stun > 0 ? Math.sin(stun * 30) * 3 : 0)); c.scale(0.5, 0.5);
@@ -120,6 +136,7 @@
   T.register({
     id: 'football', name: 'アメフト', orig: 'アメフト', kind: 'count', sport: true,
     help: 'ボールを もって はしるよ。\nあいてが つっこんで くるから、\nひだりか みぎを タッチして よけてね！',
+    oniHelp: 'とちゅうで みちを かえる あいてが いるよ。\nよく みて よけてね！',
     levels: {
       e: { n: 12, speed: 150, every: 1.6, two: 0 },
       n: { n: 15, speed: 200, every: 1.25, two: 0.25 },
@@ -128,9 +145,15 @@
       a: { n: 20, speed: 300, every: 0.85, two: 0.5 },
       ah: { n: 24, speed: 350, every: 0.72, two: 0.6 },
       endless: { n: 15, speed: 200, every: 1.2, two: 0.3, endless: true },
-      practice: { n: 4, speed: 120, every: 2.0, two: 0 }
+      practice: { n: 4, speed: 120, every: 2.0, two: 0 },
+      o: { n: 18, speed: 250, every: 1.05, two: 0.35, zig: 0.4 },
+      ao: { n: 24, speed: 340, every: 0.75, two: 0.5, zig: 0.5 },
+      practiceO: { n: 4, speed: 120, every: 2.0, two: 0, zig: 1 }
     },
-    ranks: { e: [12, 11, 10, 8, 6, 3], n: [15, 14, 12, 10, 7, 4], h: [18, 16, 14, 11, 8, 4], ae: [18, 16, 14, 11, 8, 4], a: [20, 18, 15, 12, 9, 5], ah: [24, 22, 18, 14, 10, 5] },
+    ranks: {
+      e: [12, 11, 10, 8, 6, 3], n: [15, 14, 12, 10, 7, 4], h: [18, 16, 14, 11, 8, 4], o: [18, 16, 14, 11, 8, 4],
+      ae: [18, 16, 14, 11, 8, 4], a: [20, 18, 15, 12, 9, 5], ah: [24, 22, 18, 14, 10, 5], ao: [24, 22, 18, 14, 10, 5]
+    },
     gen: gen,
     start: start,
     icon: function (c, t) {

@@ -1,5 +1,6 @@
 /* ぱっと まる (the original: 瞬間記号, 瞬間視) — many marks show for a blink; one of them is a ○.
-   Where was the ○? Tap its square. */
+   Where was the ○? Tap its square. All the marks have one colour, so the ○ is found by its shape.
+   おに: marks that look like a ○ are among them too (a ring with a gap, ◎). */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
@@ -11,12 +12,15 @@
     return { x: AREA.x0 + (k % p.cols + 0.5) * w, y: AREA.y0 + (Math.floor(k / p.cols) + 0.5) * h, w: w, h: h };
   }
 
-  // p: { rounds, cols, rows, fill (how many squares have a mark), show (s) }
+  // A mark that looks like a ○ (おに): a ring with a gap somewhere (cmaru0 .. cmaru7), or ◎.
+  function alike(r) { return r() < 0.6 ? 'cmaru' + U.int(r, 0, 7) : 'nijumaru'; }
+
+  // p: { rounds, cols, rows, fill (how many squares have a mark), show (s) }; おに: alike (share of the others that look like ○)
   function gen(p, r) {
     var out = [];
     for (var i = 0; i < p.rounds; i++) {
       var n = p.cols * p.rows, cells = U.sample(r, U.range(0, n - 1), Math.min(n, p.fill)), marks = {};
-      cells.forEach(function (k, j) { marks[k] = j === 0 ? 'maru' : U.pick(r, OTHERS); });
+      cells.forEach(function (k, j) { marks[k] = j === 0 ? 'maru' : p.alike && (j === 1 || r() < p.alike) ? alike(r) : U.pick(r, OTHERS); });
       out.push({ marks: marks, ans: cells[0] });
     }
     return out;
@@ -98,19 +102,24 @@
   T.register({
     id: 'flashmark', name: 'ぱっと まる', orig: '瞬間記号', kind: 'count',
     help: 'いろいろな マークが いっしゅん でるよ。\n○が あった ばしょを タッチしてね！',
+    oniHelp: '○に にた マークも まざるよ。\nほんとうの ○を さがしてね！',
     levels: {
       e: { rounds: 6, cols: 2, rows: 2, fill: 4, show: 0.9, limit: 8 },
       n: { rounds: 6, cols: 3, rows: 3, fill: 7, show: 0.7, limit: 7 },
       h: { rounds: 6, cols: 4, rows: 4, fill: 12, show: 0.55, limit: 6 },
+      o: { rounds: 6, cols: 4, rows: 4, fill: 12, show: 0.55, alike: 0.5, limit: 6 },
       ae: { rounds: 6, cols: 4, rows: 4, fill: 12, show: 0.45, limit: 6 },
       a: { rounds: 6, cols: 5, rows: 5, fill: 18, show: 0.4, limit: 5 },
       ah: { rounds: 6, cols: 6, rows: 6, fill: 26, show: 0.35, limit: 5 },
+      ao: { rounds: 6, cols: 6, rows: 6, fill: 28, show: 0.35, alike: 0.6, limit: 5 },
       test: { rounds: 5, cols: 3, rows: 3, fill: 8, show: 0.6, limit: 6 },
       testA: { rounds: 5, cols: 5, rows: 5, fill: 16, show: 0.4, limit: 5 },
-      practice: { rounds: 2, cols: 2, rows: 2, fill: 3, show: 1.3 }
+      practice: { rounds: 2, cols: 2, rows: 2, fill: 3, show: 1.3 },
+      practiceO: { rounds: 2, cols: 3, rows: 3, fill: 5, show: 1.3, alike: 0.5 }
     },
     ranks: {
-      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1],
+      e: [6, 5, 4, 3, 2, 1], n: [6, 5, 4, 3, 2, 1], h: [6, 5, 4, 3, 2, 1], o: [6, 5, 4, 3, 2, 1],
+      ae: [6, 5, 4, 3, 2, 1], a: [6, 5, 4, 3, 2, 1], ah: [6, 5, 4, 3, 2, 1], ao: [6, 5, 4, 3, 2, 1],
       test: [5, 5, 4, 3, 2, 1], testA: [5, 5, 4, 3, 2, 1]
     },
     gen: gen,

@@ -11,7 +11,7 @@
   var KEY = 'kero-mirumiru-v1';
   var MAX_USERS = 4, HIST = 60, NAME_MAX = 10, RECENT = 80;
   var COLORS = ['#86d65c', '#ff8fc0', '#6cc6ff', '#ffb347', '#b58cff', '#ffd23d'];
-  var LEVEL_IDS = ['e', 'n', 'h', 'ae', 'a', 'ah'];
+  var LEVEL_IDS = ['e', 'n', 'h', 'o', 'ae', 'a', 'ah', 'ao'];   // (a level not listed here loses its records when read)
   var NCHECK = Data.CHECK.length;
 
   // ---------------------------------------------------------------- dates (the phone's own clock)
@@ -196,6 +196,19 @@
     Data.TRAININGS.forEach(function (t) { Data.LEVELS.forEach(function (l) { if (l.hard) out[t.id + '/' + l.id] = hardOpen(s, t.id, l.id); }); });
     return out;
   }
+  // おに (and おとな おに): ★3 at the level before it, or enough stamps.
+  function oniFrom(lv) { for (var i = 0; i < Data.LEVELS.length; i++) if (Data.LEVELS[i].id === lv) return Data.LEVELS[i].oni || null; return null; }
+  function oniOpen(s, id, lv) {
+    var from = oniFrom(lv), u = udata(s), x = from && u.rec[id] && u.rec[id][from];
+    return !from || s.all || stampCount(u) >= Data.ONI_STAMPS || !!(x && x.stars >= 3);
+  }
+  function oniOpenAll(s) {
+    var out = {};
+    Data.TRAININGS.forEach(function (t) { Data.LEVELS.forEach(function (l) { if (l.oni) out[t.id + '/' + l.id] = oniOpen(s, t.id, l.id); }); });
+    return out;
+  }
+  // Can this level be played now (むずかしい and おに have their own rules)?
+  function levelOpen(s, id, lv) { return hardOpen(s, id, lv) && oniOpen(s, id, lv); }
   function openedBetween(a, b) {
     var out = { trainings: [] };
     Data.TRAININGS.forEach(function (t) { if (t.unlock > a && t.unlock <= b) out.trainings.push(t.id); });
@@ -209,7 +222,7 @@
     best.need = best.at - have;
     return best;
   }
-  // The trainings whose むずかしい opened between two states (for the "you can play むずかしい" card).
+  // The trainings whose むずかしい (or おに) opened between two states (for the "you can play むずかしい" card).
   function hardOpened(before, after) {
     return Object.keys(after).filter(function (k) { return after[k] && !before[k]; })
       .map(function (k) { var p = k.split('/'); return { id: p[0], lv: p[1] }; });
@@ -221,7 +234,7 @@
      Returns what happened, for the result screen. */
   function addRun(s, info) {
     var u = udata(s), today = info.today || dayKey();
-    var hardBefore = hardOpenAll(s);
+    var hardBefore = hardOpenAll(s), oniBefore = oniOpenAll(s);
     var day = u.days[today] || (u.days[today] = { stamp: false, runs: 0 });
     var before = stampCount(u), stampNew = !day.stamp;
     var rank = rankOf(info.kind, info.cuts, info.score), stars = starsOf(rank, info.acc);
@@ -238,6 +251,7 @@
     day.stamp = true;
     var opened = openedBetween(before, stampCount(u));
     opened.hard = hardOpened(hardBefore, hardOpenAll(s));
+    opened.oni = hardOpened(oniBefore, oniOpenAll(s));
     return {
       rank: rank, stars: stars, firstPlay: firstPlay, newBest: newBest, prevBest: prevBest, firstOfDay: firstOfDay,
       stampNew: stampNew, stamps: stampCount(u), opened: opened, runsToday: day.runs
@@ -262,7 +276,7 @@
   /* info: { ranks: [5 ranks], tests: [5 ids], today? }  Only the first check of a day is kept. */
   function addCheck(s, info) {
     var u = udata(s), today = info.today || dayKey();
-    var hardBefore = hardOpenAll(s);
+    var hardBefore = hardOpenAll(s), oniBefore = oniOpenAll(s);
     var day = u.days[today] || (u.days[today] = { stamp: false, runs: 0 });
     var before = stampCount(u), stampNew = !day.stamp, recorded = !day.check;
     var p = 0;
@@ -279,6 +293,7 @@
     res.stamps = stampCount(u);
     res.opened = openedBetween(before, res.stamps);
     res.opened.hard = hardOpened(hardBefore, hardOpenAll(s));
+    res.opened.oni = hardOpened(oniBefore, oniOpenAll(s));
     return res;
   }
   // The latest recorded check (for the recommendation): { day, ranks, tests } or null.
@@ -327,7 +342,8 @@
     dayKey: dayKey, parseDay: parseDay, fresh: fresh, sanitize: sanitize, load: load, store: store,
     user: user, udata: udata, isAdult: isAdult, addUser: addUser, removeUser: removeUser, resetUser: resetUser,
     rankOf: rankOf, starsOf: starsOf, better: better,
-    stampCount: stampCount, stampDays: stampDays, isOpen: isOpen, hardOpen: hardOpen, nextUnlock: nextUnlock, trainingInfo: trainingInfo,
+    stampCount: stampCount, stampDays: stampDays, isOpen: isOpen, hardOpen: hardOpen, oniOpen: oniOpen, levelOpen: levelOpen,
+    nextUnlock: nextUnlock, trainingInfo: trainingInfo,
     addRun: addRun, addEndless: addEndless, addCheck: addCheck, checkedToday: checkedToday, eyeAge: eyeAge, lastCheck: lastCheck,
     tipToday: tipToday, tipSeen: tipSeen,
     recentOf: recentOf, addRecent: addRecent,

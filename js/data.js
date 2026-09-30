@@ -49,6 +49,8 @@
   ];
   // むずかしい opens with a good result at ふつう (this rank or better) or after this many stamps.
   var HARD_RANK = 5, HARD_STAMPS = 10;
+  // おに (and おとな おに) opens with ★3 at the level before it (むずかしい / おとな むずかしい) or after this many stamps.
+  var ONI_STAMPS = 20;
 
   // The daily eye check: one test for each eye power, one of its two basic trainings.
   var CHECK = [
@@ -59,15 +61,19 @@
     { id: 'kyoou', name: 'タッチ', tests: ['quicktouch', 'numtouch'], good: 'みて すぐ タッチするのが とくい だね！' }
   ];
 
-  // The grown-ups' three levels (おとな) are near the original game's stages; only grown-up users see them.
+  // The grown-ups' levels (おとな) are near the original game's stages; only grown-up users see them.
   // hard: a むずかしい opens after a good result at that level (or with stamps), as in the original.
+  // oni: おに (鬼モード, 2026-09-30) — the hardest, with a new twist in every training; it opens with ★3 at that level
+  // (or with stamps). The trainings play it with params.oni (their levels.o / levels.ao).
   var LEVELS = [
     { id: 'e', name: 'かんたん', dots: 1 },
     { id: 'n', name: 'ふつう', dots: 2 },
     { id: 'h', name: 'むずかしい', dots: 3, hard: 'n' },
+    { id: 'o', name: 'おに', dots: 0, oni: 'h' },
     { id: 'ae', name: 'おとな かんたん', short: 'かんたん', dots: 1, adult: true },
     { id: 'a', name: 'おとな ふつう', short: 'ふつう', dots: 2, adult: true },
-    { id: 'ah', name: 'おとな むずかしい', short: 'むずかしい', dots: 3, adult: true, hard: 'a' }
+    { id: 'ah', name: 'おとな むずかしい', short: 'むずかしい', dots: 3, adult: true, hard: 'a' },
+    { id: 'ao', name: 'おとな おに', short: 'おに', dots: 0, adult: true, oni: 'ah' }
   ];
 
   // Pictures (drawn in pics.js) used by かぞえて びゅん.
@@ -145,6 +151,8 @@
     enough: 'きょうは たくさん がんばったね！ めを やすめて、つづきは また あした！',
     newTraining: 'あたらしい トレーニングが ふえたよ！',
     newHard: '「むずかしい」で あそべるように なったよ！',
+    newOni: '「おに」で あそべるように なったよ！ ちょうせん してみてね',
+    oniGood: ['おにを のりこえたね！ すごい！', 'おにも へっちゃら だね！'],   // (a good result at おに)
     best: ['すごい！ いままでで いちばんだよ！', 'じこベスト！ やったね！'],
     first1: ['はじめての きろく だね！', 'よく できました！'],
     good: ['よく できました！', 'いい ちょうし！', 'がんばったね！', 'すばらしい！'],
@@ -179,7 +187,7 @@
   var BLINK = [[0, 'そっと とじて'], [2, 'ぎゅっ'], [4, 'ぱっ！']];
 
   return {
-    ANIMALS: ANIMALS, CATS: CATS, TRAININGS: TRAININGS, HARD_RANK: HARD_RANK, HARD_STAMPS: HARD_STAMPS,
+    ANIMALS: ANIMALS, CATS: CATS, TRAININGS: TRAININGS, HARD_RANK: HARD_RANK, HARD_STAMPS: HARD_STAMPS, ONI_STAMPS: ONI_STAMPS,
     CHECK: CHECK, LEVELS: LEVELS, PICS: PICS, TIPS: TIPS, LINES: LINES, STRETCH: STRETCH, BLINK: BLINK
   };
 }));

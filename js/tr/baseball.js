@@ -1,19 +1,31 @@
 /* やきゅう (the original sports training: 野球 — 動体視力, 眼と手の協応) — ケロちゃん is at bat. The pitcher
    throws; tap just as the ball reaches the plate to hit it. Fast balls, slow balls and (harder) curve balls.
-   p.endless: きろくに ちょうせん, pitches until three misses, getting faster. */
+   p.endless: きろくに ちょうせん, pitches until three misses, getting faster.
+   おに: balls that vanish on the way (きえる まきゅう) and balls that change speed half way. */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var MOUND = { x: 180, y: 190 }, PLATE = { x: 180, y: 500 }, SWEET = 482;
 
-  // p: { n (pitches), time: [fast, slow] (s from hand to plate), slow (chance of a slow ball), curve (px) }
+  // p: { n (pitches), time: [fast, slow] (s from hand to plate), slow (chance of a slow ball), curve (px) };
+  // おに: vanish (chance of a ball that cannot be seen from 30 % to 65 % of the way), change (chance of a ball that is
+  // fast first and slow at the end, or the other way; it still takes the same time to the plate)
   function gen(p, r, count) {
     var out = [];
     for (var i = 0; i < (count || p.n); i++) {
       var slow = r() < p.slow;
-      out.push({ time: slow ? p.time[1] : p.time[0] * (0.95 + r() * 0.1), curve: p.curve ? (r() < 0.5 ? -1 : 1) * p.curve * (0.5 + r() * 0.5) : 0, slow: slow });
+      var x = { time: slow ? p.time[1] : p.time[0] * (0.95 + r() * 0.1), curve: p.curve ? (r() < 0.5 ? -1 : 1) * p.curve * (0.5 + r() * 0.5) : 0, slow: slow };
+      if (p.vanish && r() < p.vanish) x.vanish = true;
+      if (p.change && r() < p.change) x.change = r() < 0.5 ? 1 : -1;
+      out.push(x);
     }
     return out;
+  }
+  // How far the ball is (0 hand .. 1 plate) after u of its time: straight on, or (change) fast then slow / slow then fast.
+  function along(P, u) {
+    if (!P.change) return u;
+    var a = P.change > 0 ? 1.4 : 0.6, b = 2 - a;   // (the speed in the first half and in the second: 70 % / 30 % of the way)
+    return u < 0.5 ? a * u : a * 0.5 + b * (u - 0.5);
   }
 
   function start(api, p) {
@@ -40,7 +52,7 @@
     // swung: the player tapped now (otherwise the ball went by)
     function judge(swung) {
       tries++;
-      var b = ballAt(Math.min(1.2, bt / (P.time * speedUp()))), d = Math.abs(b.y - SWEET);
+      var b = ballAt(Math.min(1.2, along(P, bt / (P.time * speedUp())))), d = Math.abs(b.y - SWEET);
       var ok = swung && d < 30;
       if (ok) {
         hits++;
@@ -67,7 +79,7 @@
         if (phase === 'windup' && pt > 0.9) { phase = 'pitch'; pt = 0; bt = 0; api.sfx('whoosh'); }
         else if (phase === 'pitch') {
           bt += dt;
-          var k = bt / (P.time * speedUp());
+          var k = along(P, bt / (P.time * speedUp()));
           if (p.practice) { if (Math.abs(ballAt(k).y - SWEET) < 26) api.hand(250, 470); else api.hand(null); }
           if (k > 1.12) judge(false);
         } else if (phase === 'after' && pt > 1.1) nextPitch();
@@ -92,8 +104,9 @@
         // the sweet spot, a soft ring
         D.circle(c, 180, SWEET, 34); D.paint(c, 'rgba(255,255,255,.28)', 'rgba(255,255,255,.7)', 3);
         // the ball
-        if (phase === 'pitch') {
-          var b = ballAt(Math.min(1.2, bt / (P.time * speedUp())));
+        var bk = phase === 'pitch' ? Math.min(1.2, along(P, bt / (P.time * speedUp()))) : 0;
+        if (phase === 'pitch' && !(P.vanish && bk > 0.3 && bk < 0.65)) {   // (おに: the vanishing ball is not there for a while)
+          var b = ballAt(bk);
           D.ellipse(c, b.x, b.y + b.r * 1.4, b.r * 0.9, b.r * 0.3); D.paint(c, 'rgba(0,0,0,.15)');
           D.circle(c, b.x, b.y, b.r); D.paint(c, '#fffdf5', D.INK, 2.2);
           c.beginPath(); c.arc(b.x - b.r * 0.9, b.y, b.r * 0.7, -0.9, 0.9); c.arc(b.x + b.r * 0.9, b.y, b.r * 0.7, Math.PI - 0.9, Math.PI + 0.9);
@@ -114,8 +127,8 @@
       },
       peek: function () {   // for playtesting: tap now?
         if (phase !== 'pitch' || swing >= 0) return null;
-        var b = ballAt(bt / (P.time * speedUp()));
-        return Math.abs(b.y - SWEET) < 8 ? { now: true, x: 180, y: 400 } : null;
+        var b = ballAt(along(P, bt / (P.time * speedUp())));
+        return Math.abs(b.y - SWEET) < 14 ? { now: true, x: 180, y: 400 } : null;   // (the hit counts within 30 px)
       },
       down: function () {
         if (phase !== 'pitch' || swing >= 0) return;
@@ -128,6 +141,7 @@
   T.register({
     id: 'baseball', name: 'やきゅう', orig: '野球', kind: 'count', sport: true,
     help: 'ピッチャーが ボールを なげるよ。\nボールが ホームに きた ときに\nタッチして うちかえそう！',
+    oniHelp: 'とちゅうで きえる ボールや、\nはやさが かわる ボールが くるよ！',
     levels: {
       e: { n: 10, time: [1.6, 2.1], slow: 0.2, curve: 0 },
       n: { n: 10, time: [1.2, 1.7], slow: 0.25, curve: 0 },
@@ -136,9 +150,15 @@
       a: { n: 10, time: [0.8, 1.35], slow: 0.3, curve: 45 },
       ah: { n: 10, time: [0.68, 1.2], slow: 0.35, curve: 60 },
       endless: { n: 10, time: [1.3, 1.8], slow: 0.25, curve: 20, endless: true },
-      practice: { n: 3, time: [1.9, 1.9], slow: 0, curve: 0 }
+      practice: { n: 3, time: [1.9, 1.9], slow: 0, curve: 0 },
+      o: { n: 10, time: [1.0, 1.5], slow: 0.3, curve: 30, vanish: 0.4, change: 0.3 },
+      ao: { n: 10, time: [0.72, 1.2], slow: 0.3, curve: 60, vanish: 0.5, change: 0.35 },
+      practiceO: { n: 3, time: [1.9, 1.9], slow: 0, curve: 0, vanish: 1, change: 0 }
     },
-    ranks: { e: [10, 9, 8, 6, 4, 2], n: [10, 9, 8, 6, 4, 2], h: [10, 9, 7, 5, 3, 2], ae: [10, 9, 7, 5, 3, 2], a: [10, 9, 7, 5, 3, 1], ah: [10, 9, 7, 5, 3, 1] },
+    ranks: {
+      e: [10, 9, 8, 6, 4, 2], n: [10, 9, 8, 6, 4, 2], h: [10, 9, 7, 5, 3, 2], o: [10, 9, 7, 5, 3, 2],
+      ae: [10, 9, 7, 5, 3, 2], a: [10, 9, 7, 5, 3, 1], ah: [10, 9, 7, 5, 3, 1], ao: [10, 9, 7, 5, 3, 1]
+    },
     gen: gen,
     start: start,
     icon: function (c, t) {

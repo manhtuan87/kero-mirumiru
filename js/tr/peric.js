@@ -1,19 +1,26 @@
 /* まわりの C (the original: 周辺C, 周辺視野) — a "C" in the middle and Cs all around it. Keeping the middle
-   one in view, find the one around it that is open the same way, and tap it — as fast as you can. */
+   one in view, find the one around it that is open the same way, and tap it — as fast as you can.
+   おに: the Cs open slantwise too, many only a little turned from the middle one; grown-ups get two rings. */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var CX = 180, CY = 310;
 
-  // p: { q (questions), around, radius, size }
+  // p: { q (questions), around, radius, size }; おに: dirs: 8, near (share of the others only 45° off),
+  // rings: 2 (the Cs in two rings: 3 of 8 inside, the rest outside)
+  var RINGS2 = [88, 146];
   function gen(p, r) {
-    var out = [];
+    var out = [], nd = p.dirs || 4;
     for (var i = 0; i < p.q; i++) {
-      var dir = U.int(r, 0, 3), ans = U.int(r, 0, p.around - 1), rot = r() * Math.PI * 2, cs = [];
+      var dir = U.int(r, 0, nd - 1), ans = U.int(r, 0, p.around - 1), rot = r() * Math.PI * 2, cs = [];
+      var inner = p.rings === 2 ? Math.round(p.around * 3 / 8) : 0;
       for (var k = 0; k < p.around; k++) {
-        var a = rot + k / p.around * Math.PI * 2, d;
-        if (k === ans) d = dir; else { d = U.int(r, 0, 2); if (d >= dir) d++; }
-        cs.push({ x: CX + Math.cos(a) * p.radius, y: CY + Math.sin(a) * p.radius * 0.92, dir: d });
+        var two = k < inner, m = two ? inner : p.around - inner, j = two ? k : k - inner;
+        var a = rot + (j + (two ? 0 : 0.5)) / m * Math.PI * 2, rad = p.rings === 2 ? RINGS2[two ? 0 : 1] : p.radius, d;
+        if (k === ans) d = dir;
+        else if (p.near && r() < p.near) d = (dir + (r() < 0.5 ? 1 : nd - 1)) % nd;
+        else { d = U.int(r, 0, nd - 2); if (d >= dir) d++; }
+        cs.push({ x: CX + Math.cos(a) * rad, y: CY + Math.sin(a) * rad * 0.92, dir: d });
       }
       out.push({ dir: dir, cs: cs, ans: ans });
     }
@@ -21,7 +28,7 @@
   }
 
   function start(api, p) {
-    var D = G.Draw, A = G.Art;
+    var D = G.Draw, A = G.Art, ring = p.dirs === 8 ? A.ringC8 : A.ringC;   // (おに: slantwise too)
     var qs = gen(p, api.rnd), qi = -1, Q = null, phase = 'wait', pt = 0, time = 0, mistakes = 0, since = 0, wrong = -1;
 
     function next() {
@@ -67,12 +74,12 @@
       draw: function (c) {
         if (!Q) return;
         A.text(c, L('まんなかと おなじ むきの Cは どれ？'), 180, 104, 20, '#fff', { lw: 6 });
-        D.circle(c, CX, CY, p.radius + p.size + 14); D.paint(c, 'rgba(255,255,255,.4)');
+        D.circle(c, CX, CY, (p.rings === 2 ? RINGS2[1] : p.radius) + p.size + 14); D.paint(c, 'rgba(255,255,255,.4)');
         D.circle(c, CX, CY, p.size * 1.5 + 10); D.paint(c, '#fff4b0', D.INK, 3);
-        A.ringC(c, CX, CY, p.size * 1.5, Q.dir);
+        ring(c, CX, CY, p.size * 1.5, Q.dir);
         Q.cs.forEach(function (q, k) {
           if ((phase === 'good' || phase === 'bad') && k === Q.ans) { D.circle(c, q.x, q.y, p.size + 8); D.paint(c, phase === 'good' ? 'rgba(255,143,192,.5)' : 'rgba(108,198,255,.55)'); }
-          A.ringC(c, q.x, q.y, p.size, q.dir, k === wrong ? '#b3aaa4' : null);   // (a C tapped by mistake turns grey)
+          ring(c, q.x, q.y, p.size, q.dir, k === wrong ? '#b3aaa4' : null);   // (a C tapped by mistake turns grey)
         });
       },
       peek: function () {   // for playtesting
@@ -92,6 +99,7 @@
   T.register({
     id: 'peric', name: 'まわりの C', orig: '周辺C', kind: 'time',
     help: 'まんなかの「C」と おなじ むきの Cを\nまわりから さがして タッチしてね！\nはやさを はかるよ',
+    oniHelp: 'ななめ むきの Cも まざるよ。\nおなじ むきを さがしてね！',
     levels: {
       e: { q: 8, around: 4, radius: 105, size: 30, limit: 10 },
       n: { q: 10, around: 6, radius: 118, size: 26, limit: 8 },
@@ -101,10 +109,14 @@
       ah: { q: 12, around: 12, radius: 140, size: 17, limit: 4 },
       test: { q: 8, around: 6, radius: 120, size: 25, limit: 8 },
       testA: { q: 10, around: 8, radius: 134, size: 19, limit: 5 },
-      practice: { q: 3, around: 4, radius: 100, size: 32 }
+      practice: { q: 3, around: 4, radius: 100, size: 32 },
+      o: { q: 10, around: 8, radius: 128, size: 22, dirs: 8, near: 0.6, limit: 8 },
+      ao: { q: 12, around: 16, rings: 2, size: 16, dirs: 8, near: 0.6, limit: 5 },
+      practiceO: { q: 3, around: 4, radius: 100, size: 32, rings: 0, dirs: 8, near: 0.5 }
     },
     ranks: {
       e: [8, 10, 13, 17, 23, 32], n: [12, 15, 19, 25, 33, 45], h: [15, 19, 24, 31, 41, 56], ae: [13, 16, 20, 26, 34, 46], a: [16, 20, 25, 32, 42, 56], ah: [22, 27, 34, 43, 56, 74],
+      o: [20, 25, 31, 40, 52, 70], ao: [31, 38, 47, 60, 78, 104],
       test: [10, 13, 16, 21, 28, 38], testA: [13, 16, 20, 26, 34, 46]
     },
     gen: gen,

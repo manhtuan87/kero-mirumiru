@@ -16,7 +16,10 @@
   (function localize() {
     if (Lang.cur === 'ja') return;
     var tx = function (s) { return L(s); };
-    T.list.forEach(function (tr) { tr.name = L(tr.name); if (tr.help) tr.help = L(tr.help); });
+    T.list.forEach(function (tr) {
+      tr.name = L(tr.name);
+      ['help', 'oniHelp', 'oniHelpA'].forEach(function (k) { if (tr[k]) tr[k] = L(tr[k]); });
+    });
     DATA.CATS.forEach(function (c) { c.name = L(c.name); if (c.sub) c.sub = L(c.sub); });
     DATA.LEVELS.forEach(function (l) { l.name = L(l.name); if (l.short) l.short = L(l.short); });
     DATA.ANIMALS.forEach(function (a) { a.name = L(a.name); a.fact = L(a.fact); });
@@ -48,6 +51,9 @@
   }
   function levelsFor() { return DATA.LEVELS.filter(function (l) { return !l.adult || isAdult(); }); }
   function isAdultLevel(lv) { return lv === 'testA' || DATA.LEVELS.some(function (l) { return l.id === lv && l.adult; }); }
+  function isOniLevel(lv) { return DATA.LEVELS.some(function (l) { return l.id === lv && l.oni; }); }
+  // The explanation of a training at a level: おに has its own (its twist), for grown-ups too when it differs.
+  function helpOf(tr, lv) { return isOniLevel(lv) ? (isAdultLevel(lv) && tr.oniHelpA) || tr.oniHelp || tr.help : tr.help; }
   function animalName(rank) { return DATA.ANIMALS[Math.max(0, Math.min(6, rank - 1))].name; }
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];   // (English calendar)
   function paren(t) { return t ? L('（{t}）', { t: t }) : ''; }
@@ -112,18 +118,32 @@
     var x0 = -view.ox / view.s, y0 = -view.oy / view.s;
     return { x0: x0, y0: y0, x1: x0 + view.cw / view.s, y1: y0 + view.ch / view.s };
   }
-  function drawBackground(theme) {
+  function drawBackground(theme, oni) {
     if (!(view.s > 0)) return;   // (a window with no size yet)
-    if (!bg.canvas || bg.theme !== theme) {
+    var key = theme + (oni ? '/oni' : '');
+    if (!bg.canvas || bg.theme !== key) {
       bg.canvas = document.createElement('canvas');
       bg.canvas.width = canvas.width; bg.canvas.height = canvas.height;
       var b = bg.canvas.getContext('2d'), v = visible();
       worldTransform(b);
       D.background(b, theme, v.x0, v.y0, v.x1, v.y1);
-      bg.theme = theme;
+      if (oni) oniTint(b, v);
+      bg.theme = key;
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(bg.canvas, 0, 0);
+  }
+  // おに: the whole background turns reddish and darker at the edges (the play field itself stays as it is).
+  function oniTint(b, v) {
+    b.save();
+    b.fillStyle = 'rgba(214,40,57,.2)';
+    b.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    var cx = (v.x0 + v.x1) / 2, cy = (v.y0 + v.y1) / 2, rr = Math.hypot(v.x1 - v.x0, v.y1 - v.y0) / 2;
+    var g = b.createRadialGradient(cx, cy, rr * 0.45, cx, cy, rr);
+    g.addColorStop(0, 'rgba(90,10,20,0)'); g.addColorStop(1, 'rgba(90,10,20,.32)');
+    b.fillStyle = g;
+    b.fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
+    b.restore();
   }
   function toWorld(e) { return { x: (e.clientX - view.ox) / view.s, y: (e.clientY - view.oy) / view.s }; }
 
@@ -469,10 +489,10 @@
   function openIntro(tr) {
     if (!tr) { go('list'); return; }
     intro.tr = tr; intro.t = 0;
-    var ids = levelsFor().filter(function (l) { return !l.hard || C.hardOpen(save, tr.id, l.id); }).map(function (l) { return l.id; }), last = ud().lv[tr.id];
+    var ids = levelsFor().filter(function (l) { return C.levelOpen(save, tr.id, l.id); }).map(function (l) { return l.id; }), last = ud().lv[tr.id];
     intro.level = ids.indexOf(last) >= 0 ? last : (isAdult() ? 'a' : 'e');
     $('intro-name').textContent = tr.name;
-    $('intro-help').textContent = tr.help;
+    showHelp();
     buildLevels();
     var eb = $('intro-endless');
     eb.hidden = !tr.sport;
@@ -482,17 +502,23 @@
     }
     $('intro-start-label').textContent = L('はじめる');
     show('intro');
-    setTimeout(function () { if (screen === 'intro' && intro.tr === tr) speak(tr.help); }, 300);
+    setTimeout(function () { if (screen === 'intro' && intro.tr === tr) speak(helpOf(tr, intro.level)); }, 300);
+  }
+  // The explanation for the chosen level (おに explains its twist, on a red card).
+  function showHelp() {
+    $('intro-help').textContent = helpOf(intro.tr, intro.level);
+    document.querySelector('.intro-card').classList.toggle('oni', isOniLevel(intro.level));
   }
 
   function buildLevels() {
     var box = $('intro-levels'), rec = ud().rec[intro.tr.id] || {};
     box.innerHTML = '';
-    box.classList.toggle('six', levelsFor().length > 3);   // (grown-ups: the children's row, then the grown-ups' row)
+    box.classList.toggle('eight', levelsFor().length > 4);   // (grown-ups: the children's row, then the grown-ups' row)
     levelsFor().forEach(function (l) {
-      var b = document.createElement('button'), locked = l.hard && !C.hardOpen(save, intro.tr.id, l.id);
-      b.className = 'lv-btn' + (l.adult ? ' adult' : '') + (intro.level === l.id ? ' on' : '') + (locked ? ' locked' : '');
-      b.innerHTML = '<i class="dots">' + '●●●'.slice(0, l.dots) + '</i>' + (l.adult ? '<small>' + L('おとな') + '</small>' + l.short : l.name);
+      var b = document.createElement('button'), locked = !C.levelOpen(save, intro.tr.id, l.id);
+      b.className = 'lv-btn' + (l.adult ? ' adult' : '') + (l.oni ? ' oni' : '') + (intro.level === l.id ? ' on' : '') + (locked ? ' locked' : '');
+      b.innerHTML = (l.oni ? '<i class="horns">' + icon('horns') + '</i>' : '<i class="dots">' + '●●●'.slice(0, l.dots) + '</i>') +
+        (l.adult ? '<small>' + L('おとな') + '</small>' + l.short : l.name);
       if (locked) b.insertAdjacentHTML('beforeend', icon('lock'));
       else if (rec[l.id]) b.appendChild(animalCanvas(rec[l.id].rank, 34, 24));
       else b.insertAdjacentHTML('beforeend', '<span class="noanimal"></span>');
@@ -500,11 +526,13 @@
         if (locked) {
           S.play('ng'); shake(b);
           $('intro-note').classList.remove('best');
-          $('intro-note').textContent = L('「{level}」は「{from}」で {animal} いじょう か、スタンプ {n}こで あくよ',
-            { level: l.name, from: levelName(l.hard), animal: animalName(DATA.HARD_RANK), n: DATA.HARD_STAMPS });
+          $('intro-note').textContent = l.oni ? L('「{level}」は「{from}」で ★3つか、スタンプ {n}こで あくよ', { level: l.name, from: levelName(l.oni), n: DATA.ONI_STAMPS }) :
+            L('「{level}」は「{from}」で {animal} いじょう か、スタンプ {n}こで あくよ', { level: l.name, from: levelName(l.hard), animal: animalName(DATA.HARD_RANK), n: DATA.HARD_STAMPS });
           return;
         }
+        var was = isOniLevel(intro.level);
         S.play('select'); intro.level = l.id; buildLevels();
+        if (isOniLevel(l.id) !== was) { showHelp(); if (l.oni) speak(helpOf(intro.tr, l.id)); }   // (the twist of おに is said when it is chosen)
       });
       box.appendChild(b);
     });
@@ -521,10 +549,16 @@
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, cv.width, cv.height);
     if (!intro.tr) return;
-    if (intro.tr.demo) { intro.tr.demo(g, intro.t, cv.width, cv.height); return; }
-    var s = cv.height / 100;
-    g.setTransform(s, 0, 0, s, (cv.width - cv.height) / 2, 0);
-    intro.tr.icon(g, intro.t);
+    if (intro.tr.demo) intro.tr.demo(g, intro.t, cv.width, cv.height);
+    else {
+      var s = cv.height / 100;
+      g.setTransform(s, 0, 0, s, (cv.width - cv.height) / 2, 0);
+      intro.tr.icon(g, intro.t);
+    }
+    if (isOniLevel(intro.level)) {   // (おに: ケロはかせ with his horns in the corner)
+      g.setTransform(1, 0, 0, 1, cv.width - 58, cv.height - 22); g.scale(0.62, 0.62);
+      D.critter(g, { x: 0, y: 0, t: clock, kind: 'frog', look: { x: -200, y: -60 }, mode: 'idle', mt: intro.t, wear: A.hakaseOni });
+    }
   }
 
   // ---------------------------------------------------------------- playing a training
@@ -534,16 +568,20 @@
   function startRun(tr, level, opts) {
     opts = opts || {};
     if (run) stopRun();
-    var params = Object.assign({}, tr.levels[level] || tr.levels.n);
-    if (opts.practice) Object.assign(params, tr.levels.practice || {}, { practice: true });
+    var params = Object.assign({}, tr.levels[level] || tr.levels.n), oni = isOniLevel(level) && !!tr.levels[level];
+    // (the practice of おに keeps its twist: practiceO, and practiceAO for grown-ups when it differs)
+    var practice = oni ? (isAdultLevel(level) && tr.levels.practiceAO) || tr.levels.practiceO : tr.levels.practice;
+    if (opts.practice) Object.assign(params, practice || tr.levels.practice || {}, { practice: true });
     params.adult = isAdultLevel(level);
+    params.oni = oni;
     if (tr.pool) params.recent = C.recentOf(save, tr.pool);   // (what was shown lately comes last)
     run = {
-      tr: tr, level: level, params: params, practice: !!opts.practice, check: opts.check || null, endless: level === 'endless',
+      tr: tr, level: level, params: params, practice: !!opts.practice, check: opts.check || null, endless: level === 'endless', oni: oni,
       state: 'count', countT: 0, t: 0, session: null, hand: null, done: false
     };
     fx.length = 0; marks.length = 0; words.length = 0;
-    $('p-name').innerHTML = '<span class="nm">' + esc(tr.name) + '</span>' + (run.practice ? '<small>' + L('れんしゅう') + '</small>' : '');
+    $('p-name').innerHTML = '<span class="nm">' + esc(tr.name) + '</span>' + (oni ? '<small class="oni">' + L('おに') + '</small>' : '') +
+      (run.practice ? '<small>' + L('れんしゅう') + '</small>' : '');
     setDots(0, 0);
     clearCtrl();
     $('ctrl').classList.add('wait');
@@ -615,7 +653,7 @@
 
   function drawRun(c) {
     var r = run, se = r.session;
-    drawBackground(se.theme != null ? se.theme : catOf(r.tr.id).theme);
+    drawBackground(se.theme != null ? se.theme : catOf(r.tr.id).theme, r.oni);
     worldTransform(c);
     if (se.draw) se.draw(c, clock);
     drawFx(c);
@@ -683,7 +721,7 @@
     clearCtrl();
     if (r.practice) {
       ud().seen[r.tr.id] = true; store();
-      queueOverlay({ kind: 'practice', after: function () { startRun(r.tr, r.level, { check: r.check }); } });
+      queueOverlay({ kind: 'practice', oni: r.oni, after: function () { startRun(r.tr, r.level, { check: r.check }); } });
       return;
     }
     ud().seen[r.tr.id] = true;
@@ -877,7 +915,8 @@
       el.classList.toggle('long', name.length > 4);
       S.play('fanfare');
       var who = nameOf(me());
-      var core = R.out.newBest ? pick(DATA.LINES.best) : R.out.firstPlay ? pick(DATA.LINES.first1) : R.rank >= 4 ? pick(DATA.LINES.good) : pick(DATA.LINES.soso);
+      var core = R.out.newBest ? pick(DATA.LINES.best) : isOniLevel(R.level) && R.rank >= 5 ? pick(DATA.LINES.oniGood) :
+        R.out.firstPlay ? pick(DATA.LINES.first1) : R.rank >= 4 ? pick(DATA.LINES.good) : pick(DATA.LINES.soso);
       $('r-badge').textContent = R.out.newBest ? L('じこベスト！') : '';
       $('r-say').textContent = L('ケロはかせ「{t}」', { t: nameHead(who) + core });
       speak([L('{animal}！', { animal: name }), core]);
@@ -926,6 +965,9 @@
     var hard = (out.opened.hard || []).filter(function (o) { return trOf(o.id) && C.isOpen(save, o.id) && mine.indexOf(o.lv) >= 0; });
     if (hard.length > 2) queueOverlay({ kind: 'hardAll' });
     else hard.forEach(function (o) { queueOverlay({ kind: 'hard', id: o.id, lv: o.lv }); });
+    var oni = (out.opened.oni || []).filter(function (o) { return trOf(o.id) && C.isOpen(save, o.id) && mine.indexOf(o.lv) >= 0; });
+    if (oni.length > 2) queueOverlay({ kind: 'oniAll' });
+    else oni.forEach(function (o) { queueOverlay({ kind: 'oni', id: o.id, lv: o.lv }); });
     if (fromRun && save.stopAfter && out.runsToday >= save.stopAfter) {
       var day = ud().days[C.dayKey()];
       if (day && !day.nudged) { day.nudged = true; store(); queueOverlay({ kind: 'nudge' }); }
@@ -956,6 +998,10 @@
       title = L('「むずかしい」が あそべるよ！');
       text = ov.kind === 'hard' ? L('「{name}」で「{level}」が えらべるよ', { name: trOf(ov.id).name, level: levelName(ov.lv) }) : L('ぜんぶの トレーニングで「むずかしい」が えらべるよ');
       S.play('unlock'); speak(DATA.LINES.newHard);
+    } else if (ov.kind === 'oni' || ov.kind === 'oniAll') {
+      title = L('「おに」が あそべるよ！');
+      text = ov.kind === 'oni' ? L('「{name}」で「{level}」が えらべるよ', { name: trOf(ov.id).name, level: levelName(ov.lv) }) : L('ぜんぶの トレーニングで「おに」が えらべるよ');
+      S.play('unlock'); speak(DATA.LINES.newOni);
     } else if (ov.kind === 'tip') {
       title = L('めの まめちしき No.{n}', { n: ov.n + 1 });
       text = DATA.TIPS[ov.n];
@@ -970,6 +1016,7 @@
     $('ov-title').textContent = title;
     $('ov-text').textContent = text;
     $('overlay').classList.toggle('is-tip', ov.kind === 'tip');   // (not 'tip': that is the speech bubble)
+    $('overlay').classList.toggle('is-oni', ov.kind === 'oni' || ov.kind === 'oniAll' || !!ov.oni);
     $('ov-ok-label').textContent = ok;
     showPanel('overlay');
   }
@@ -1023,7 +1070,7 @@
       D.circle(g, look - 5, -6, 4); D.paint(g, '#fff');
       g.restore();
       D.sparkle(g, 232, 30, 8 + Math.sin(t * 5) * 2, '#ffd23d');
-    } else if (ov.kind === 'training' || ov.kind === 'hard' || ov.kind === 'hardAll') {
+    } else if (ov.kind === 'training' || ov.kind === 'hard' || ov.kind === 'hardAll' || ov.kind === 'oni' || ov.kind === 'oniAll') {
       var tr = trOf(ov.id || 'shuffle');
       g.save(); g.translate(130 - 60, 16);
       var bob = Math.sin(t * 3) * 3;
@@ -1034,9 +1081,14 @@
         var q = t * 1.5 + i * 1.26;
         D.sparkle(g, 130 + Math.cos(q) * 105, 76 + Math.sin(q) * 60, 6 + 3 * Math.sin(t * 5 + i), i % 2 ? '#ffd23d' : '#ff9fc9');
       }
+      if (ov.kind === 'oni' || ov.kind === 'oniAll') {   // (ケロはかせ with his horns beside the picture)
+        g.save(); g.translate(218, 112); g.scale(0.5, 0.5);
+        D.critter(g, { x: 0, y: 0, t: clock, kind: 'frog', look: { x: -200, y: -40 }, mode: 'happy', mt: t % 1.4, wear: A.hakaseOni });
+        g.restore();
+      }
     } else if (ov.kind === 'practice') {
       g.save(); g.translate(130, 88); g.scale(0.9, 0.9);
-      D.critter(g, { x: 0, y: 0, t: clock, kind: 'frog', look: null, mode: 'happy', mt: t % 1.4, wear: A.hakase });
+      D.critter(g, { x: 0, y: 0, t: clock, kind: 'frog', look: null, mode: 'happy', mt: t % 1.4, wear: ov.oni ? A.hakaseOni : A.hakase });
       g.restore();
     }
   }
@@ -1242,7 +1294,7 @@
       levelsFor().forEach(function (l) {
         if (!rec[l.id]) return;
         var chip = document.createElement('span');
-        chip.className = 'lv-chip';
+        chip.className = 'lv-chip' + (l.oni ? ' oni' : '');
         chip.appendChild(animalCanvas(rec[l.id].rank, 28, 20));
         chip.insertAdjacentHTML('beforeend', l.name);
         chips.appendChild(chip);
@@ -1321,7 +1373,7 @@
       if (!rec[l.id]) return;
       var b = document.createElement('button');
       b.textContent = l.name;
-      b.className = graph.level === l.id ? 'on' : '';
+      b.className = (graph.level === l.id ? 'on' : '') + (l.oni ? ' oni' : '');
       b.addEventListener('click', function () { S.play('select'); graph.level = l.id; renderGraph(); });
       box.appendChild(b);
     });
@@ -1699,6 +1751,7 @@
     voice: '<path d="M4 5.5h16v10.5h-8.5L7 20v-4H4z" fill="currentColor" fill-opacity=".18"/><path d="M8 9.5h8M8 12.5h5"/>',
     voiceOff: '<path d="M4 5.5h16v10.5h-8.5L7 20v-4H4z" fill="currentColor" fill-opacity=".18"/><path d="M3.5 3.5l17 17"/>',
     lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5"/>',
+    horns: '<path d="M4.5 20.5c-.4-5.6.6-11 3.4-16.5 1.9 4.3 3.1 9.5 3.3 16.5z" fill="currentColor"/><path d="M19.5 20.5c.4-5.6-.6-11-3.4-16.5-1.9 4.3-3.1 9.5-3.3 16.5z" fill="currentColor"/>',   // (おに)
     star: '<path d="M12 3.2l2.6 5.5 6 .8-4.4 4.1 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z" fill="currentColor" stroke-linejoin="round"/>',
     install: '<path d="M12 4v10M7.5 9.5 12 14l4.5-4.5M5 19h14"/>',
     shop: '<path d="M5.5 8.5h13l-1.2 11.5H6.7z" fill="currentColor" fill-opacity=".25"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/>',
