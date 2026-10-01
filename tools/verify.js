@@ -407,14 +407,30 @@ console.log('save data');
   check(nu && nu.training === 'countc' && nu.need === 1, 'next unlock');
   // the eye check
   const ck = C.addCheck(s, { ranks: [7, 7, 7, 7, 7], tests: ['shuffle', 'flashnum', 'triplec', 'peric', 'quicktouch'], today: '2026-10-02' });
-  check(ck.recorded && ck.rank === 7 && ck.age == null && !ck.stampNew, 'check for a child (no eye age)');
+  check(ck.recorded && ck.rank === 7 && ck.score === 100 && ck.age === undefined && !ck.stampNew, 'check: a score, no eye age');
+  check(ck.cond.state === 'warmup' && ck.cond.need === 3, 'the first check only starts to learn the usual');
   check(!C.addCheck(s, { ranks: [1, 1, 1, 1, 1], tests: ['shuffle', 'flashnum', 'triplec', 'peric', 'quicktouch'], today: '2026-10-02' }).recorded, 'second check of a day is practice');
   check(C.lastCheck(s).rank === 7 && C.checkedToday(s, '2026-10-02') && !C.checkedToday(s, '2026-10-03'), 'last check');
   const ck2 = C.addCheck(s, { ranks: [1, 2, 3, 4, 5], tests: ['rushcount', 'flashmark', 'countc', 'updownc', 'numtouch'], today: '2026-10-03' });
   check(ck2.stampNew && ck2.stamps === 3 && ck2.opened.trainings[0] === 'countc', 'a check alone gives a stamp too');
-  check(C.eyeAge(1) === 20 && C.eyeAge(0) === 80, 'eye age range');
-  for (let p = 0; p < 1; p += 0.01) check(C.eyeAge(p) >= C.eyeAge(p + 0.01), 'eye age gets younger as the check gets better');
-  // きろくに ちょうせん
+  // today's condition against the player's own usual (the mean of the last checks, one spread either way)
+  {
+    const cs = C.fresh(), day = n => '2026-11-' + String(n).padStart(2, '0'), five = r => [r, r, r, r, r];
+    const tests = ['shuffle', 'flashnum', 'triplec', 'peric', 'quicktouch'];
+    check(C.condition(cs, day(1), 0.5).state === 'warmup', 'no checks yet: warming up');
+    [4, 4, 4].forEach((r, i) => C.addCheck(cs, { ranks: five(r), tests, today: day(i + 1) }));
+    check(C.condition(cs, day(2), 0.5).need === 2, 'only the days before count');
+    check(C.condition(cs, day(4), 0.5).state === 'same', 'the same as usual');
+    check(C.condition(cs, day(4), 0.56).state === 'up' && C.condition(cs, day(4), 0.44).state === 'down', 'at least 5 points either way');
+    check(C.condition(cs, day(4), 0.54).state === 'same' && C.condition(cs, day(4), 0.46).state === 'same', 'small changes are as usual');
+    [1, 7, 1, 7].forEach((r, i) => C.addCheck(cs, { ranks: five(r), tests, today: day(i + 4) }));
+    const wide = C.condition(cs, day(9), 0.75);
+    check(wide.band > 0.3 && wide.state === 'same', 'an up-and-down player needs a bigger change');
+    check(C.addCheck(cs, { ranks: five(7), tests, today: day(20) }).cond.state === 'up' && C.addCheck(cs, { ranks: five(1), tests, today: day(21) }).cond.state === 'down', 'addCheck tells the condition');
+    for (let k = 22; k < 30; k++) C.addCheck(cs, { ranks: five(4), tests, today: day(k) });
+    check(C.condition(cs, day(30), 0.5).mean === 0.5, 'only the last 10 checks make the usual');
+  }
+  // どこまで いけるかな？
   const e1 = C.addEndless(s, 'baseball', 7, '2026-10-03');
   check(e1.first && e1.best === 7 && !e1.newBest, 'first endless record');
   const e2 = C.addEndless(s, 'baseball', 5, '2026-10-03');
@@ -430,7 +446,7 @@ console.log('save data');
   check(u && s.users.length === 2, 'add user');
   s.cur = u.id;
   check(C.isAdult(s) && C.stampCount(C.udata(s)) === 0 && C.tipToday(s, '2026-10-03') === 0, 'users have their own data');
-  check(C.addCheck(s, { ranks: [4, 4, 4, 4, 4], tests: ['a', 'b', 'c', 'd', 'e'], today: '2026-10-03' }).age === C.eyeAge(0.5), 'grown-ups get an eye age');
+  check(C.addCheck(s, { ranks: [4, 4, 4, 4, 4], tests: ['a', 'b', 'c', 'd', 'e'], today: '2026-10-03' }).score === 50, 'grown-ups get a score');
   check(C.removeUser(s, u.id) && s.users.length === 1 && s.cur === 'u1', 'remove user');
   check(!C.removeUser(s, 'u1'), 'the last user stays');
   // ★: what the animal gives, but ★3 only with no mistakes and ★1 at half or less right

@@ -1,6 +1,6 @@
-/* アメフト (the original sports training: アメフト — 瞬間視, 周辺視野) — run up the field with the ball while
+/* アメフト (瞬間視, 周辺視野) — run up the field with the ball while
    the other team rushes at you. Tap the left or right side (or slide) to step into a free lane and get past.
-   p.endless: きろくに ちょうせん, until three tackles.
+   p.endless: どこまで いけるかな？, until three tackles.
    おに: some rushers change lanes on the way (into a lane next to theirs that nobody of their wave takes). */
 (function (T) {
   'use strict';
@@ -134,7 +134,7 @@
   }
 
   T.register({
-    id: 'football', name: 'アメフト', orig: 'アメフト', kind: 'count', sport: true,
+    id: 'football', name: 'アメフト', kind: 'count', sport: true,
     help: 'ボールを もって はしるよ。\nあいてが つっこんで くるから、\nひだりか みぎを タッチして よけてね！',
     oniHelp: 'とちゅうで みちを かえる あいてが いるよ。\nよく みて よけてね！',
     levels: {

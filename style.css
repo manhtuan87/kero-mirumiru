@@ -339,6 +339,21 @@ input { -webkit-user-select: text; user-select: text; touch-action: auto; }
 .ck-bar .cells i.on { background: var(--c); }
 .ck-big { font-size: 25px; font-weight: 800; line-height: 1.2; text-align: center; white-space: nowrap; }
 .ck-big b { font-size: 44px; color: #ff6fa8; -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; }
+/* a grown-up's result: the score, how it compares with their usual, and a small note under the buttons */
+.ck-big.adult b { font-size: 38px; }
+.ck-cond { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 2px; font-size: 16px; font-weight: 800; white-space: nowrap; }
+.ck-cond span[data-icon] { display: inline-flex; width: 26px; height: 26px; flex: none; }
+.ck-cond span[data-icon] svg { width: 100%; height: 100%; }
+.ck-cond.up span[data-icon] { color: #ff9a1f; }
+.ck-cond.same span[data-icon] { color: #3a9ad9; }
+.ck-cond.down span[data-icon] { color: #7f8fa3; }
+.ck-cond.warmup span[data-icon] { color: #5bb03a; }
+/* (the grown-ups' card has a line more and longer tips: a little smaller so the buttons stay inside) */
+.check-card.result.adult { gap: 6px; }
+.check-card.result.adult .ck-bars { gap: 3px; }
+.check-card.result.adult .ck-bar .cells i { height: 12px; }
+.check-card.result.adult .ck-text { font-size: 15px; line-height: 1.4; }
+.ck-note { position: absolute; left: 0; right: 0; bottom: 2px; margin: 0; text-align: center; font-size: 10.5px; font-weight: 700; opacity: .7; }
 .ck-row { display: flex; justify-content: center; gap: 10px; margin-top: auto; }
 .ck-row .btn.big { height: 60px; font-size: 22px; padding: 0 18px; }
 

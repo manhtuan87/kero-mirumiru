@@ -1,4 +1,4 @@
-/* ナンバー タッチ (the original: ナンバータッチ, 眼と手の協応) — panels with the numbers from 1 are laid out
+/* すうじ さがし (眼と手の協応) — panels with the numbers from 1 are laid out
    at random; tap them in order, 1, 2, 3 ... as fast as you can.
    おに: after each right tap, two of the panels still to go change places (they slide, so the eyes can follow). */
 (function (T) {
@@ -107,7 +107,7 @@
   }
 
   T.register({
-    id: 'numtouch', name: 'ナンバー タッチ', orig: 'ナンバータッチ', kind: 'time',
+    id: 'numtouch', name: 'すうじ さがし', kind: 'time',
     help: 'すうじの パネルを、1から じゅんばんに\nできるだけ はやく タッチしてね！',
     oniHelp: 'タッチする たびに、\nパネルが 2まい いれかわるよ！',
     levels: {

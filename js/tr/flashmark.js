@@ -1,4 +1,4 @@
-/* ぱっと まる (the original: 瞬間記号, 瞬間視) — many marks show for a blink; one of them is a ○.
+/* ぱっと まる (瞬間視) — many marks show for a blink; one of them is a ○.
    Where was the ○? Tap its square. All the marks have one colour, so the ○ is found by its shape.
    おに: marks that look like a ○ are among them too (a ring with a gap, ◎). */
 (function (T) {
@@ -100,7 +100,7 @@
   }
 
   T.register({
-    id: 'flashmark', name: 'ぱっと まる', orig: '瞬間記号', kind: 'count',
+    id: 'flashmark', name: 'ぱっと まる', kind: 'count',
     help: 'いろいろな マークが いっしゅん でるよ。\n○が あった ばしょを タッチしてね！',
     oniHelp: '○に にた マークも まざるよ。\nほんとうの ○を さがしてね！',
     levels: {

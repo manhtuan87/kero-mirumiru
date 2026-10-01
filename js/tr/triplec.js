@@ -1,4 +1,4 @@
-/* トリプル C (the original: トリプルC, 眼球運動) — a "C" pops up in one place after another. Then tell which
+/* わっかの じゅんばん (眼球運動) — a "C" pops up in one place after another. Then tell which
    way each C was open, in the order they came (↑ → ↓ ←). Moving the eyes quickly to each new place.
    おに: the Cs open slantwise too (8 directions, answered with 8 arrows around a compass). */
 (function (T) {
@@ -87,10 +87,10 @@
         if (!R) return;
         D.roundRect(c, BOX.x0 - 44, BOX.y0 - 44, BOX.x1 - BOX.x0 + 88, BOX.y1 - BOX.y0 + 88, 24); D.paint(c, 'rgba(255,255,255,.4)');
         if (phase === 'ready') {
-          A.text(c, L('Cが {n}かい でるよ', { n: R.cs.length }), 180, 104, 22, '#fff', { lw: 6 });
+          A.text(c, L('わっかが {n}かい でるよ', { n: R.cs.length }), 180, 104, 22, '#fff', { lw: 6 });
           D.sparkle(c, 180, 285, 12 + Math.sin(pt * 10) * 2, '#ffd23d');
         } else if (phase === 'show') {
-          A.text(c, L('Cの あいてる ほうを おぼえてね'), 180, 104, 20, '#fff', { lw: 6 });
+          A.text(c, L('わっかの むきを おぼえてね'), 180, 104, 20, '#fff', { lw: 6 });
           if (pt < p.show) { var q = R.cs[ci]; ring(c, q.x, q.y, p.size, q.dir); }
         } else {
           A.text(c, L(phase === 'ask' ? 'でた じゅんに こたえてね' : phase === 'good' ? 'ぜんぶ あたり！' : 'こたえは これ'), 180, 104, 22, '#fff', { lw: 6 });
@@ -112,9 +112,9 @@
   }
 
   T.register({
-    id: 'triplec', name: 'トリプル C', orig: 'トリプルC', kind: 'count',
-    help: 'いろいろな ばしょに「C」が でるよ。\nでた じゅんばんに、Cの あいてる ほう\n（↑ → ↓ ←）を こたえてね！',
-    oniHelp: 'ななめ むきの Cも でるよ。\n8つの やじるしから こたえてね！',
+    id: 'triplec', name: 'わっかの じゅんばん', kind: 'count',
+    help: 'いろいろな ばしょに わっかが でるよ。\nでた じゅんばんに、わっかの あいてる ほう\n（↑ → ↓ ←）を こたえてね！',
+    oniHelp: 'ななめ むきの わっかも でるよ。\n8つの やじるしから こたえてね！',
     levels: {
       e: { rounds: 6, k: 2, show: 1.0, gap: 0.3, size: 36, limit: 8 },
       n: { rounds: 6, k: 3, show: 0.8, gap: 0.25, size: 32, limit: 10 },

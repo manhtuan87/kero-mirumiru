@@ -1,6 +1,6 @@
 /* ケロちゃん みるみる — save data and the rules around it:
    users, days and stamps, records, ranks, ★, what is open (trainings and むずかしい), the daily eye check,
-   the eye facts, and the best records of きろくに ちょうせん.
+   the eye facts, and the best records of どこまで いけるかな？.
    Shared by the browser game and the Node.js tools (nothing here touches the page). */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory(require('./data.js'));
@@ -58,7 +58,6 @@
           ranks: Array.isArray(c.ranks) ? c.ranks.slice(0, NCHECK).map(function (r) { return clampInt(r, 1, 7); }) : [],
           tests: Array.isArray(c.tests) ? c.tests.slice(0, NCHECK).filter(function (t) { return typeof t === 'string'; }) : []
         };
-        if (typeof c.age === 'number') o.check.age = clampInt(c.age, 20, 80);
       }
       out.days[k] = o;
     });
@@ -258,7 +257,7 @@
     };
   }
 
-  // きろくに ちょうせん (a sport until three misses): keeps the best number of successes.
+  // どこまで いけるかな？ (a sport until three misses): keeps the best number of successes.
   function addEndless(s, id, score, today) {
     var u = udata(s), prev = u.endless[id] || 0, newBest = score > prev;
     if (newBest) u.endless[id] = score;
@@ -269,8 +268,20 @@
 
   // ---------------------------------------------------------------- the daily eye check
 
-  // めねんれい (eye age) for grown-ups, from how well the check went (p: 0..1); 20 is the best, as in the original.
-  function eyeAge(p) { p = Math.max(0, Math.min(1, +p || 0)); return Math.max(20, Math.min(80, Math.round(20 + 60 * Math.pow(1 - p, 1.3)))); }
+  /* How today's check (p: 0..1) compares with the player's own usual, for the grown-ups' result. There is no proven
+     way to turn these scores into an age, so we compare with the mean of the last COND_DAYS recorded checks:
+     'up' / 'down' when today is at least one spread (their standard deviation, never less than COND_BAND) above or
+     below it, else 'same'; 'warmup' (with `need`) until there are COND_MIN checks to compare with. */
+  var COND_DAYS = 10, COND_MIN = 3, COND_BAND = 0.05;
+  function condition(s, today, p) {
+    var u = udata(s), ps = Object.keys(u.days).filter(function (k) { return k < today && u.days[k].check; }).sort()
+      .slice(-COND_DAYS).map(function (k) { return u.days[k].check.p; });
+    if (ps.length < COND_MIN) return { state: 'warmup', need: COND_MIN - ps.length };
+    var mean = ps.reduce(function (a, b) { return a + b; }, 0) / ps.length;
+    var sd = Math.sqrt(ps.reduce(function (a, b) { return a + (b - mean) * (b - mean); }, 0) / ps.length);
+    var band = Math.max(COND_BAND, sd);
+    return { state: p >= mean + band ? 'up' : p <= mean - band ? 'down' : 'same', mean: mean, band: band };
+  }
   function checkedToday(s, today) { var d = udata(s).days[today || dayKey()]; return !!(d && d.check); }
 
   /* info: { ranks: [5 ranks], tests: [5 ids], today? }  Only the first check of a day is kept. */
@@ -282,11 +293,8 @@
     var p = 0;
     info.ranks.forEach(function (r) { p += (r - 1) / 6; });
     p /= info.ranks.length || 1;
-    var res = { p: p, rank: 1 + Math.round(p * 6), age: isAdult(s) ? eyeAge(p) : null };
-    if (recorded) {
-      day.check = { p: p, rank: res.rank, ranks: info.ranks.slice(), tests: info.tests.slice() };
-      if (res.age != null) day.check.age = res.age;
-    }
+    var res = { p: p, rank: 1 + Math.round(p * 6), score: Math.round(p * 100), cond: condition(s, today, p) };
+    if (recorded) day.check = { p: p, rank: res.rank, ranks: info.ranks.slice(), tests: info.tests.slice() };
     day.stamp = true;
     res.recorded = recorded;
     res.stampNew = stampNew;
@@ -344,7 +352,7 @@
     rankOf: rankOf, starsOf: starsOf, better: better,
     stampCount: stampCount, stampDays: stampDays, isOpen: isOpen, hardOpen: hardOpen, oniOpen: oniOpen, levelOpen: levelOpen,
     nextUnlock: nextUnlock, trainingInfo: trainingInfo,
-    addRun: addRun, addEndless: addEndless, addCheck: addCheck, checkedToday: checkedToday, eyeAge: eyeAge, lastCheck: lastCheck,
+    addRun: addRun, addEndless: addEndless, addCheck: addCheck, checkedToday: checkedToday, condition: condition, lastCheck: lastCheck,
     tipToday: tipToday, tipSeen: tipSeen,
     recentOf: recentOf, addRecent: addRecent,
     starsEarned: starsEarned, wallet: wallet

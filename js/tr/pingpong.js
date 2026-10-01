@@ -1,6 +1,6 @@
-/* たっきゅう (the original sports training: 卓球 — 動体視力, 眼球運動, 眼と手の協応) — the ball comes over the
+/* たっきゅう (動体視力, 眼球運動, 眼と手の協応) — the ball comes over the
    net, bounces, and flies towards you: tap the ball as it reaches your end to hit it back. Keep the rally going.
-   p.endless: きろくに ちょうせん, until three misses, getting faster.
+   p.endless: どこまで いけるかな？, until three misses, getting faster.
    おに: smashes (much faster) and balls that turn aside when they bounce. */
 (function (T) {
   'use strict';
@@ -120,7 +120,7 @@
   }
 
   T.register({
-    id: 'pingpong', name: 'たっきゅう', orig: '卓球', kind: 'count', sport: true,
+    id: 'pingpong', name: 'たっきゅう', kind: 'count', sport: true,
     help: 'あいてが うった ボールが とんで くるよ。\nてまえに きた ボールを タッチして\nうちかえそう！ ラリーを つづけてね',
     oniHelp: 'すごく はやい スマッシュや、\nはねて まがる ボールが くるよ！',
     levels: {

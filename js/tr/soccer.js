@@ -1,6 +1,6 @@
-/* サッカー (the original sports training: サッカー — 周辺視野, 眼球運動) — you have the ball. Look around:
+/* サッカー (周辺視野, 眼球運動) — you have the ball. Look around:
    the other team (red) stands in the way of all your teammates but one. Slide from the ball towards the free
-   teammate to pass (a tap on the teammate works too). p.endless: きろくに ちょうせん, until three misses.
+   teammate to pass (a tap on the teammate works too). p.endless: どこまで いけるかな？, until three misses.
    おに: part of the way through the time, a defender moves over to the free teammate — and another one is free. */
 (function (T) {
   'use strict';
@@ -198,7 +198,7 @@
   }
 
   T.register({
-    id: 'soccer', name: 'サッカー', orig: 'サッカー', kind: 'count', sport: true,
+    id: 'soccer', name: 'サッカー', kind: 'count', sport: true,
     help: 'あかい あいてが じゃまを しているよ。\nじゃまされて いない みかた（みどり）へ\nボールから ゆびを スライドして パス！',
     oniHelp: 'パスの まえに あいてが うごくよ。\nさいごまで よく みてね！',
     levels: {

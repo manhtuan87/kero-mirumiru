@@ -47,7 +47,7 @@
   }
   function levelName(lv) {
     for (var i = 0; i < DATA.LEVELS.length; i++) if (DATA.LEVELS[i].id === lv) return DATA.LEVELS[i].name;
-    return lv === 'endless' ? L('きろくに ちょうせん') : L('チェック');
+    return lv === 'endless' ? L('どこまで いけるかな？') : L('チェック');
   }
   function levelsFor() { return DATA.LEVELS.filter(function (l) { return !l.adult || isAdult(); }); }
   function isAdultLevel(lv) { return lv === 'testA' || DATA.LEVELS.some(function (l) { return l.id === lv && l.adult; }); }
@@ -302,6 +302,9 @@
       var tgt = navTarget; navTarget = null;
       if (run) stopRun();
       go(tgt);
+      // A screen reached from the check's result (トレーニング, めの ストレッチ) lands on the title's own entry:
+      // give it one of its own, so that going back from it shows the title instead of leaving the game.
+      if (tgt !== 'title' && history.state && history.state.root) history.pushState({ miru: 1 }, '');
       return;
     }
     if (screen === 'play' && run) {
@@ -498,7 +501,7 @@
     eb.hidden = !tr.sport;
     if (tr.sport) {
       var best = ud().endless[tr.id] || 0;
-      $('intro-endless-label').textContent = best ? L('きろくに ちょうせん（さいこう {n}）', { n: best }) : L('きろくに ちょうせん');
+      $('intro-endless-label').textContent = best ? L('どこまで いけるかな？（さいこう {n}）', { n: best }) : L('どこまで いけるかな？');
     }
     $('intro-start-label').textContent = L('はじめる');
     show('intro');
@@ -1187,21 +1190,39 @@
   function renderCheckResult() {
     var card = $('check-card'), out = check.out;
     card.classList.add('result');
+    card.classList.toggle('adult', isAdult());
     var bars = DATA.CHECK.map(function (c, i) {
       var cells = '';
       for (var k = 1; k <= 7; k++) cells += '<i class="' + (k <= check.ranks[i] ? 'on' : '') + '"></i>';
       return '<div class="ck-bar"><span>' + c.name + '</span><div class="cells" style="--c:' + CHECK_COLORS[i] + '">' + cells + '</div></div>';
     }).join('');
-    var head = out.age != null ?
-      '<div class="ck-big">' + L('めねんれい <b>{age}</b> さい', { age: out.age }) + '</div>' :
+    // Grown-ups: the score and how it compares with their own usual (no eye age: there is no proven way to make one).
+    // When the eyes seem tired, the eye stretch takes the place of the trainings.
+    var adult = isAdult(), rest = adult && out.cond.state === 'down';
+    var head = adult ?
+      '<div class="ck-big adult">' + L('てんすう <b>{n}</b>', { n: out.score }) + '</div>' +
+        '<div class="ck-cond ' + out.cond.state + '"><span data-icon="' + COND_ICON[out.cond.state] + '"></span>' + condText(out.cond) + '</div>' :
       '<div class="ck-big">' + L('きょうの めは<br><b>{animal}</b>', { animal: animalName(out.rank) }) + '</div>';
     card.innerHTML = '<div id="ck-head" class="r-hide">' + head + '</div>' +
       '<div id="ck-bars" class="ck-bars r-hide">' + bars + '</div>' +
       '<p id="ck-say" class="ck-text r-hide"></p>' +
-      '<div class="ck-row"><button id="ck-end" class="btn">' + L('おわる') + '</button><button id="ck-train" class="btn big"><span data-icon="next"></span>' + L('トレーニング') + '</button></div>';
+      '<div class="ck-row"><button id="ck-end" class="btn">' + L('おわる') + '</button>' + (rest ?
+        '<button id="ck-rest" class="btn big"><span data-icon="stretch"></span>' + L('めの ストレッチ') + '</button>' :
+        '<button id="ck-train" class="btn big"><span data-icon="next"></span>' + L('トレーニング') + '</button>') + '</div>' +
+      (adult ? '<p class="ck-note">' + L('あそびの めやすです。けんさでは ありません') + '</p>' : '');
     setIcons(card);
     $('ck-end').addEventListener('click', function () { S.play('click'); check = null; backTo('title'); });
-    $('ck-train').addEventListener('click', function () { S.play('click'); check = null; navTarget = 'list'; history.back(); });
+    if (rest) $('ck-rest').addEventListener('click', function () { S.play('click'); check = null; navTarget = 'stretch'; history.back(); });
+    else $('ck-train').addEventListener('click', function () { S.play('click'); check = null; navTarget = 'list'; history.back(); });
+  }
+  var COND_ICON = { up: 'sun', same: 'partly', down: 'cloud', warmup: 'chart' };
+  function condText(cond) {
+    if (cond.state === 'warmup') return L('いつもの ちょうしを はかって いるよ（あと {n}かい）', { n: cond.need });
+    return L({ up: 'いつもより いい ちょうし！', same: 'いつもどおりの ちょうし', down: 'いつもより すこし ひくめ' }[cond.state]);
+  }
+  // What ケロはかせ says about it (the same words as on the card, without the count).
+  function condSay(cond) {
+    return cond.state === 'warmup' ? L('いつもの ちょうしを はかって いるよ') : condText(cond);
   }
 
   function updateCheck(dt) {
@@ -1216,13 +1237,16 @@
       var who = nameOf(me());
       var core = allSame ? (check.ranks[0] >= 5 ? 'ぜんぶ すごいね！' : 'まいにち やると ぐんぐん のびるよ') : DATA.CHECK[best].good;
       if (allSame) core = L(core);   // (DATA's lines are already in the chosen language)
+      // A grown-up whose eyes did worse than usual hears a tip instead (look far away: 日本眼科医会, 20-20-20).
+      var adult = isAdult(), cond = check.out.cond;
+      if (adult && cond.state === 'down') core = L('めが つかれて いるかも。20びょう とおくを みて やすもう');
       var line = nameHead(who) + core;
       if (!check.out.recorded) line += L('\n（れんしゅう なので きろくは しないよ）');
       $('ck-say').textContent = L('ケロはかせ「{t}」', { t: line });
       S.play('fanfare');
       confetti(40);
-      var what = check.out.age != null ? L('めねんれいは {age}さい！', { age: check.out.age }) : L('きょうの めは {animal}！', { animal: animalName(check.out.rank) });
-      speak([what, core]);
+      var what = L('きょうの めは {animal}！', { animal: animalName(check.out.rank) });
+      speak(adult ? [what, condSay(cond), core] : [what, core]);
     }
     if (check.shown && !check.overlays && check.t >= 2.9 && (quietFor(0.4) || check.t >= 12)) { check.overlays = true; queueGains(check.out, false); }
   }
@@ -1313,7 +1337,7 @@
     var sports = DATA.TRAININGS.filter(function (t) { return trOf(t.id) && trOf(t.id).sport; });
     var card2 = document.createElement('div');
     card2.className = 'rec-card';
-    card2.innerHTML = '<h3>' + L('きろくに ちょうせん') + '</h3><div class="endless-list">' + sports.map(function (t) {
+    card2.innerHTML = '<h3>' + L('どこまで いけるかな？') + '</h3><div class="endless-list">' + sports.map(function (t) {
       var n = ud().endless[t.id] || 0;
       return '<div class="endless-row"><span>' + esc(trOf(t.id).name) + '</span><b>' + (n ? L('{n}かい', { n: n }) : '—') + '</b></div>';
     }).join('') + '</div>';
@@ -1336,23 +1360,28 @@
     var step = (x1 - x0) / Math.max(1, n);
     g.strokeStyle = 'rgba(90,56,37,.15)'; g.lineWidth = 1;
     for (var k = 0; k <= 3; k++) { var yy = y0 + (y1 - y0) * k / 3; g.beginPath(); g.moveTo(x0, yy); g.lineTo(x1, yy); g.stroke(); }
+    // grown-ups: the score (0-100) of each day and a dashed line at their average
+    function sy(c) { return y1 - (y1 - y0) * c.p; }
+    if (adult) {
+      var avg = days.reduce(function (a, d) { return a + u.days[d].check.p; }, 0) / n, ym = y1 - (y1 - y0) * avg;
+      g.save(); g.setLineDash([5, 4]); g.strokeStyle = '#6cc6ff'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(x0, ym); g.lineTo(x1, ym); g.stroke(); g.restore();
+      A.text(g, L('へいきん'), x1 - 22, ym - 8, 10, '#3a9ad9', { stroke: false });
+    }
     days.forEach(function (d, i) {
       var c = u.days[d].check, x = x0 + step * (i + 0.5);
       A.text(g, shortDay(d), x, h - 13, 10, D.INK, { stroke: false });
-      if (adult && c.age != null) {
-        var ya = y0 + (y1 - y0) * (c.age - 20) / 60;
-        if (i) {
-          var pc = u.days[days[i - 1]].check;
-          if (pc.age != null) { g.beginPath(); g.moveTo(x - step, y0 + (y1 - y0) * (pc.age - 20) / 60); g.lineTo(x, ya); g.strokeStyle = '#ff8fc0'; g.lineWidth = 3; g.stroke(); }
-        }
+      if (adult) {
+        var ya = sy(c);
+        if (i) { g.beginPath(); g.moveTo(x - step, sy(u.days[days[i - 1]].check)); g.lineTo(x, ya); g.strokeStyle = '#ff8fc0'; g.lineWidth = 3; g.stroke(); }
         D.circle(g, x, ya, 5); D.paint(g, '#ff8fc0', D.INK, 2);
-        A.text(g, String(c.age), x, ya - 11, 11, D.INK, { stroke: false });
+        A.text(g, String(Math.round(c.p * 100)), x, ya - 11, 11, D.INK, { stroke: false });
       } else {
         var bh = (y1 - y0) * c.rank / 7, bw = Math.min(22, step * 0.6);
         D.roundRect(g, x - bw / 2, y1 - bh, bw, bh, 5); D.paint(g, ['#ffd0a0', '#ffc27a', '#ffb347', '#9ad8ff', '#6cc6ff', '#ff9fc9', '#ff6fa8'][c.rank - 1], D.INK, 2);
       }
     });
-    if (adult) { A.text(g, '20', 14, y0 + 2, 10, D.INK, { stroke: false }); A.text(g, '80', 14, y1, 10, D.INK, { stroke: false }); }
+    if (adult) { A.text(g, '100', 14, y0 + 2, 10, D.INK, { stroke: false }); A.text(g, '0', 14, y1, 10, D.INK, { stroke: false }); }
     else {
       var last = u.days[days[n - 1]].check;
       A.animal(g, last.rank, x0 + step * (n - 0.5), y1 - (y1 - y0) * last.rank / 7 - 2, 0.2, 0, {});
@@ -1767,6 +1796,10 @@
     heart: '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" fill="currentColor" fill-opacity=".3"/>',
     stamp: '<path d="M9.5 11V8.3a2.5 2.5 0 1 1 5 0V11"/><rect x="5" y="11" width="14" height="5.5" rx="1.6" fill="currentColor" fill-opacity=".25"/><path d="M4.5 20h15"/>',
     chart: '<path d="M5 20V12.5M10 20V7M15 20v-6M20 20V9.5"/>',
+    // today's condition (a grown-up's check): better / as usual / lower than usual
+    sun: '<circle cx="12" cy="12" r="4.2" fill="currentColor" fill-opacity=".35"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7"/>',
+    partly: '<circle cx="9" cy="8.5" r="3.2" fill="currentColor" fill-opacity=".35"/><path d="M9 2.6v1.4M3.1 8.5h1.4M4.8 4.3l1 1M13.2 4.3l-1 1"/><path d="M9.5 20h8a3.4 3.4 0 0 0 .3-6.8 4.7 4.7 0 0 0-9 1A2.9 2.9 0 0 0 9.5 20z" fill="currentColor" fill-opacity=".2"/>',
+    cloud: '<path d="M7 18.5h10a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.6 1.2A3.4 3.4 0 0 0 7 18.5z" fill="currentColor" fill-opacity=".25"/>',
     plus: '<path d="M12 5v14M5 12h14"/>'
   };
   function icon(name) {

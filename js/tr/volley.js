@@ -1,6 +1,6 @@
-/* バレー (the original sports training: バレー — 眼球運動, 周辺視野) — your teammate tosses the ball up by the
+/* バレー (眼球運動, 周辺視野) — your teammate tosses the ball up by the
    net. Tap the ball while it is high up (in the band) to spike it into the other court.
-   p.endless: きろくに ちょうせん, until three misses.
+   p.endless: どこまで いけるかな？, until three misses.
    おに: two balls go up one just after the other — spike both. */
 (function (T) {
   'use strict';
@@ -139,7 +139,7 @@
   }
 
   T.register({
-    id: 'volley', name: 'バレー', orig: 'バレー', kind: 'count', sport: true,
+    id: 'volley', name: 'バレー', kind: 'count', sport: true,
     help: 'みかたが ボールを あげるよ。\nボールが たかい ところ（しろい おび）に\nきたら タッチして スパイク！',
     oniHelp: 'ボールが 2つ あがるよ。\nどっちも スパイクしてね！',
     levels: {

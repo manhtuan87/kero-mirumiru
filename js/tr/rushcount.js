@@ -1,4 +1,4 @@
-/* かぞえて びゅん (the original: ABC速読, 動体視力) — first a picture to look for; then pictures rush
+/* かぞえて びゅん (動体視力) — first a picture to look for; then pictures rush
    across the screen one after another. How many of them were that picture? Grown-ups get letters,
    as in the original. おに: two lanes rush at the same time, the top one to the right and the bottom one to the
    left; count them all. */
@@ -140,7 +140,7 @@
   }
 
   T.register({
-    id: 'rushcount', name: 'かぞえて びゅん', orig: 'ABC速読', kind: 'count', pool: 'pics',
+    id: 'rushcount', name: 'かぞえて びゅん', kind: 'count', pool: 'pics',
     help: 'さいしょに でた えと おなじ えが、\nよこに びゅんと ながれるよ。\nいくつ あったか かぞえてね！',
     oniHelp: 'うえと したの 2れつで いっしょに ながれるよ。\nりょうほう あわせて かぞえてね！',
     levels: {

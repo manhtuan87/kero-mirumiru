@@ -1,4 +1,4 @@
-/* れんぞく タッチ (the original: 連続タッチ, 眼と手の協応) — squares pop up here and there and fade away.
+/* ぽんぽん タッチ (眼と手の協応) — squares pop up here and there and fade away.
    Tap each one before it is gone.
    おに: the squares drift about, and dark squares with a × come too — those must not be touched (they go away
    by themselves). */
@@ -126,7 +126,7 @@
   }
 
   T.register({
-    id: 'quicktouch', name: 'れんぞく タッチ', orig: '連続タッチ', kind: 'count',
+    id: 'quicktouch', name: 'ぽんぽん タッチ', kind: 'count',
     help: 'あちこちに しかくが でては きえるよ。\nきえる まえに すばやく タッチしてね！',
     oniHelp: 'しかくが うごくよ。\n×の しかくは さわらないでね！',
     levels: {

@@ -1,4 +1,4 @@
-/* かぞえて C (the original: カウントC, 眼球運動) — first a "C" to look for; then Cs open this way and that pop up
+/* わっか かぞえ (眼球運動) — first a "C" to look for; then Cs open this way and that pop up
    all over the screen, several at once, a few times over. How many were open the same way as the first, in all?
    (Several at once since 2026-09-30: one at a time looked too easy.)
    おに: the Cs open slantwise too, and many are only a little turned from the one to count. */
@@ -104,7 +104,7 @@
         if (!R) return;
         D.roundRect(c, BOX.x0 - 44, BOX.y0 - 50, BOX.x1 - BOX.x0 + 88, BOX.y1 - BOX.y0 + 94, 24); D.paint(c, 'rgba(255,255,255,.4)');
         if (phase === 'target') {
-          A.text(c, L('この むきの Cを かぞえてね！'), 180, 104, 21, '#fff', { lw: 6 });
+          A.text(c, L('この むきを かぞえてね！'), 180, 104, 21, '#fff', { lw: 6 });
           A.disc(c, 180, 290, 76, '#fff4b0', 3);   // (the C to count sits on yellow, as in the corner later)
           ring(c, 180, 290, 52 + Math.sin(pt * 6) * 2, R.target);
           return;
@@ -122,9 +122,9 @@
   }
 
   T.register({
-    id: 'countc', name: 'かぞえて C', orig: 'カウントC', kind: 'count',
-    help: 'Cが いっぺんに いくつも でるよ。\nさいしょの Cと おなじ むきの Cを\nぜんぶ かぞえてね！',
-    oniHelp: 'ななめ むきの Cも でるよ。\nおなじ むきだけ かぞえてね！',
+    id: 'countc', name: 'わっか かぞえ', kind: 'count',
+    help: 'わっかが いっぺんに いくつも でるよ。\nさいしょの わっかと おなじ むきの\nわっかを ぜんぶ かぞえてね！',
+    oniHelp: 'ななめ むきの わっかも でるよ。\nおなじ むきだけ かぞえてね！',
     levels: {
       e: { rounds: 6, waves: 3, per: [2, 3], hits: [2, 4], show: 1.5, gap: 0.35, size: 32, limit: 10 },
       n: { rounds: 6, waves: 3, per: [3, 4], hits: [3, 6], show: 1.3, gap: 0.3, size: 28, limit: 9 },

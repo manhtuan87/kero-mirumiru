@@ -1,4 +1,4 @@
-/* まわりの C (the original: 周辺C, 周辺視野) — a "C" in the middle and Cs all around it. Keeping the middle
+/* わっか さがし (周辺視野) — a "C" in the middle and Cs all around it. Keeping the middle
    one in view, find the one around it that is open the same way, and tap it — as fast as you can.
    おに: the Cs open slantwise too, many only a little turned from the middle one; grown-ups get two rings. */
 (function (T) {
@@ -73,7 +73,7 @@
       },
       draw: function (c) {
         if (!Q) return;
-        A.text(c, L('まんなかと おなじ むきの Cは どれ？'), 180, 104, 20, '#fff', { lw: 6 });
+        A.text(c, L('まんなかと おなじ むきは どれ？'), 180, 104, 20, '#fff', { lw: 6 });
         D.circle(c, CX, CY, (p.rings === 2 ? RINGS2[1] : p.radius) + p.size + 14); D.paint(c, 'rgba(255,255,255,.4)');
         D.circle(c, CX, CY, p.size * 1.5 + 10); D.paint(c, '#fff4b0', D.INK, 3);
         ring(c, CX, CY, p.size * 1.5, Q.dir);
@@ -97,9 +97,9 @@
   }
 
   T.register({
-    id: 'peric', name: 'まわりの C', orig: '周辺C', kind: 'time',
-    help: 'まんなかの「C」と おなじ むきの Cを\nまわりから さがして タッチしてね！\nはやさを はかるよ',
-    oniHelp: 'ななめ むきの Cも まざるよ。\nおなじ むきを さがしてね！',
+    id: 'peric', name: 'わっか さがし', kind: 'time',
+    help: 'まんなかと おなじ むきの わっかを\nまわりから さがして タッチしてね！\nはやさを はかるよ',
+    oniHelp: 'ななめ むきの わっかも まざるよ。\nおなじ むきを さがしてね！',
     levels: {
       e: { q: 8, around: 4, radius: 105, size: 30, limit: 10 },
       n: { q: 10, around: 6, radius: 118, size: 26, limit: 8 },

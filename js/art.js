@@ -469,7 +469,7 @@ var Art = (function () {
     ctx.lineWidth = w; ctx.strokeStyle = MARK_COLOR; ctx.stroke();
     ctx.restore();
   }
-  // A cup upside down (シャッフル); (x, y) = the middle of its rim, lift = how far it is raised.
+  // A cup upside down (ひよこ どこ？); (x, y) = the middle of its rim, lift = how far it is raised.
   // Every cup has the same colour: with different colours the chick could be found by colour, not with the eyes.
   var CUP_COLOR = '#6cc6ff';
   function cup(ctx, x, y, w, h, color, lift) {

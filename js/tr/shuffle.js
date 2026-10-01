@@ -1,4 +1,4 @@
-/* シャッフル (the original: シャッフル, 動体視力) — a chick hides under one of the cups; the cups change
+/* ひよこ どこ？ (動体視力) — a chick hides under one of the cups; the cups change
    places, and then you tap the cup the chick is under. Following the moving cups with the eyes.
    おに: the cups stand in two rows and change places sideways, up and down and slantwise (grown-ups: now and then
    two pairs at once). */
@@ -187,7 +187,7 @@
   }
 
   T.register({
-    id: 'shuffle', name: 'シャッフル', orig: 'シャッフル', kind: 'count',
+    id: 'shuffle', name: 'ひよこ どこ？', kind: 'count',
     help: 'コップの どれかに ひよこが いるよ。\nコップが いれかわるのを めで おいかけて、\nひよこが いる コップを タッチしてね！',
     oniHelp: 'コップが 2だんに なるよ。\nよこ・たて・ななめにも いれかわるよ！',
     levels: {

@@ -1,6 +1,6 @@
-/* ボクシング (the original sports training — 眼球運動, 周辺視野, 眼と手の協応) — the trainer holds up a mitt
+/* ボクシング (眼球運動, 周辺視野, 眼と手の協応) — the trainer holds up a mitt
    here or there: tap it quickly. Now and then the trainer punches: slide the way the arrow points to dodge.
-   p.endless: きろくに ちょうせん, until three misses, getting faster.
+   p.endless: どこまで いけるかな？, until three misses, getting faster.
    おに: now and then two mitts at once — tap both (a little more time for the two). */
 (function (T) {
   'use strict';
@@ -133,7 +133,7 @@
   }
 
   T.register({
-    id: 'boxing', name: 'ボクシング', orig: 'ボクシング', kind: 'count', sport: true,
+    id: 'boxing', name: 'ボクシング', kind: 'count', sport: true,
     help: 'トレーナーが だす ミットを\nすばやく タッチしよう！\nパンチが きたら やじるしの ほうへ\nゆびを スライドして よけてね',
     oniHelp: 'ミットが 2つ いっしょに でるよ。\nどっちも タッチしてね！',
     levels: {

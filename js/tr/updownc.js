@@ -1,4 +1,4 @@
-/* うえした C (the original: 上下C, 周辺視野) — looking at the star in the middle, two "C"s blink at the top
+/* おなじ むき？ (周辺視野) — looking at the star in the middle, two "C"s blink at the top
    and the bottom of the screen at the same time. Were they open the same way, or not?
    おに: the Cs open slantwise too, and a different pair is often only a little turned. */
 (function (T) {
@@ -91,9 +91,9 @@
   }
 
   T.register({
-    id: 'updownc', name: 'うえした C', orig: '上下C', kind: 'count',
-    help: 'まんなかの ほしを みていてね。\nうえと したに「C」が いっしゅん でるよ。\nおなじ むきか ちがう むきか こたえてね！',
-    oniHelp: 'ななめ むきの Cも でるよ。\nちょっとの ちがいも みのがさないでね！',
+    id: 'updownc', name: 'おなじ むき？', kind: 'count',
+    help: 'まんなかの ほしを みていてね。\nうえと したに わっかが いっしゅん でるよ。\nおなじ むきか ちがう むきか こたえてね！',
+    oniHelp: 'ななめ むきの わっかも でるよ。\nちょっとの ちがいも みのがさないでね！',
     levels: {
       e: { q: 8, show: 0.9, size: 30, spread: 120, limit: 6 },
       n: { q: 10, show: 0.6, size: 26, spread: 140, limit: 5 },

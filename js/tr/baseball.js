@@ -1,6 +1,6 @@
-/* やきゅう (the original sports training: 野球 — 動体視力, 眼と手の協応) — ケロちゃん is at bat. The pitcher
+/* やきゅう (動体視力, 眼と手の協応) — ケロちゃん is at bat. The pitcher
    throws; tap just as the ball reaches the plate to hit it. Fast balls, slow balls and (harder) curve balls.
-   p.endless: きろくに ちょうせん, pitches until three misses, getting faster.
+   p.endless: どこまで いけるかな？, pitches until three misses, getting faster.
    おに: balls that vanish on the way (きえる まきゅう) and balls that change speed half way. */
 (function (T) {
   'use strict';
@@ -139,7 +139,7 @@
   }
 
   T.register({
-    id: 'baseball', name: 'やきゅう', orig: '野球', kind: 'count', sport: true,
+    id: 'baseball', name: 'やきゅう', kind: 'count', sport: true,
     help: 'ピッチャーが ボールを なげるよ。\nボールが ホームに きた ときに\nタッチして うちかえそう！',
     oniHelp: 'とちゅうで きえる ボールや、\nはやさが かわる ボールが くるよ！',
     levels: {

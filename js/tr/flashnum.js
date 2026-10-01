@@ -1,4 +1,4 @@
-/* ぱっと すうじ (the original: 瞬間数字, 瞬間視) — a number shows for a blink, somewhere on the screen.
+/* ぱっと すうじ (瞬間視) — a number shows for a blink, somewhere on the screen.
    What was it? Children pick it from four; grown-ups type it.
    おに: two numbers show at the same time, one in the top half and one in the bottom half; tell the top one,
    then the bottom one (the half asked now has a yellow frame, and the grown-ups' pad says うえ / した).
@@ -165,7 +165,7 @@
   }
 
   T.register({
-    id: 'flashnum', name: 'ぱっと すうじ', orig: '瞬間数字', kind: 'count',
+    id: 'flashnum', name: 'ぱっと すうじ', kind: 'count',
     help: 'すうじが いっしゅんだけ でるよ。\nなんの すうじ だったか こたえてね！',
     oniHelp: 'すうじが うえと したに 2つ でるよ。\nうえ、したの じゅんに こたえてね！',
     levels: {

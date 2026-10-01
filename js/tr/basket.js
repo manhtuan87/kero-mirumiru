@@ -1,6 +1,6 @@
-/* バスケット (the original sports training: バスケット — 瞬間視, 眼球運動, 周辺視野) — players run in: green
+/* バスケット (瞬間視, 眼球運動, 周辺視野) — players run in: green
    shirts are your team, orange shirts the other team. Then they all turn into shadows (and move about).
-   Tap your teammates. p.endless: きろくに ちょうせん, rounds until three misses.
+   Tap your teammates. p.endless: どこまで いけるかな？, rounds until three misses.
    おに: as shadows, a teammate and a player of the other team change places, one pair after another. */
 (function (T) {
   'use strict';
@@ -107,7 +107,7 @@
         pt += dt;
         if (!playing) return;
         if (phase === 'run' && pt > 0.65) { phase = 'look'; pt = 0; }
-        // (きろくに ちょうせん: the colours show a little shorter with every round won)
+        // (どこまで いけるかな？: the colours show a little shorter with every round won)
         else if (phase === 'look' && pt > p.show * (p.endless ? Math.max(0.5, 1 - right * 0.02) : 1)) {
           phase = 'shadow'; pt = 0; api.sfx('flip');
           api.timer(p.limit + swapTime(), function () { if (phase === 'shadow') endRound(false); });   // (time up: wrong)
@@ -166,7 +166,7 @@
   }
 
   T.register({
-    id: 'basket', name: 'バスケット', orig: 'バスケット', kind: 'count', sport: true,
+    id: 'basket', name: 'バスケット', kind: 'count', sport: true,
     help: 'せんしゅが はしって くるよ。\nみどりの ふくが みかた、オレンジが あいて。\nかげに なったら、みかたを タッチしてね！',
     oniHelp: 'かげに なった あと、せんしゅが いれかわるよ。\nめで おいかけてね！',
     levels: {
