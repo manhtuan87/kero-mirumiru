@@ -96,7 +96,7 @@ function run(id, fn) {
 }
 
 run('shuffle', (tr, p, lv, r) => {
-  const rs = tr.gen(p, r), two = p.rows === 2, n = two ? 2 * p.cols : p.cups;
+  const rs = tr.gen(p, r), two = p.rows === 2, n = two ? 2 * p.cols : p.cups, g = tr.layout(p);
   check(rs.length === p.rounds, `shuffle ${lv} count`);
   check(!p.oni || two, `shuffle ${lv}: おに has two rows`);
   rs.forEach(x => {
@@ -118,8 +118,51 @@ run('shuffle', (tr, p, lv, r) => {
     if (two) check(x.swaps.some(sw => Math.floor(sw[0] / p.cols) !== Math.floor(sw[1] / p.cols)) || x.swaps.length < 4, `shuffle ${lv} two rows but no swap between them`);
     check(pos === x.ans, `shuffle ${lv} answer`);
     check(x.swaps.some(([a, b]) => a === x.start || b === x.start), `shuffle ${lv} the chick's cup never moves`);
+    if (!two) check(x.swaps.every(([a, b]) => Math.abs(a - b) <= (n >= 5 ? 1 : 2)), `shuffle ${lv} a cup changes places with one too far away`);
+    // two pairs at once: their ways never cross (the cups as drawn, all the way)
+    x.swaps.filter(sw => sw.length === 4).forEach(sw => {
+      let worst = 0;
+      for (let e = 0; e <= 1.0001; e += 0.05) {
+        const p1 = tr.swing(g, sw[0], sw[1], e), p2 = tr.swing(g, sw[2], sw[3], e);
+        p1.forEach(q1 => p2.forEach(q2 => { worst = Math.max(worst, tr.cover(q1, q2)); }));
+      }
+      check(worst <= 8, `shuffle ${lv} two pairs at once run into each other (${Math.round(worst)} px)`);
+    });
+    // the short stops between swaps: only where the level has them, never before the first two swaps
+    check(Array.isArray(x.rests) && (p.pause || !x.rests.length), `shuffle ${lv} stops where the level has none`);
+    check(x.rests.every((k, i) => k >= 2 && k < x.swaps.length && (!i || k > x.rests[i - 1])), `shuffle ${lv} a stop out of place`);
   });
+  // faster round by round (and more swaps) where the speed is [first, last]; never faster than 5 swaps a second
+  if (Array.isArray(p.speed)) {
+    check(p.speed[0] < p.speed[1] && p.speed[1] <= 5, `shuffle ${lv} speed ${p.speed}`);
+    check(rs.every((x, i) => !i || x.swaps.length >= rs[i - 1].swaps.length), `shuffle ${lv} fewer swaps than the round before`);
+  } else check(p.speed > 0 && p.speed <= 5, `shuffle ${lv} speed ${p.speed}`);
 });
+{ // every swap that can happen: the cups stay on the screen, the two cups of a swap hardly cover each other, and in
+  // one row a cup two places away goes round the cup between
+  const sh = T.byId.shuffle;
+  [{ cups: 3 }, { cups: 4 }, { cups: 5 }, { rows: 2, cols: 3 }, { rows: 2, cols: 4 }].forEach(p => {
+    const g = sh.layout(p), name = JSON.stringify(p);
+    for (let a = 0; a < g.n; a++) for (let b = 0; b < g.n; b++) {
+      if (a === b || (g.rows === 2 ? Math.abs(a % g.cols - b % g.cols) > 1 : Math.abs(a - b) > (g.n >= 5 ? 1 : 2))) continue;
+      let inside = true, each = 0, round = 0;
+      for (let e = 0; e <= 1.0001; e += 0.02) {
+        const q = sh.swing(g, a, b, e);
+        q.forEach(c => { if (c.x < 34 - 0.01 || c.x > 326 + 0.01 || c.y - 81 < 160 || c.y > 560) inside = false; });
+        each = Math.max(each, sh.cover(q[0], q[1]));
+        if (g.rows === 1) for (let m = Math.min(a, b) + 1; m < Math.max(a, b); m++) q.forEach(c => { round = Math.max(round, sh.cover(c, sh.slotAt(g, m))); });
+      }
+      check(inside, `shuffle ${name} swap ${a}-${b}: a cup leaves the screen or covers the words`);
+      check(each <= 12, `shuffle ${name} swap ${a}-${b}: the two cups cover each other (${Math.round(each)} px)`);
+      check(round <= 8, `shuffle ${name} swap ${a}-${b}: goes over the cup between (${Math.round(round)} px)`);
+    }
+  });
+}
+{ // むずかしい and おに start where ふつう ends (2026-10-02: faster)
+  const sh = T.byId.shuffle, sp = (lv, i) => sh.speedOf(sh.levels[lv], i);
+  check(sp('h', 0) > sp('n', 0) && sp('o', 0) > sp('n', 0) && sp('ah', 0) >= sp('a', 0) && sp('ao', 0) >= sp('a', 0), 'shuffle: むずかしい or おに slower than ふつう');
+  check(sp('h', 5) >= 3.5 && sp('o', 5) >= 4 && sp('ah', 5) >= 4.5 && sp('ao', 5) >= 4.2, 'shuffle: the last rounds of むずかしい and おに are not fast');
+}
 
 run('rushcount', (tr, p, lv, r) => {
   const rs = tr.gen(p, r), ids = Data.PICS.map(x => x.id);

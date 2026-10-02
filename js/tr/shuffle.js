@@ -1,11 +1,17 @@
 /* ひよこ どこ？ (動体視力) — a chick hides under one of the cups; the cups change
    places, and then you tap the cup the chick is under. Following the moving cups with the eyes.
    おに: the cups stand in two rows and change places sideways, up and down and slantwise (grown-ups: now and then
-   two pairs at once). */
+   two pairs at once).
+   Two cups change places by going half a turn round the point between them, one over the top and one underneath,
+   in the same short time however far apart they are. At むずかしい and おに (2026-10-02: "faster, as hard as the
+   game it is modelled on") each round is faster than the one before, with more swaps, and now and then the cups
+   stop for a moment between two swaps, so the eyes cannot just follow a rhythm. */
 (function (T) {
   'use strict';
   var U = T.U, G = typeof window !== 'undefined' ? window : {};
   var CUP_Y = 380, CUP_W = 62, CUP_H = 74, ROW_Y = [320, 470];
+  var REST = 0.22;            // (the short stop between two swaps)
+  var EDGE = CUP_W / 2 + 6;   // (a cup swinging out stays this far inside the screen's sides)
 
   function slotX(n, i) { var gap = Math.min(96, 280 / Math.max(1, n - 1)); return 180 + (i - (n - 1) / 2) * gap; }   // (5 cups still fit the screen)
 
@@ -23,13 +29,58 @@
     return out;
   }
 
-  // p: { rounds, cups, swaps, speed (swaps per second) }; おに: { rows: 2, cols, double (chance of two pairs at once) }
-  // Each round: where the chick starts and the list of swaps [a, b] (slots; [a, b, c, d] for two pairs at once);
-  // ans = the slot at the end.
+  // How far two cups swing out of the way when they change places: in one row, two places apart they go round
+  // the cup between them; in two rows it depends on the way they go.
+  function orbitOf(g, a, b) {
+    if (g.rows !== 2) return Math.abs(a - b) >= 2 ? 104 : 58;
+    if (Math.floor(a / g.cols) === Math.floor(b / g.cols)) return 60;
+    return a % g.cols === b % g.cols ? 36 : 44;   // (up and down or slantwise: a cup may pass in front of a still one)
+  }
+  // Where cups a and b are when their swap is e (0..1) done: half a turn round the point between them, one over
+  // the top (or to the right) and the other underneath.
+  function swing(g, a, b, e) {
+    var pa = slotAt(g, a), pb = slotAt(g, b), dx = pb.x - pa.x, dy = pb.y - pa.y, len = Math.hypot(dx, dy) || 1;
+    var mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2, ux = dx / len, uy = dy / len, orbit = orbitOf(g, a, b);
+    var nx = uy, ny = -ux;
+    if (ny > 0 || (ny === 0 && nx < 0)) { nx = -nx; ny = -ny; }
+    var ca = Math.cos(e * Math.PI), sa = Math.sin(e * Math.PI);
+    // (two cups at the side of the screen swing a little inwards, so the outer one stays on the screen)
+    var reach = Math.hypot(ux * len / 2, nx * orbit), lo = mx - reach, hi = mx + reach;
+    var shift = (lo < EDGE ? EDGE - lo : hi > 360 - EDGE ? 360 - EDGE - hi : 0) * sa;
+    var inside = function (x) { return Math.max(CUP_W / 2 + 3, Math.min(360 - CUP_W / 2 - 3, x)); };
+    return [{ x: inside(mx - ux * len / 2 * ca + nx * orbit * sa + shift), y: my - uy * len / 2 * ca + ny * orbit * sa },
+      { x: inside(mx + ux * len / 2 * ca - nx * orbit * sa + shift), y: my + uy * len / 2 * ca - ny * orbit * sa }];
+  }
+  // How much two cups standing at p and q cover each other (px; 0 when they are apart).
+  function cover(p, q) {
+    var ox = CUP_W + 6 - Math.abs(p.x - q.x), oy = CUP_H + 9 - Math.abs(p.y - q.y);
+    return ox > 0 && oy > 0 ? Math.min(ox, oy) : 0;
+  }
+  // Two pairs changing places at the same time never run into each other.
+  function apart(g, a, b, c, d) {
+    for (var e = 0.05; e < 1; e += 0.1) {
+      var p1 = swing(g, a, b, e), p2 = swing(g, c, d, e);
+      for (var i = 0; i < 2; i++) for (var j = 0; j < 2; j++) if (cover(p1[i], p2[j]) > 6) return false;
+    }
+    return true;
+  }
+
+  // How many swaps a second in round i: p.speed, or [first round, last round] (faster round by round).
+  function speedOf(p, i) {
+    if (!Array.isArray(p.speed)) return p.speed;
+    var k = p.rounds > 1 ? Math.min(1, i / (p.rounds - 1)) : 1;
+    return p.speed[0] + (p.speed[1] - p.speed[0]) * k;
+  }
+
+  // p: { rounds, cups, swaps, speed (swaps per second, or [first, last]: then the swaps grow round by round too),
+  // pause (chance of a short stop before a swap) }; おに: { rows: 2, cols, double (chance of two pairs at once) }
+  // Each round: where the chick starts, the list of swaps [a, b] (slots; [a, b, c, d] for two pairs at once),
+  // rests (the swaps that come after a short stop); ans = the slot at the end.
   function gen(p, r) {
-    var out = [], g = layout(p);
+    var out = [], g = layout(p), sw0 = Array.isArray(p.swaps) ? p.swaps : [p.swaps, p.swaps];
     for (var i = 0; i < p.rounds; i++) {
-      var start = U.int(r, 0, g.n - 1), pos = start, swaps = [], n = U.span(r, p.swaps);
+      var n = Array.isArray(p.speed) ? Math.round(sw0[0] + (sw0[1] - sw0[0]) * (p.rounds > 1 ? i / (p.rounds - 1) : 1)) : U.span(r, p.swaps);
+      var start = U.int(r, 0, g.n - 1), pos = start, swaps = [], rests = [];
       for (var k = 0; k < n; k++) {
         var a, b;
         if (g.rows === 2) {
@@ -42,23 +93,28 @@
             if (!last || !((last[0] === a && last[1] === b) || (last[0] === b && last[1] === a))) break;
           }
         } else {
-          a = U.int(r, 0, g.n - 1); b = U.int(r, 0, g.n - 2);
-          if (b >= a) b++;
-          if (k % 2 === 0 && (k === 0 || r() < 0.7) && a !== pos && b !== pos) a = pos;
+          // most other swaps move the chick's cup; a cup changes places with one at most two places away
+          // (with five cups the next one only: there is no room to go round a cup)
+          var far = g.n >= 5 ? 1 : 2;
+          a = U.int(r, 0, g.n - 1);
+          if (k % 2 === 0 && (k === 0 || r() < 0.7)) a = pos;
+          b = U.pick(r, U.range(0, g.n - 1).filter(function (x) { return x !== a && Math.abs(x - a) <= far; }));
         }
         var sw = [a, b];
         if (g.rows === 2 && p.double && k > 0 && r() < p.double) {
-          // a second pair at the same time, apart from the first
+          // a second pair at the same time, whose way does not cross the first pair's
           var free = U.range(0, g.n - 1).filter(function (s) { return s !== a && s !== b; });
-          for (var t = 0; t < 20; t++) {
+          for (var t = 0; t < 30; t++) {
             var c = U.pick(r, free), ds = neighbours(g, c).filter(function (s) { return s !== a && s !== b; });
-            if (ds.length) { sw.push(c, U.pick(r, ds)); break; }
+            var d = ds.length ? U.pick(r, ds) : -1;
+            if (d >= 0 && apart(g, a, b, c, d)) { sw.push(c, d); break; }
           }
         }
         swaps.push(sw);
+        if (p.pause && k >= 2 && r() < p.pause) rests.push(k);
         for (var q = 0; q < sw.length; q += 2) { if (pos === sw[q]) pos = sw[q + 1]; else if (pos === sw[q + 1]) pos = sw[q]; }
       }
-      out.push({ start: start, swaps: swaps, ans: pos });
+      out.push({ start: start, swaps: swaps, rests: rests, ans: pos });
     }
     return out;
   }
@@ -66,7 +122,7 @@
   function start(api, p) {
     var D = G.Draw, A = G.Art, g = layout(p);
     var rounds = gen(p, api.rnd), ri = -1, phase = 'wait', pt = 0, right = 0;
-    var si = 0, sw = null, pick = -1, lift = 0, R = null;
+    var si = 0, sw = null, pick = -1, lift = 0, R = null, rest = 0;
 
     function startRound() {
       ri++;
@@ -84,7 +140,7 @@
     }
     function stepSwap() {
       if (si >= R.swaps.length) { toAsk(); return; }
-      sw = { s: R.swaps[si++], t: 0, dur: 1 / p.speed };
+      sw = { s: R.swaps[si++], t: 0, dur: 1 / speedOf(p, ri) };
       api.sfx('whoosh');
     }
     function where(slot) { return slotAt(g, slot); }
@@ -117,12 +173,16 @@
         else if (phase === 'good' || phase === 'bad') lift = Math.min(1, pt * 4);
         if (!playing) return;
         if (phase === 'show' && pt > 1.45) { phase = 'move'; pt = 0; stepSwap(); }
-        else if (phase === 'move' && sw) {
-          sw.t += dt;
-          if (sw.t >= sw.dur) {
-            sw = null;
-            if (si < R.swaps.length) stepSwap(); else toAsk();
-          }
+        else if (phase === 'move') {
+          if (sw) {
+            sw.t += dt;
+            if (sw.t >= sw.dur) {
+              sw = null;
+              if (si >= R.swaps.length) toAsk();
+              else if (R.rests.indexOf(si) >= 0) rest = REST;   // (a short stop, then the next swap)
+              else stepSwap();
+            }
+          } else if ((rest -= dt) <= 0) stepSwap();
         } else if (phase === 'ask' && p.practice && pt > 2.5) { var w = where(R.ans); api.hand(w.x + 6, w.y - 30); }
         else if ((phase === 'good' && pt > 1.2) || (phase === 'bad' && pt > 1.8)) startRound();
       },
@@ -132,18 +192,16 @@
           D.roundRect(c, 20, by - 10, 320, 26, 13); D.paint(c, 'rgba(255,255,255,.55)');
         }
         if (!R) return;
-        // where each cup is drawn now: the moving ones travel on arcs (one on each side of the straight way).
+        // where each cup is drawn now: two cups changing places go half a turn round the point between them
+        // (one over the top, one underneath), at an almost even speed.
         // All the cups look the same, so only following them with the eyes tells where the chick went.
         var pos = [], moving = {};
         for (var s = 0; s < g.n; s++) pos.push(where(s));
         if (sw) {
-          var k = Math.min(1, sw.t / sw.dur), e = k * k * (3 - 2 * k), bulge = Math.sin(k * Math.PI);
+          var k = Math.min(1, sw.t / sw.dur), e = 0.7 * k + 0.3 * k * k * (3 - 2 * k);
           for (var q = 0; q < sw.s.length; q += 2) {
-            var a = sw.s[q], b = sw.s[q + 1], pa = where(a), pb = where(b), dx = pb.x - pa.x, dy = pb.y - pa.y, len = Math.hypot(dx, dy) || 1;
-            var nx = dy / len, ny = -dx / len;   // (sideways from the way; the first cup always goes over the top, or to the right)
-            if (ny > 0 || (ny === 0 && nx < 0)) { nx = -nx; ny = -ny; }
-            pos[a] = { x: pa.x + dx * e + nx * bulge * 26, y: pa.y + dy * e + ny * bulge * 26 };
-            pos[b] = { x: pb.x - dx * e - nx * bulge * 18, y: pb.y - dy * e - ny * bulge * 18 };
+            var a = sw.s[q], b = sw.s[q + 1], two = swing(g, a, b, e);
+            pos[a] = two[0]; pos[b] = two[1];
             moving[a] = moving[b] = true;
           }
         }
@@ -193,12 +251,12 @@
     levels: {
       e: { rounds: 6, cups: 3, swaps: [3, 4], speed: 1.3, limit: 8 },
       n: { rounds: 6, cups: 3, swaps: [5, 6], speed: 2.0, limit: 6 },
-      h: { rounds: 6, cups: 4, swaps: [6, 8], speed: 2.6, limit: 5 },
-      o: { rounds: 6, rows: 2, cols: 3, swaps: [6, 8], speed: 2.2, limit: 6 },
+      h: { rounds: 6, cups: 4, swaps: [6, 8], speed: [2.9, 3.8], pause: 0.15, limit: 5 },
+      o: { rounds: 6, rows: 2, cols: 3, swaps: [7, 9], speed: [3.2, 4.2], pause: 0.2, limit: 6 },
       ae: { rounds: 6, cups: 3, swaps: [8, 10], speed: 3.0, limit: 5 },
       a: { rounds: 6, cups: 4, swaps: [9, 11], speed: 3.4, limit: 4 },
-      ah: { rounds: 6, cups: 5, swaps: [10, 12], speed: 4.0, limit: 3 },
-      ao: { rounds: 6, rows: 2, cols: 4, swaps: [10, 12], speed: 3.2, double: 0.3, limit: 4 },
+      ah: { rounds: 6, cups: 5, swaps: [10, 12], speed: [4.0, 5.0], pause: 0.2, limit: 3 },
+      ao: { rounds: 6, rows: 2, cols: 4, swaps: [10, 12], speed: [3.4, 4.5], double: 0.3, pause: 0.2, limit: 4 },
       test: { rounds: 5, cups: 3, swaps: [5, 6], speed: 2.2, limit: 6 },
       testA: { rounds: 5, cups: 4, swaps: [7, 9], speed: 3.2, limit: 4 },
       practice: { rounds: 2, cups: 3, swaps: [2, 2], speed: 1.0 },
@@ -211,6 +269,8 @@
     },
     gen: gen,
     start: start,
+    speedOf: speedOf,
+    layout: layout, slotAt: slotAt, swing: swing, cover: cover,
     icon: function (c, t) {
       var A = G.Art, D = G.Draw, k = Math.sin((t || 0) * 2.5);
       D.chick(c, 50, 78, 0.55, t || 0, { happy: true });
