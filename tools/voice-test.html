@@ -21,6 +21,7 @@
   var off = new OfflineAudioContext(1, 48000, 48000);
   var Sound = {
     ready: function () { return true; },
+    whenReady: function (cb) { cb(true); },
     decode: function (b) { return off.decodeAudioData(b); },
     voice: function (buf, done) {
       log.push('clip ' + buf.duration.toFixed(2) + 's');

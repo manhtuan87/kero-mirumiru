@@ -1747,6 +1747,8 @@
 
   // ---------------------------------------------------------------- input
 
+  // ケロはかせ's line kept from before the first touch is said at that touch, but only on the same screen (js/voice.js).
+  V.setContext(function () { return screen; });
   window.addEventListener('pointerdown', function () {
     S.init(); V.prime();
     if (save.music && !QUIET[screen]) S.startMusic();

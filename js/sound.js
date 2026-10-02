@@ -263,9 +263,21 @@ var Sound = (function () {
 
   function suspend() { if (ac && ac.state === 'running') ac.suspend(); }
   function resume() { if (ac && ac.state === 'suspended') ac.resume(); }
+  /* For ケロはかせ's voice (js/voice.js): cb(true) as soon as the audio runs, or cb(false) after `wait` ms when the
+     browser keeps it stopped. The audio is started here too, not only at the first touch: on a phone the app on
+     the home screen may make sound right away, and the first line should be the recorded voice then. */
+  function whenReady(cb, wait) {
+    if (QUIET) { cb(false); return; }
+    if (!ac) init();
+    if (!ac) { cb(false); return; }
+    if (ac.state === 'running') { cb(true); return; }
+    var called = false, finish = function () { if (!called) { called = true; cb(ac.state === 'running'); } };
+    try { var p = ac.resume(); if (p && p.then) p.then(finish, finish); } catch (e) { /* ignore */ }
+    setTimeout(finish, wait || 1500);
+  }
 
   // The piano of the piano training is the training itself, not an effect: it sounds even with effects off.
   function piano(i, len) { if (ac) { try { pianoNote(i, len, 0, master); } catch (e) { /* ignore */ } } }
 
-  return { init: init, ready: ready, play: play, piano: piano, set: set, startMusic: startMusic, stopMusic: stopMusic, suspend: suspend, resume: resume, decode: decode, voice: voice };
+  return { init: init, ready: ready, whenReady: whenReady, play: play, piano: piano, set: set, startMusic: startMusic, stopMusic: stopMusic, suspend: suspend, resume: resume, decode: decode, voice: voice };
 }());

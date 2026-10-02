@@ -58,7 +58,8 @@ var Voice = (function () {
 
   // The phone's voice in language `id`, slower and at its natural pitch. When the phone lists its voices
   // but has none for the language, the part is left out (another language's voice would read it badly).
-  function tts(text, id, done, my) {
+  // When the browser does not let the page speak yet (before the first touch), wait() keeps the line for later.
+  function tts(text, id, done, my, wait) {
     if (!synth || quiet) { done(); return; }
     if (!voices[id]) pickVoices();
     if (listed && !voices[id]) { done(); return; }
@@ -69,7 +70,11 @@ var Voice = (function () {
       u.rate = 0.85; u.pitch = 1.0; u.volume = 1;
       var finished = false;
       var end = function () { if (!finished) { finished = true; if (my === gen) done(); } };
-      u.onend = end; u.onerror = end;
+      u.onend = end;
+      u.onerror = function (e) {
+        if (!finished && wait && e && e.error === 'not-allowed') { finished = true; if (my === gen) wait(); }
+        else end();
+      };
       synth.speak(u);
       setTimeout(end, 600 + norm(text).length * 260);   // in case the phone never reports the end
     } catch (e) { done(); }
@@ -81,16 +86,24 @@ var Voice = (function () {
     }
     return bytes[url];
   }
-  // A recorded clip; if it cannot be played, the phone reads the line instead.
-  function play(url, text, done, my) {
+  /* A recorded clip. Only a clip that cannot be loaded or decoded is read by the phone instead. While the audio
+     is not running yet (the browser waits for the first touch, or it is just starting again after the app came
+     back), the line waits for it: wait() keeps it for the first touch. Before, the phone's voice read the first
+     line of a screen, or nothing was heard (2026-10-02 report). */
+  function play(url, text, done, my, wait) {
     if (quiet) { done(); return; }
-    var instead = function () { if (my === gen) tts(text, 'ja', done, my); };
-    if (!sound || !sound.ready()) { instead(); return; }
-    load(url).then(function (b) { return sound.decode(b.slice(0)); }).then(function (buf) {
+    var instead = function () { if (my === gen) tts(text, 'ja', done, my, wait); };
+    if (!sound || !sound.whenReady) { instead(); return; }
+    load(url);   // (fetch the clip while the audio gets ready)
+    sound.whenReady(function (ok) {
       if (my !== gen) return;
-      src = sound.voice(buf, function () { if (my === gen) { src = null; done(); } });
-      if (!src) instead();
-    }).catch(instead);
+      if (!ok) { if (wait) wait(); else done(); return; }
+      load(url).then(function (b) { return sound.decode(b.slice(0)); }).then(function (buf) {
+        if (my !== gen) return;
+        src = sound.voice(buf, function () { if (my === gen) { src = null; done(); } });
+        if (!src) { if (wait) wait(); else done(); }   // (the audio stopped again in between)
+      }).catch(instead);
+    }, 1500);
   }
 
   // Outside Japanese, a part is cut where Japanese letters start or end ('はなこ ơi,' → 'はなこ', 'ơi,'),
@@ -112,31 +125,54 @@ var Voice = (function () {
     else list = pieces(list);
     if (!on || !list.length) return;
     stop();
+    run(list, id);
+  }
+  function run(list, id) {
     var my = gen;
     talking = true;
     (function next(i) {
       if (my !== gen) return;
       if (i >= list.length) { talking = false; return; }
       var t = list[i], go = function () { next(i + 1); };
+      var wait = function () { if (my === gen) hold(list.slice(i), id); };
       var url = id === 'ja' ? clipOf(t) : null;
-      if (url && canPlay) play(url, t, go, my);
-      else tts(t, id === 'ja' || JA.test(t) ? 'ja' : id, go, my);
+      if (url && canPlay) play(url, t, go, my, wait);
+      else tts(t, id === 'ja' || JA.test(t) ? 'ja' : id, go, my, wait);
     }(0));
+  }
+
+  /* A line that could not be heard yet (no sound before the first touch) is kept, and said at that touch if the
+     game is still on the same screen (context(): set by the game) and it is not too old. A touch that opens another
+     screen, or any other line, drops it. */
+  var HOLD_MS = 15000;
+  var held = null, context = function () { return ''; };
+  function hold(list, id) { held = { list: list, id: id, at: Date.now(), ctx: context() }; talking = false; }
+  function flush() {
+    var h = held;
+    held = null;
+    if (!h || !on || Date.now() - h.at > HOLD_MS || h.ctx !== context()) return;
+    stop();
+    run(h.list, h.id);
   }
 
   function stop() {
     gen++;
     talking = false;
+    held = null;
     if (src) { try { src.stop(); } catch (e) { /* ignore */ } src = null; }
     if (synth) { try { synth.cancel(); } catch (e) { /* ignore */ } }
   }
 
-  // Chrome only lets a page speak after the player has touched it once.
+  // Chrome only lets a page speak after the player has touched it once (the game calls this at every touch).
+  // A line kept from before is said a moment later: the touch may first open another screen, which drops it.
   function prime() {
-    if (primed || quiet) return;
-    primed = true;
-    pickVoices();
-    if (synth) { try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) { /* ignore */ } }
+    if (quiet) return;
+    if (!primed) {
+      primed = true;
+      pickVoices();
+      if (synth) { try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) { /* ignore */ } }
+    }
+    if (held) setTimeout(flush, 350);
   }
 
   function set(value) { on = !!value; if (!on) stop(); }
@@ -150,6 +186,7 @@ var Voice = (function () {
 
   return {
     say: say, stop: stop, prime: prime, set: set, phoneVoice: phoneVoice, quiet: quiet, busy: function () { return talking; },
+    setContext: function (fn) { context = fn; }, held: function () { return !!held; },
     norm: norm, hasClip: function (t) { return !!clipOf(t); }, misses: misses, credit: clips.credit || ''
   };
 }());
